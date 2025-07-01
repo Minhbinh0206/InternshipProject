@@ -1,0 +1,19 @@
+.active-bar .ant-tabs-tab {
+  padding: 0 8px;
+  font-weight: 600;
+}
+
+.active-bar .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: #2f54eb;
+}
+
+.active-bar .ant-tabs-ink-bar {
+  background: #2f54eb;
+  height: 2px;          
+}
+
+.active-bar .ant-tabs-tab .anticon {
+  margin-right: 4px;
+  font-size: 14px;
+  vertical-align: -2px;
+}
