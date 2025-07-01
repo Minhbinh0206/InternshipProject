@@ -1,7 +1,7 @@
 import React from 'react';
 import './CustomButton.css';
 
-type ButtonVariant = 'blue' | 'white' | 'black' | 'red';
+type ButtonVariant = 'blue' | 'white' | 'black' | 'red' | 'gray';
 type ButtonLayout  = 'iconFirst' | 'textFirst' | 'noIcon';
 
 interface ButtonCustomProps
@@ -18,7 +18,7 @@ const CustomButton: React.FC<ButtonCustomProps> = ({
   icon,
   text = 'Button',
   className = '',
-  children,          // đề phòng truyền JSX thay vì text
+  children,
   ...rest
 }) => {
   // gộp className ngoài vào để vẫn custom được
