@@ -1,0 +1,6 @@
+.link-item .ant-breadcrumb-link {
+  color: #2f54eb;         
+}
+.link-item .ant-breadcrumb-link:hover {
+  text-decoration: underline;
+}
