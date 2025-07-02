@@ -1,6 +1,5 @@
 .active-bar .ant-tabs-tab {
-  padding: 0 10px;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .active-bar .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {

@@ -5,30 +5,40 @@ import './ActiveBar.css';
 export interface ActiveBarItem {
   key: string;
   label: React.ReactNode;
-  children: React.ReactNode;
+  icon?: React.ReactNode;           // NEW
 }
 
 interface ActiveBarProps {
   items: ActiveBarItem[];
-  defaultActiveKey?: string;
+  activeKey?: string;
   onChange?: (activeKey: string) => void;
-  underlineWidth?: number | string;
 }
 
 const ActiveBar: React.FC<ActiveBarProps> = ({
   items,
-  defaultActiveKey,
+  activeKey,
   onChange,
 }) => {
+  // ghép icon + label thành một ReactNode
+  const tabItems = items.map(({ key, label, icon }) => ({
+    key,
+    label: (
+      <span className="active-bar-label">
+        {icon && <span className="active-bar-icon">{icon}</span>}
+        {label}
+      </span>
+    ),
+  }));
+
   return (
     <Tabs
       className="active-bar"
-      items={items}
-      defaultActiveKey={defaultActiveKey ?? items[0]?.key}
+      items={tabItems}
+      activeKey={activeKey}
       onChange={onChange}
       animated={false}
       tabBarGutter={24}
-      moreIcon={null} 
+      moreIcon={null}
     />
   );
 };
