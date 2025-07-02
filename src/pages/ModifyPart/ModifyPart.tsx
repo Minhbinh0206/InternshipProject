@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
 import type { PartTypeMode } from '../../components/FilterPartType/FilterPartType';
-import { BarsOutlined, CheckCircleOutlined, EditOutlined, FileTextOutlined, HomeOutlined, LoadingOutlined, SearchOutlined, SettingOutlined } from '@ant-design/icons';
+import { BarsOutlined, CheckCircleOutlined, EditOutlined, FileTextOutlined, HomeOutlined, LoadingOutlined, QuestionOutlined, SearchOutlined, SettingOutlined } from '@ant-design/icons';
 import PageHeader from '../../components/PageHeader/PageHeader';
 import CodeBuilder from '../../components/CodeBuilder/CodeBuilder';
+import PartAssemblerGroup from '../../components/PartAssemblerGroup/PartAssemblerGroup';
+import AssemblyOutcomes from '../../components/AssemblyOutcome/AssemblyOutcomes';
 
 export interface ActiveBarItem {
     key: string;
@@ -15,19 +17,20 @@ const ModifyPart: React.FC = () => {
 
     const tabs: ActiveBarItem[] = [
         { key: 'properties', label: 'Properties', icon: <FileTextOutlined /> },
-        { key: 'raw-data', label: 'Part raw data', icon: <SearchOutlined />},
-        { key: 'assembler', label: 'Part assembler', icon: <BarsOutlined />},
-        { key: 'outcome-settings', label: 'Outcome settings', icon: <SettingOutlined />},
-        { key: 'supply', label: 'Supply chain', icon: <LoadingOutlined />},
-        { key: 'code-builder', label: 'Code Builder', icon: <EditOutlined />},
-        { key: 'assembly-outcomes', label: 'Assembly Outcomes', icon: <CheckCircleOutlined />},
-        { key: 'compatible', label: 'Part compatible', icon: <LoadingOutlined />},
+        { key: 'raw-data', label: 'Part raw data', icon: <SearchOutlined /> },
+        { key: 'assembler', label: 'Part assembler', icon: <BarsOutlined /> },
+        { key: 'outcome-settings', label: 'Outcome settings', icon: <SettingOutlined /> },
+        { key: 'supply', label: 'Supply chain', icon: <QuestionOutlined /> },
+        { key: 'code-builder', label: 'Code Builder', icon: <EditOutlined /> },
+        { key: 'assembly-outcomes', label: 'Assembly Outcomes', icon: <CheckCircleOutlined /> },
+        { key: 'compatible', label: 'Part compatible', icon: <QuestionOutlined /> },
     ];
 
     const [mode, setMode] = useState<PartTypeMode>('editable');
     const [isChecked, setChecked] = useState(false);
+
     return (
-        <div>
+        <div style={{ flex: 1}}>
             <PageHeader
                 title="Modify Part"
                 breadcrumbs={[
@@ -40,8 +43,15 @@ const ModifyPart: React.FC = () => {
                 onTabChange={setActiveKey}
                 mode={mode}
             />
-
-            <CodeBuilder />
+            {
+                activeKey === 'code-builder' ? (
+                    <CodeBuilder />
+                ) : activeKey === 'assembler' ? (
+                    <PartAssemblerGroup />
+                ) : activeKey === 'assembly-outcomes' ? (
+                    <AssemblyOutcomes />
+                ) : null 
+            }
         </div>
     );
 };
