@@ -16,25 +16,14 @@ interface BreadcrumbItem {
   icon?: React.ReactNode;
 }
 
-type PageHeaderProps =
-  | {
-    title: string;
-    breadcrumbs?: BreadcrumbItem[];
-    /**  Không dùng tab */
-    tabs?: undefined;
-    activeKey?: undefined;
-    onTabChange?: undefined;
-    mode?: PartTypeMode;
-  }
-  | {
-    title: string;
-    breadcrumbs?: BreadcrumbItem[];
-    /**  Dùng tab */
-    tabs: ActiveBarItem[];
-    activeKey: string;
-    onTabChange: (key: string) => void;
-    mode: undefined;
-  };
+interface PageHeaderProps {
+  title: string;
+  breadcrumbs?: BreadcrumbItem[];
+  tabs?: ActiveBarItem[];
+  activeKey?: string;
+  onTabChange?: (key: string) => void;
+  mode?: PartTypeMode; // ✅ mode là optional
+}
 
 const PageHeader: React.FC<PageHeaderProps> = ({
   title,
@@ -72,7 +61,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
         <FilterPartType
           partType={partType}
           onChange={setPartType}
-          mode={mode} // ✅ bây giờ mode luôn có giá trị
+          mode={mode} 
           showButton={mode === 'editable'}
           onButtonClick={() => console.log('Click nút')}
         />

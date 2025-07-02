@@ -1,0 +1,35 @@
+.section-card {
+    padding: 32px;
+    background: #fff;
+    border-radius: 4px;
+    padding-bottom: 0px;
+}
+
+.section-title {
+    text-align: left;
+    color: blue !important;
+    margin-bottom: 5px !important;
+}
+
+.custom-section {
+    justify-content: flex-start;
+    align-items: flex-start;
+    text-align: left;
+    padding: 0 32px;
+}
+
+.custom-section-title {
+    text-align: left;
+    color: blue !important;
+}
+
+.remove-btn {
+    padding: 0;
+    text-align: right;
+}
+
+.title-container{
+    display: flex;
+    flex-direction: row;
+    padding-bottom: 16px;
+}
