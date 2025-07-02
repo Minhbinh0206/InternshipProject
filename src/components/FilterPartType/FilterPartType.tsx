@@ -44,6 +44,7 @@ const FilterPartType: React.FC<FilterPartTypeProps> = ({
       alignItems: 'center',
       width: '100%',
       marginTop: 24,
+      marginBottom: 50
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
         <Text strong>Part type:</Text>

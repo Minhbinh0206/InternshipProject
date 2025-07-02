@@ -1,11 +1,11 @@
 import './App.css'
-import CodeBuilder from './components/CodeBuilder/CodeBuilder'
+import CreatePart from './pages/CreatePart/CreatePart'
 
 function App() {
 
   return (
     <>
-      <CodeBuilder />
+      <CreatePart />
     </>
   )
 }
