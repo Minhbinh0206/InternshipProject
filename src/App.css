@@ -1,3 +1,7 @@
+html, body{
+  height: auto !important;
+}
+
 #root {
   width: 100%;
   padding: 2rem;
