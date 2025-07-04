@@ -1,11 +1,14 @@
 import './App.css'
-import ModifyPart from './pages/ModifyPart/ModifyPart'
+import CreatePart from './pages/CreatePart/CreatePart'
+import PartList from './pages/PartsList/PartsListPage'
+
 
 function App() {
 
   return (
     <>
-      <ModifyPart />
+      <PartList />
+      <CreatePart />
     </>
   )
 }
