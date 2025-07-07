@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Typography, Breadcrumb } from 'antd';
 import {
   HomeOutlined,
@@ -7,6 +7,7 @@ import 'antd/dist/reset.css';
 import './PageHeader.css';
 import ActiveBar, { type ActiveBarItem } from '../ActiveBar/ActiveBar';
 import FilterPartType, { type PartTypeMode } from '../FilterPartType/FilterPartType';
+import type PartType from '../../types/part';
 
 const { Title } = Typography;
 
@@ -22,7 +23,11 @@ interface PageHeaderProps {
   tabs?: ActiveBarItem[];
   activeKey?: string;
   onTabChange?: (key: string) => void;
-  mode?: PartTypeMode; // ✅ mode là optional
+  mode?: PartTypeMode;
+
+  partTypes: PartType[];
+  selectedPartType: string;
+  onSelectPartType: (value: string) => void;
 }
 
 const PageHeader: React.FC<PageHeaderProps> = ({
@@ -30,10 +35,12 @@ const PageHeader: React.FC<PageHeaderProps> = ({
   breadcrumbs,
   tabs,
   activeKey,
+  partTypes,
   onTabChange,
   mode,
+  selectedPartType,
+  onSelectPartType
 }) => {
-  const [partType, setPartType] = useState('standard');
 
   return (
     <div style={{ background: '#f5f5f5', padding: 32, width: '100%' }}>
@@ -59,13 +66,15 @@ const PageHeader: React.FC<PageHeaderProps> = ({
 
       {mode && (
         <FilterPartType
-          partType={partType}
-          onChange={setPartType}
-          mode={mode} 
+          value={selectedPartType}        
+          partTypes={partTypes}
+          mode={mode}
+          onChange={onSelectPartType}     
           showButton={mode === 'editable'}
           onButtonClick={() => console.log('Click nút')}
         />
       )}
+
 
       {/* ActiveBar (nếu có) */}
       {Array.isArray(tabs) && tabs.length > 0 && activeKey && onTabChange && (

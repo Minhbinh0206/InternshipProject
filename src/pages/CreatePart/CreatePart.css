@@ -33,3 +33,101 @@
     flex-direction: row;
     padding-bottom: 16px;
 }
+
+.manage-properties-modal {
+  padding: 16px;
+}
+
+.manage-properties-modal h5 {
+  font-weight: 600;
+  font-size: 18px;
+  color: #165DFF;
+}
+
+.category-title {
+  font-weight: 600;
+  margin-bottom: 24px;
+  font-size: 16px;
+}
+
+.field-row {
+  display: flex;
+  align-items: center;
+  margin: 8px 0;
+  gap: 8px;
+}
+
+.field-label {
+  color: #165DFF; /* màu xanh giống ảnh */
+  font-size: 15px;
+  margin-bottom: 0;
+}
+
+.field-checkbox {
+  margin-top: 2px;
+}
+
+.field-input {
+  flex: 1;
+  max-width: 150px;
+}
+
+.modal-footer {
+  text-align: right;
+  margin-top: 24px;
+}
+
+/* Kích thước tiêu đề modal lớn hơn */
+.modal-title {
+  font-size: 23px;
+  font-weight: 700;
+  margin-bottom: 24px !important;
+}
+
+/* Subtitle "Custom properties" màu xanh, chữ to */
+.custom-properties-title {
+  font-size: 18px !important;
+  font-weight: 600;
+  color: #165DFF;
+  margin-bottom: 24px;
+}
+
+/* Danh mục như Design, Ratings */
+.category-title {
+  font-weight: 600;
+  margin: 8px 0 6px;
+  font-size: 16px;
+}
+
+/* Dòng chứa checkbox + label */
+.field-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0;
+  cursor: pointer;
+}
+
+/* Checkbox */
+.field-row input[type='checkbox'] {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+}
+
+/* Nhãn bên cạnh checkbox */
+.field-label {
+  color: #165dff;
+  font-size: 16px;
+  user-select: none;
+}
+
+.footer-modal{
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+}
+
+.button-modal{
+    margin: 0 5px;
+}
