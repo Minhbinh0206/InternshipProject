@@ -9,7 +9,8 @@ import {
     Alert,
     Modal,
     Select,
-    Button
+    Button,
+    message
 } from 'antd';
 import {
     PlusOutlined,
@@ -20,6 +21,9 @@ import {
 } from '@ant-design/icons';
 import CustomButton from '../CustomButton/CustomButton';
 import './CodeBuilder.css';
+import { flushSync } from 'react-dom';
+import type PartItem from '../../types/part';
+import type PartGroup from '../../types/partGroup';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -29,6 +33,11 @@ interface CodePattern {
     name: string;
     code: string;
     isDefault: boolean;
+}
+
+interface ValidateState {
+    id: number | null;
+    status: 'ok' | 'dup' | 'empty' | null;
 }
 
 const CodeBuilder: React.FC = () => {
@@ -47,6 +56,47 @@ const CodeBuilder: React.FC = () => {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [selectedGroup, setSelectedGroup] = useState<string | undefined>();
     const [selectedProperty, setSelectedProperty] = useState<string | undefined>();
+    const [isDuplicated, setDuplicated] = useState(false);
+    const [validate, setValidate] = useState<ValidateState>({
+        id: null,
+        status: null,
+    });
+
+    /* ---------- List of part groups ---------- */
+    const partGroups: PartGroup[] = [
+        {
+            id: 'group-1',
+            name: 'Part Group 1',
+            optional: false,
+            parts: [
+                {
+                    key: '1',
+                    id: '6123',
+                    version: '1.0',
+                    publishVersion: '1.0',
+                    name: 'HP test deploy 0625-2',
+                    type: 'standard',
+                    code: 'HPIEST.0625-2',
+                },
+            ],
+        },
+        {
+            id: 'group-2',
+            name: 'Part Group 2',
+            optional: true,
+            parts: [
+                {
+                    key: '2',
+                    id: '6124',
+                    version: '2.0',
+                    publishVersion: '2.0',
+                    name: 'HP deploy test',
+                    type: 'standard',
+                    code: 'HPIEST.0626',
+                },
+            ],
+        },
+    ];
 
     const handleRename = (id: number, currentName: string) => {
         setEditingId(id);
@@ -62,11 +112,16 @@ const CodeBuilder: React.FC = () => {
         setEditingId(null);
     };
 
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, id: number, originalName: string) => {
-        if (e.key === 'Escape') {
-            setTempName(originalName);
-            setEditingId(null);
-            inputRef.current?.blur();
+    const handleCancel = (
+        e: React.KeyboardEvent<HTMLInputElement>,
+        id: number,
+        originalName: string,
+    ) => {
+        if (e.key === 'Escape' || e.keyCode === 27) {
+            // ép React cập nhật state NGAY LẬP TỨC
+            flushSync(() => setTempName(originalName));
+            setEditingId(null);           // thoát chế độ rename
+            inputRef.current?.blur();     // giờ mới blur -> handleBlur sẽ đọc đúng "Tên CŨ"
         }
     };
 
@@ -105,7 +160,6 @@ const CodeBuilder: React.FC = () => {
         });
     };
 
-
     const handleCreateNew = () => {
         const newItem: CodePattern = {
             id: Date.now(),
@@ -114,6 +168,27 @@ const CodeBuilder: React.FC = () => {
             isDefault: false
         };
         setListCodeBuilders(prev => [...prev, newItem]);
+    };
+
+    const normalize = (s: string) =>
+        s.trim().replace(/\s+/g, '').toLowerCase();
+
+    const handleValidate = (id: number) => {
+        const current = listCodeBuilders.find(cb => cb.id === id);
+        if (!current) return;
+
+        const code = normalize(current.code);
+
+        if (!code) {
+            setValidate({ id, status: 'empty' });
+            return;
+        }
+
+        const dup = listCodeBuilders.some(
+            cb => cb.id !== id && normalize(cb.code) === code
+        );
+
+        setValidate({ id, status: dup ? 'dup' : 'ok' });
     };
 
     return (
@@ -161,7 +236,7 @@ const CodeBuilder: React.FC = () => {
                                         autoFocus
                                         onChange={(e) => setTempName(e.target.value)}
                                         onBlur={() => handleBlur(item.id)}
-                                        onKeyDown={(e) => handleKeyDown(e, item.id, item.name)}
+                                        onKeyDown={(e) => handleCancel(e, item.id, item.name)}
                                         placeholder="Enter name Code Builder"
                                     />
                                 )}
@@ -200,6 +275,39 @@ const CodeBuilder: React.FC = () => {
                             />
                         </div>
 
+                        {/* báo trống */}
+                        {validate.id === item.id && validate.status === 'empty' && (
+                            <Alert
+                                type="error"
+                                message="Code Builder content cannot be blank"
+                                showIcon closable
+                                onClose={() => setValidate({ id: null, status: null })}
+                                style={{ marginTop: 12 }}
+                            />
+                        )}
+
+                        {/* báo trùng */}
+                        {validate.id === item.id && validate.status === 'dup' && (
+                            <Alert
+                                type="error"
+                                message="Code Builder content already exists"
+                                showIcon closable
+                                onClose={() => setValidate({ id: null, status: null })}
+                                style={{ marginTop: 12 }}
+                            />
+                        )}
+
+                        {/* báo hợp lệ */}
+                        {validate.id === item.id && validate.status === 'ok' && (
+                            <Alert
+                                type="success"
+                                message="Code Builder content is unique"
+                                showIcon closable
+                                onClose={() => setValidate({ id: null, status: null })}
+                                style={{ marginTop: 12 }}
+                            />
+                        )}
+
                         <Row justify="space-between" className="cb-action-bar">
                             <Col>
                                 <Space>
@@ -215,6 +323,7 @@ const CodeBuilder: React.FC = () => {
                                         layout="iconFirst"
                                         icon={<InfoCircleOutlined />}
                                         text="Validate"
+                                        onClick={() => handleValidate(item.id)}
                                     />
                                 </Space>
                             </Col>
@@ -264,22 +373,22 @@ const CodeBuilder: React.FC = () => {
                         value={selectedGroup}
                         onChange={(val) => {
                             setSelectedGroup(val);
-                            setSelectedProperty(undefined); // reset property
+                            setSelectedProperty(undefined);
                         }}
                     >
-                        <Select.Option value="outcome">Outcome</Select.Option>
-                        <Select.Option value="engine">Engine</Select.Option>
+                        <Select.Option value='this Item'>This</Select.Option>
+                        {partGroups.map((item) => (
+                            <Select.Option value={item.id}>{item.name ? item.name : "Không có tên"}</Select.Option>
+                        ))}
                     </Select>
+                    <Text type="secondary">Select part group to see available properties</Text>
                 </div>
 
                 <div style={{ marginTop: 24 }}>
-                    <Text type="secondary">
-                        {selectedGroup ? 'Available properties' : 'Select part group to see available properties'}
-                    </Text>
+                    <Text strong>Available properties</Text>
                     <Select
                         style={{ width: '100%', marginTop: 8 }}
                         placeholder="Select option..."
-                        disabled={!selectedGroup}
                         value={selectedProperty}
                         onChange={(val) => setSelectedProperty(val)}
                     >
@@ -305,7 +414,7 @@ const CodeBuilder: React.FC = () => {
                         </Space>
                     </Col>
                     <Col>
-                        <CustomButton className='button-modal' variant='white' text='Cancel' layout='noIcon' onClick={() => setIsModalVisible(false)}/>
+                        <CustomButton className='button-modal' variant='white' text='Cancel' layout='noIcon' onClick={() => setIsModalVisible(false)} />
                     </Col>
                 </Row>
             </Modal>
