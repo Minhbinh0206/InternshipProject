@@ -30,6 +30,12 @@ const PartTable: React.FC = () => {
   );
   console.log(partList);
 
+  const handleEdit = (part: { id: number; revisionId?: number; versionId?: number }) => {
+    navigate(
+      `/parts/modify/${part.id}/${part.revisionId ?? 0}/${part.versionId ?? 0}?key=edit`
+    );
+  };
+
   return (
     <table>
       <thead>
@@ -59,7 +65,14 @@ const PartTable: React.FC = () => {
             <td className="p-3">{part.type}</td>
             <td className="p-3">{part.code}</td>
             <td className="p-3 flex gap-2">
-              <CustomButton variant="blue" layout="iconFirst" icon={<EditOutlined />} text="Edit" style={{ marginRight: 10 }} />
+              <CustomButton
+                variant="blue"
+                layout="iconFirst"
+                icon={<EditOutlined />}
+                text="Edit"
+                style={{ marginRight: 10 }}
+                onClick={() => handleEdit(part)}
+              />
               <CustomButton variant="red" layout="iconFirst" icon={<DeleteOutlined />} text="Delete" style={{ marginRight: 10 }} />
               <CustomButton variant="white" layout="iconFirst" icon={<CopyOutlined />} text="Duplicate" />
             </td>
