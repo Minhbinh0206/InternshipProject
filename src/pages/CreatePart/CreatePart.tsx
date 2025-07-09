@@ -6,7 +6,8 @@ import { Button, Col, Divider, Form, Input, Modal, Row, Select, Tooltip, Typogra
 import './CreatePart.css';
 import CustomSwitch from '../../components/common/CustomSwitch/CustomSwitch';
 import CustomButton from '../../components/common/CustomButton/CustomButton';
-import type PartType from '../../types/part';
+import type PartType from '../../types/partType';
+
 import type ActiveBarItem from '../../types/activeBarItem';
 const { Option } = Select;
 
