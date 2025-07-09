@@ -9,8 +9,6 @@ import {
     Alert,
     Modal,
     Select,
-    Button,
-    message
 } from 'antd';
 import {
     PlusOutlined,
@@ -19,11 +17,10 @@ import {
     CloseOutlined,
     CheckOutlined,
 } from '@ant-design/icons';
-import CustomButton from '../CustomButton/CustomButton';
 import './CodeBuilder.css';
+import CustomButton from '../../common/CustomButton/CustomButton';
 import { flushSync } from 'react-dom';
-import type PartItem from '../../types/part';
-import type PartGroup from '../../types/partGroup';
+import type PartGroup from '../../../types/partGroup';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -56,7 +53,6 @@ const CodeBuilder: React.FC = () => {
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [selectedGroup, setSelectedGroup] = useState<string | undefined>();
     const [selectedProperty, setSelectedProperty] = useState<string | undefined>();
-    const [isDuplicated, setDuplicated] = useState(false);
     const [validate, setValidate] = useState<ValidateState>({
         id: null,
         status: null,

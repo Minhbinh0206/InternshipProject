@@ -1,7 +1,7 @@
 import React from 'react';
 import { Select, Typography } from 'antd';
-import CustomButton from '../CustomButton/CustomButton';
-import type PartType from '../../types/partType';      // <- type bạn đã tạo
+import CustomButton from '../../components/common/CustomButton/CustomButton';
+import type PartType from '../part';      // <- type bạn đã tạo
 const { Text } = Typography;
 
 export type PartTypeMode = 'editable' | 'read-only' | 'detailed';

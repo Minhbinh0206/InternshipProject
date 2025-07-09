@@ -21,7 +21,7 @@ import {
   QuestionCircleFilled,
   QuestionOutlined
 } from '@ant-design/icons';
-import CustomButton from '../CustomButton/CustomButton';
+import CustomButton from '../../common/CustomButton/CustomButton';
 
 const { Title, Paragraph, Text } = Typography;
 

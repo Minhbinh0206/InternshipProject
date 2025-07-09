@@ -2,16 +2,16 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.tsx';
 import { Provider } from 'react-redux';
-import { store } from '../src/app/store.ts';
+import { store } from './store/store.ts';
 import { ApolloProvider } from '@apollo/client';
-import { client } from '../src/app/apolloClient.ts';
+import { client } from './graphQL/client.ts';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-    <ApolloProvider client={client}>
-      <Provider store={store}>
+    <Provider store={store}>
+      <ApolloProvider client={client}>
         <App />
-      </Provider>
-    </ApolloProvider>
+      </ApolloProvider>
+    </Provider>
   </React.StrictMode>
 );

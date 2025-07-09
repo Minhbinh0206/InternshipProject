@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import type { PartTypeMode } from '../../components/FilterPartType/FilterPartType';
+import type { PartTypeMode } from '../../types/FilterPartType/FilterPartType';
 import { BarsOutlined, CheckCircleOutlined, EditOutlined, FileTextOutlined, HomeOutlined, LoadingOutlined, QuestionOutlined, SearchOutlined, SettingOutlined } from '@ant-design/icons';
-import PageHeader from '../../components/PageHeader/PageHeader';
-import CodeBuilder from '../../components/CodeBuilder/CodeBuilder';
-import PartAssemblerGroup from '../../components/PartAssemblerGroup/PartAssemblerGroup';
-import AssemblyOutcomes from '../../components/AssemblyOutcome/AssemblyOutcomes';
+import PageHeader from '../../components/layout/PageHeader/PageHeader';
+import CodeBuilder from '../../components/parts/CodeBuilder/CodeBuilder';
+import PartAssemblerGroup from '../../components/parts/PartAssemblerGroup/PartAssemblerGroup';
+import AssemblyOutcomes from '../../components/parts/AssemblyOutcome/AssemblyOutcomes';
 
 export interface ActiveBarItem {
     key: string;
@@ -42,8 +42,8 @@ const ModifyPart: React.FC = () => {
                 activeKey={activeKey}
                 onTabChange={setActiveKey}
                 mode={mode}
-                partTypes={[]}
                 selectedPartType=''
+                partTypes={[]}
                 onSelectPartType={() => {}}
             />
             {
