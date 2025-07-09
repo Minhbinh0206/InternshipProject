@@ -6,8 +6,8 @@ import {
 import 'antd/dist/reset.css';
 import './PageHeader.css';
 import ActiveBar, { type ActiveBarItem } from '../ActiveBar/ActiveBar';
-import FilterPartType, { type PartTypeMode } from '../FilterPartType/FilterPartType';
-import type PartType from '../../types/part';
+import FilterPartType, { type PartTypeMode } from '../../../types/FilterPartType/FilterPartType';
+import type PartType from '../../../types/part';
 
 const { Title } = Typography;
 

@@ -8,7 +8,7 @@ import {
     CheckOutlined,
 } from '@ant-design/icons';
 import './CodeBuilder.css';
-import CustomButton from '../CustomButton/CustomButton';
+import CustomButton from '../../common/CustomButton/CustomButton';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;

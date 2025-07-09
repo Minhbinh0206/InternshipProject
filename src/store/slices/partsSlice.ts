@@ -1,30 +1,20 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-//import { request, gql } from 'graphql-request';
-import axios from 'axios';
+import { request } from 'graphql-request';
+import { GET_PARTS } from '../../graphQL/partQueries';
 
-export const fetchParts = createAsyncThunk('parts/fetchParts', async () => {
-  const response = await axios.get('/api/parts');
-  return response.data;
+interface Version {
+  id: number;
+  name: string;
+}
 
-  // const query = gql`
-  //   query {
-  //     parts {
-  //       id
-  //       name
-  //       type
-  //       code
-  //     }
-  //   }
-  // `;
-  // const data = await request('http://localhost:8000/graphql', query);
-  // return data.parts;
-});
+interface Revision {
+  id: number;
+  versions: Version[];
+}
 
 interface Part {
   id: number;
-  name: string;
-  type: string;
-  code: string;
+  revisions: Revision[];
 }
 
 interface PartsState {
@@ -36,6 +26,11 @@ const initialState: PartsState = {
   list: [],
   status: 'idle',
 };
+
+export const fetchParts = createAsyncThunk<Part[]>('parts/fetchParts', async () => {
+  const data = await request<{ parts: Part[] }>('http://localhost:8000/graphql', GET_PARTS);
+  return data.parts;
+});
 
 const partsSlice = createSlice({
   name: 'parts',

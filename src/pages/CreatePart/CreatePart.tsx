@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import { BarsOutlined, CloseOutlined, FileTextOutlined, HomeOutlined, LoadingOutlined, PlusOutlined, QuestionCircleFilled, QuestionCircleOutlined, SearchOutlined } from '@ant-design/icons';
-import PageHeader from '../../components/PageHeader/PageHeader';
-import { type PartTypeMode } from '../../components/FilterPartType/FilterPartType';
+import PageHeader from '../../components/layout/PageHeader/PageHeader';
+import { type PartTypeMode } from '../../types/FilterPartType/FilterPartType';
 import { Button, Col, Divider, Form, Input, Modal, Row, Select, Tooltip, Typography } from 'antd';
 import './CreatePart.css';
-import CustomSwitch from '../../components/CustomSwitch/CustomSwitch';
-import CustomButton from '../../components/CustomButton/CustomButton';
+import CustomSwitch from '../../components/common/CustomSwitch/CustomSwitch';
+import CustomButton from '../../components/common/CustomButton/CustomButton';
 import type PartType from '../../types/part';
 import type ActiveBarItem from '../../types/activeBarItem';
 const { Option } = Select;

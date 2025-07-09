@@ -5,7 +5,7 @@ import {
   ArrowsAltOutlined, CloseOutlined, DeleteOutlined,
   DoubleRightOutlined, EditOutlined, PlusOutlined, QuestionCircleFilled, SettingOutlined
 } from '@ant-design/icons';
-import CustomButton from '../CustomButton/CustomButton';
+import CustomButton from '../../common/CustomButton/CustomButton';
 import './PartAssemblerGroup.css';
 
 const { Title } = Typography;

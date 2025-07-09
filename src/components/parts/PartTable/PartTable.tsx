@@ -1,56 +1,73 @@
-import React, { useEffect } from "react";
-//import { useDispatch, useSelector } from "react-redux";
-//import { fetchParts } from "../../../redux/slices/partsSlice";
-//import { RootState, AppDispatch } from "../../../redux/store";
+import React from "react";
+import { useQuery } from "@apollo/client";
 import { SettingOutlined, EditOutlined, DeleteOutlined, CopyOutlined } from "@ant-design/icons";
-import CustomButton from "../../CustomButton/CustomButton";
-import './PartTable.css';
-
-const parts = [
-    { id: 1, name: "Part A", type: "Standard", code: "A001" },
-    { id: 2, name: "Part B", type: "Luminaire", code: "B002" },
-    { id: 3, name: "Part C", type: "Standard", code: "C003" }
-];
+import CustomButton from "../../common/CustomButton/CustomButton";
+import { useNavigate } from "react-router-dom";
+import { GET_PARTS } from "../../../graphQL/partQueries";
+import "./PartTable.css";
 
 const PartTable: React.FC = () => {
-    // const dispatch = useDispatch<AppDispatch>();
-    // const parts = useSelector((state: RootState) => state.parts.list);
-    // const status = useSelector((state: RootState) => state.parts.status);
+  const navigate = useNavigate();
+  const { loading, error, data } = useQuery(GET_PARTS);
+  if (loading) return <p>Đang tải...</p>;
+  if (error) return <p>Lỗi tải dữ liệu</p>;
 
-    // useEffect(() => {
-    //     dispatch(fetchParts());
-    // }, [dispatch]);
+  const handleView = (part: { id: number; revisionId?: number; versionId?: number }) => {
+    navigate(`/parts/modify/${part.id}/${part.revisionId ?? 3}/${part.versionId ?? "3.0"}`);
+  };
 
-    return (
-        <table>
-            <thead >
-                <tr className="bg-gray-100" style={{ color: 'gray' }}>
-                    <th className="p-3">ID</th>
-                    <th className="p-3" style={{ width: '30%' }}>Name</th>
-                    <th className="p-3">Type</th>
-                    <th className="p-3" style={{ width: '30%' }}>Code</th>
-                    <th className="p-3"><SettingOutlined /></th>
-                </tr>
-            </thead>
-            <tbody>
-                {parts.map((part) => (
-                    <tr key={part.id} className="border-b">
-                        <td className="p-3 text-blue-600">{part.id}</td>
-                        <td className="p-3">{part.name}</td>
-                        <td className="p-3">{part.type}</td>
-                        <td className="p-3">{part.code}</td>
-                        <td className="p-3 flex gap-2">
-                            <CustomButton variant='blue' layout='iconFirst' icon={<EditOutlined />} text='Edit' style={{ marginRight: '5px' }} />
-                            <CustomButton variant='red' layout='iconFirst' icon={<DeleteOutlined />} text='Delete' style={{ marginRight: '5px' }} />
-                            <CustomButton variant='white' layout='iconFirst' icon={<CopyOutlined />} text='Duplicate' style={{ color: 'blue' }} />
-                        </td>
-                    </tr>
-                ))}
+  const partList = data.parts.flatMap((part: any) =>
+    part.revisions.flatMap((revision: any) =>
+      revision.versions.map((version: any) => ({
+        id: part.id,
+        type: part.type,
+        code: part.code,
+        revisionId: revision.id,
+        versionId: version.id,
+        version: version.name,
+      }))
+    )
+  );
+  console.log(partList);
 
-            </tbody>
-        </table>
-    );
+  return (
+    <table>
+      <thead>
+        <tr className="bg-gray-100" style={{ color: "gray" }}>
+          <th className="p-3">ID</th>
+          <th className="p-3" style={{ width: "30%" }}>Name</th>
+          <th className="p-3">Type</th>
+          <th className="p-3" style={{ width: "30%" }}>Code</th>
+          <th className="p-3"><SettingOutlined /></th>
+        </tr>
+      </thead>
+      <tbody>
+        {partList.map((part: any, index: number) => (
+          <tr key={index} className="border-b">
+            <td
+              className="p-3 text-blue-600 cursor-pointer"
+              onClick={() => handleView(part)}
+            >
+              {part.id}
+            </td>
+            <td
+              className="p-3 text-blue-600 cursor-pointer"
+              onClick={() => handleView(part)}
+            >
+              {part.version}
+            </td>
+            <td className="p-3">{part.type}</td>
+            <td className="p-3">{part.code}</td>
+            <td className="p-3 flex gap-2">
+              <CustomButton variant="blue" layout="iconFirst" icon={<EditOutlined />} text="Edit" style={{ marginRight: 10 }} />
+              <CustomButton variant="red" layout="iconFirst" icon={<DeleteOutlined />} text="Delete" style={{ marginRight: 10 }} />
+              <CustomButton variant="white" layout="iconFirst" icon={<CopyOutlined />} text="Duplicate" />
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  );
 };
 
 export default PartTable;
-

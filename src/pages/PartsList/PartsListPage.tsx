@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { HomeOutlined } from '@ant-design/icons';
-import PageHeader from '../../components/PageHeader/PageHeader';
+import PageHeader from '../../components/layout/PageHeader/PageHeader';
 import PartTable from '../../components/parts/PartTable/PartTable';
 import './PartsListPage.css';
 import SearchBar from '../../components/common/SearchBar';
@@ -19,13 +19,14 @@ const PartList: React.FC = () => {
 
     return (
         <>
-            <PageHeader
+            {/* <PageHeader
                 title="Parts"
                 breadcrumbs={[
                     { title: '', href: '/', icon: <HomeOutlined /> },
                     { title: 'Parts', href: '/parts' },
                 ]}
-            />
+
+            /> */}
             <SearchBar
                 searchText={search}
                 onSearchTextChange={setSearch}
