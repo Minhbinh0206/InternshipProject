@@ -7,28 +7,13 @@ import {
 } from '@ant-design/icons';
 import CustomButton from '../../common/CustomButton/CustomButton';
 import './PartAssemblerGroup.css';
+import type PartItem from '../../types/part';
+import type PartGroup from '../../types/partGroup';
 
 const { Title } = Typography;
 
-interface PartRecord {
-  key: string;
-  id: string;
-  version: string;
-  publishVersion: string;
-  name: string;
-  type: string;
-  code: string;
-}
-
-interface PartGroup {
-  id: string;
-  name: string;
-  optional: boolean;
-  parts: PartRecord[];
-}
-
 /* ---------- Table columns ---------- */
-const columns: ColumnsType<PartRecord> = [
+const columns: ColumnsType<PartItem> = [
   {
     title: '',
     key: 'index',

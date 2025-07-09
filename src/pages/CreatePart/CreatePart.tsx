@@ -192,7 +192,6 @@ const CreatePart: React.FC = () => {
                                     .flatMap(group => group.fields)
                                     .find(f => f.key === fieldKey)?.label || fieldKey}
                                 name={fieldKey}
-                                rules={[{ required: true }]}
                             >
                                 {fieldKey === 'finish' ? (
                                     <Select placeholder="Select Finish" defaultValue='Black'>
