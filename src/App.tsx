@@ -1,5 +1,6 @@
 import './App.css'
 import CreatePart from './pages/CreatePart/CreatePart'
+import ModifyPart from './pages/ModifyPart/ModifyPart'
 
 
 function App() {
@@ -7,6 +8,7 @@ function App() {
   return (
     <>
       <CreatePart />
+      <ModifyPart />
     </>
   )
 }

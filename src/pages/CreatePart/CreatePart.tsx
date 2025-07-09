@@ -6,7 +6,7 @@ import { Button, Col, Divider, Form, Input, Modal, Row, Select, Tooltip, Typogra
 import './CreatePart.css';
 import CustomSwitch from '../../components/CustomSwitch/CustomSwitch';
 import CustomButton from '../../components/CustomButton/CustomButton';
-import type PartType from '../../types/part';
+import type PartType from '../../types/partType';
 import type ActiveBarItem from '../../types/activeBarItem';
 const { Option } = Select;
 
@@ -192,7 +192,6 @@ const CreatePart: React.FC = () => {
                                     .flatMap(group => group.fields)
                                     .find(f => f.key === fieldKey)?.label || fieldKey}
                                 name={fieldKey}
-                                rules={[{ required: true }]}
                             >
                                 {fieldKey === 'finish' ? (
                                     <Select placeholder="Select Finish" defaultValue='Black'>

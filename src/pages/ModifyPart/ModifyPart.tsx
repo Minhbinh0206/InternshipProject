@@ -42,6 +42,9 @@ const ModifyPart: React.FC = () => {
                 activeKey={activeKey}
                 onTabChange={setActiveKey}
                 mode={mode}
+                partTypes={[]}
+                selectedPartType=''
+                onSelectPartType={() => {}}
             />
             {
                 activeKey === 'code-builder' ? (
