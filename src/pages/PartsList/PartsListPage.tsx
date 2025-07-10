@@ -19,14 +19,16 @@ const PartList: React.FC = () => {
 
     return (
         <>
-            {/* <PageHeader
+            <PageHeader
                 title="Parts"
                 breadcrumbs={[
                     { title: '', href: '/', icon: <HomeOutlined /> },
                     { title: 'Parts', href: '/parts' },
                 ]}
-
-            /> */}
+                partTypes={[]}
+                selectedPartType=''
+                onSelectPartType={() => {}}
+            />
             <SearchBar
                 searchText={search}
                 onSearchTextChange={setSearch}

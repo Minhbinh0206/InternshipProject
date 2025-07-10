@@ -377,7 +377,7 @@ const CodeBuilder: React.FC = () => {
                             <Select.Option value={item.id}>{item.name ? item.name : "Không có tên"}</Select.Option>
                         ))}
                     </Select>
-                    <Text type="secondary">Select part group to see available properties</Text>
+                    <Text >Select part group to see available properties</Text>
                 </div>
 
                 <div style={{ marginTop: 24 }}>

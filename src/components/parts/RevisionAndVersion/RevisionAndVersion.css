@@ -1,0 +1,210 @@
+/* ===== Wrapper Container ===== */
+.container {
+  background-color: white;
+  padding: 24px;
+}
+
+/* ===== Title Section ===== */
+.title-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  margin-top: 50px;
+}
+
+.title {
+  font-weight: 500 !important;
+  text-align: start;
+  color: #1a73e8 !important;
+  margin: 0 20px !important;
+}
+
+/* ===== Parent Table Styles ===== */
+.parentTable .ant-table-thead>tr>th {
+  background-color: white;
+  color: #7a7a7a;
+  font-weight: 500;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.parentTable .ant-table-tbody>tr>td {
+  background-color: #f5f5f5;
+  color: #1a73e8;
+  padding: 12px 16px;
+  border: none !important;
+}
+
+.parentTable .ant-table-row:hover {
+  background-color: #f3f3f3;
+}
+
+/* ===== Expanded Row (child container) ===== */
+.ant-table-expanded-row {
+  background-color: #fafafa !important;
+}
+
+/* ===== Note Row ===== */
+.noteRow {
+  display: flex;
+  flex-direction: column;
+  padding: 8px;
+  font-size: 14px;
+  font-style: italic;
+  color: #555;
+  justify-content: flex-start;
+  text-align: start;
+}
+
+.noteRowTitle {
+  padding: 8px;
+  font-style: italic;
+  color: #555;
+  justify-content: flex-start;
+  text-align: start;
+  align-self: flex-start;
+
+}
+
+/* ===== Gạch ngang Revision note ===== */
+.ant-typography-secondary {
+  color: #a8071a;
+  text-decoration: line-through;
+}
+
+.childTable .ant-table-thead>tr>th {
+  background-color: white;
+  color: #7a7a7a;
+  font-weight: 500;
+  padding: 10px 16px;
+}
+
+.childTable .ant-table-tbody>tr>td {
+  background-color: #f5f5f5;
+  color: #1a73e8;
+  padding: 10px 16px;
+  border: none !important;
+}
+
+.childTable .ant-table-row:hover {
+  background-color: #f3f3f3;
+}
+
+.button-active-box {
+  margin: 0 !important;
+  border-radius: 0;
+}
+
+.parentTable .ant-table,
+.parentTable .ant-table-container,
+.parentTable .ant-table-thead>tr>th,
+.parentTable .ant-table-tbody>tr>td,
+.parentTable .ant-table-cell,
+.childTable .ant-table,
+.childTable .ant-table-container,
+.childTable .ant-table-thead>tr>th,
+.childTable .ant-table-tbody>tr>td,
+.childTable .ant-table-cell {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+.parentTable .ant-table-row:hover,
+.childTable .ant-table-row:hover {
+  background-color: #f3f3f3;
+  border: none !important;
+}
+
+.parentTable .ant-table-thead>tr>th,
+.childTable .ant-table-thead>tr>th {
+  background-color: white;
+  color: #7a7a7a;
+  font-weight: 500;
+  padding: 12px 16px;
+}
+
+.parentTable .ant-table-tbody>tr>td,
+.childTable .ant-table-tbody>tr>td {
+  background-color: #f3f3f3;
+  color: #1a73e8;
+  padding: 12px 16px;
+}
+
+.parentTable .ant-table-tbody>tr:nth-child(1)>td:first-child {
+  background-color: white !important;
+  color: #1a73e8 !important;
+  text-align: center;
+  font-size: 19px;
+  font-weight: bold;
+}
+
+.child-wrapper {}
+
+.childTable .ant-table-container,
+.childTable .ant-table-thead>tr>th,
+.childTable .ant-table-tbody>tr>td {
+  background: #f5f5f5 !important;
+  border: none !important;
+}
+
+.childTable .ant-table-row>td {
+  color: #1a73e8;
+}
+
+.childTable .ant-table-row:hover {
+  background: #f3f3f3;
+}
+
+.child-expanded-wrapper {
+  margin-left: 150px;
+  background-color: #f5f5f5;
+  padding: 12px 16px;
+  border-radius: 6px;
+  justify-content: flex-start;
+}
+
+.childTable .ant-table-tbody>tr>td:first-child {
+  background: #f5f5f5 !important;
+  color: #1a73e8;
+}
+
+.childTable .ant-table-tbody>tr>td:not(:first-child) {
+  background: #ffffff !important;
+  color: #1a73e8;
+}
+
+.childTable .ant-table-tbody>tr>td {
+  text-align: left;
+  vertical-align: middle;
+  padding: 10px 16px;
+}
+
+.childTable .ant-table-tbody>tr>td:first-child {
+  background: #f5f5f5 !important;
+  color: #1a73e8;
+  font-weight: bold;
+  text-align: center;
+}
+
+.childTable .ant-table-tbody>tr>td:last-child {
+  text-align: right;
+}
+
+.parentTable .ant-table-tbody>tr>td {
+  text-align: left;
+  vertical-align: middle;
+  padding: 10px 16px;
+}
+
+.parentTable .ant-table-tbody>tr>td:first-child {
+  background: #f5f5f5 !important;
+  color: #1a73e8;
+  font-weight: bold;
+  text-align: center;
+}
+
+.parentTable .ant-table-tbody>tr>td:last-child {
+  text-align: right;
+}

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { BarsOutlined, CloseOutlined, FileTextOutlined, HomeOutlined, LoadingOutlined, PlusOutlined, QuestionCircleFilled, QuestionCircleOutlined, SearchOutlined } from '@ant-design/icons';
 import PageHeader from '../../components/layout/PageHeader/PageHeader';
-import { type PartTypeMode } from '../../types/FilterPartType/FilterPartType';
+import { type PartTypeMode } from '../../components/parts/FilterPartType/FilterPartType';
 import { Button, Col, Divider, Form, Input, Modal, Row, Select, Tooltip, Typography } from 'antd';
 import './CreatePart.css';
 import CustomSwitch from '../../components/common/CustomSwitch/CustomSwitch';
