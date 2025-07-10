@@ -22,12 +22,13 @@ interface PageHeaderProps {
   breadcrumbs?: BreadcrumbItem[];
   tabs?: ActiveBarItem[];
   activeKey?: string;
+  code?: string,
   onTabChange?: (key: string) => void;
   mode?: PartTypeMode;
 
-  partTypes: PartType[];
-  selectedPartType: string;
-  onSelectPartType: (value: string) => void;
+  partTypes?: PartType[];
+  selectedPartType?: string;
+  onSelectPartType?: (value: string) => void;
 }
 
 const PageHeader: React.FC<PageHeaderProps> = ({
@@ -37,6 +38,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
   activeKey,
   partTypes,
   onTabChange,
+  code,
   mode,
   selectedPartType,
   onSelectPartType
@@ -69,7 +71,9 @@ const PageHeader: React.FC<PageHeaderProps> = ({
           value={selectedPartType}        
           partTypes={partTypes}
           mode={mode}
+          selectedPartType={selectedPartType}
           onChange={onSelectPartType}     
+          code={code}
           showButton={mode === 'editable'}
           onButtonClick={() => console.log('Click nút')}
         />

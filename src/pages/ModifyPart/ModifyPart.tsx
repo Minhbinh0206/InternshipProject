@@ -5,8 +5,10 @@ import PageHeader from '../../components/layout/PageHeader/PageHeader';
 import CodeBuilder from '../../components/parts/CodeBuilder/CodeBuilder';
 import PartAssemblerGroup from '../../components/parts/PartAssemblerGroup/PartAssemblerGroup';
 import AssemblyOutcomes from '../../components/parts/AssemblyOutcome/AssemblyOutcomes';
-import { useSearchParams } from 'react-router-dom';
+import { useLocation, useParams, useSearchParams } from 'react-router-dom';
 import RevisionAndVersion from '../../components/parts/RevisionAndVersion/RevisionAndVersion';
+import { GET_PART_BY_ID } from "../../graphQL/partQueries";
+import { useQuery } from '@apollo/client';
 
 export interface ActiveBarItem {
     key: string;
@@ -17,12 +19,12 @@ export interface ActiveBarItem {
 const ModifyPart: React.FC = () => {
     const [searchParams] = useSearchParams();
     const [activeKey, setActiveKey] = useState<string>('code-builder');
-    const name = useState('I dont know');
 
-    // cập nhật activeKey nếu có query param "key"
+    const [versionId, setVersionId] = useState<string | null>(null);
+
     useEffect(() => {
-        const keyParam = searchParams.get("key");
-        if (keyParam) setActiveKey(keyParam);
+        const currentVersionId = searchParams.get("versionId");
+        setVersionId(currentVersionId);
     }, [searchParams]);
 
     const tabs: ActiveBarItem[] = [
@@ -34,62 +36,79 @@ const ModifyPart: React.FC = () => {
         { key: 'code-builder', label: 'Code Builder', icon: <EditOutlined /> },
         { key: 'assembly-outcomes', label: 'Assembly Outcomes', icon: <CheckCircleOutlined /> },
         { key: 'compatible', label: 'Part compatible', icon: <QuestionOutlined /> },
-        { key: 'edit', label: 'Revision & Version', icon: <EditOutlined /> }, // 👉 nếu muốn hiện tab edit
+        { key: 'edit', label: 'Revision & Version', icon: <EditOutlined /> },
     ];
 
     const [mode, setMode] = useState<PartTypeMode>('editable');
+    const location = useLocation();
+    const state = location.state as { name?: string; type?: string; code?: string } | null;
+
+    const { id } = useParams();
+    const { data } = useQuery(GET_PART_BY_ID, { variables: { id } });
+
+    console.log('data', data);
+
+    if (!data) {
+        return <div>Loading...</div>;
+    }
+
+    const part = data?.getPartById;
+
+    const partName = state?.name || part?.name || 'Unknown';
+    const partType = state?.type || part?.type || '';
+    const partCode = state?.code || part?.code || '';
+
+    console.log('location.state:', location.state);
 
     return (
         <div style={{ flex: 1 }}>
-            {
-                activeKey === 'edit' ? (
-                    <>
-                        <PageHeader
-                            title="Modify Part - I dont know"
-                            breadcrumbs={[
-                                { title: '', href: '/', icon: <HomeOutlined /> },
-                                { title: 'Parts', href: '/parts' },
-                                { title: `Modify`, href: '/modify' },
-                                { title: `Modify - I dont know`, href: '/I-dont-know' }
-                            ]}
-                            onTabChange={setActiveKey}
-                            mode='read-only'
-                            selectedPartType=''
-                            partTypes={[]}
-                            onSelectPartType={() => { }}
-                        />
+            {!searchParams.get("versionId") ? (
+                <>
+                    <PageHeader
+                        title={partName}
+                        breadcrumbs={[
+                            { title: '', href: '/', icon: <HomeOutlined /> },
+                            { title: 'Parts', href: '/parts' },
+                            { title: `Modify`, href: '/parts/modify' },
+                            { title: partName, href: `/${partName}` }
+                        ]}
+                        onTabChange={setActiveKey}
+                        mode='read-only'
+                        selectedPartType={partType}
+                        code={partCode}
+                    />
 
-                        <RevisionAndVersion />
-                    </>
-                ) : (
-                    <>
-                        <PageHeader
-                            title="Modify Part - I dont know"
-                            breadcrumbs={[
-                                { title: '', href: '/', icon: <HomeOutlined /> },
-                                { title: 'Parts', href: '/parts' },
-                                { title: 'Modify', href: '/modifies' }
-                            ]}
-                            tabs={tabs}
-                            activeKey={activeKey}
-                            onTabChange={setActiveKey}
-                            mode={mode}
-                            selectedPartType=''
-                            partTypes={[]}
-                            onSelectPartType={() => { }}
-                        />
+                    <RevisionAndVersion />
+                </>
+            ) : (
+                <>
+                    <PageHeader
+                        title={`Modify Part - ${partName}`}
+                        breadcrumbs={[
+                            { title: '', href: '/', icon: <HomeOutlined /> },
+                            { title: 'Parts', href: '/parts' },
+                            { title: 'Modify', href: '/modifies' }
+                        ]}
+                        tabs={tabs}
+                        activeKey={activeKey}
+                        onTabChange={setActiveKey}
+                        mode={mode}
+                        selectedPartType=''
+                        partTypes={[]}
+                        onSelectPartType={() => { }}
+                    />
 
-                        {
-                            activeKey === 'code-builder' ? (
-                                <CodeBuilder />
-                            ) : activeKey === 'assembler' ? (
-                                <PartAssemblerGroup />
-                            ) : activeKey === 'assembly-outcomes' ? (
-                                <AssemblyOutcomes />
-                            ) : null
-                        }
-                    </>
-                )
+                    {
+                        activeKey === 'code-builder' ? (
+                            <CodeBuilder />
+                        ) : activeKey === 'assembler' ? (
+                            <PartAssemblerGroup />
+                        ) : activeKey === 'assembly-outcomes' ? (
+                            <AssemblyOutcomes />
+                        ) : null
+                    }
+                </>
+            )
             }
         </div>
     );

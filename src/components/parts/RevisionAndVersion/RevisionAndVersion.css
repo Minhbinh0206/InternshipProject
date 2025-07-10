@@ -47,6 +47,8 @@
 
 /* ===== Note Row ===== */
 .noteRow {
+  display: flex;
+  flex-direction: column;
   padding: 8px;
   font-size: 14px;
   font-style: italic;
@@ -62,6 +64,7 @@
   justify-content: flex-start;
   text-align: start;
   align-self: flex-start;
+
 }
 
 /* ===== Gạch ngang Revision note ===== */

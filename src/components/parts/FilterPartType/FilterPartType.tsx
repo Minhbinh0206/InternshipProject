@@ -7,14 +7,12 @@ const { Text } = Typography;
 export type PartTypeMode = 'editable' | 'read-only' | 'detailed';
 
 interface FilterPartTypeProps {
-  /** Giá trị part‑type đang chọn (value của option) */
-  value: string;
-  /** Danh sách tất cả part‑types */
-  partTypes: PartType[];
-  /** Chế độ hiển thị */
+  value?: string;
+  partTypes?: PartType[];
   mode: PartTypeMode;
-  /** Callback khi user thay đổi part type */
+  selectedPartType?: string;
   onChange?: (value: string) => void;
+  code?: string;
 
   /** Tuỳ chọn nút phụ (chỉ hiển thị ở mode = 'editable') */
   showButton?: boolean;
@@ -26,20 +24,20 @@ const FilterPartType: React.FC<FilterPartTypeProps> = ({
   value,
   partTypes,
   mode,
+  selectedPartType,
   onChange,
+  code,
   showButton = false,
   buttonText = 'Return to version control',
   onButtonClick
 }) => {
-  /* PartType đang chọn, dùng hiển thị mô tả */
-  const current = partTypes.find(p => p.value === value);
 
   /* ---------- ĐỌC CHỈ HIỂN THỊ ---------- */
   if (mode === 'read-only') {
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: 24, marginTop: 24 }}>
-        <Text strong>ERP SKU Code:</Text>  <Text>HP.Test.price</Text>
-        <Text strong>Part type:</Text>     <Text>{current?.label}</Text>
+        <Text strong>ERP SKU Code:</Text>  <Text>{code}</Text>
+        <Text strong>Part type:</Text>     <Text>{selectedPartType}</Text>
       </div>
     );
   }
@@ -64,13 +62,8 @@ const FilterPartType: React.FC<FilterPartTypeProps> = ({
           value={value}
           style={{ width: 180 }}
           onChange={onChange}
-          options={partTypes.map(p => ({ value: p.value, label: p.label }))}
+          options={partTypes?.map(p => ({ value: p.value, label: p.label }))}
         />
-
-        {/* Mô tả chỉ hiển thị khi mode = 'detailed' */}
-        {mode === 'detailed' && (
-          <Text type="secondary"><strong>{current?.desc}</strong></Text>
-        )}
       </div>
 
       {/* Nút phụ (chỉ mode editable) */}

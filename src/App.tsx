@@ -12,7 +12,8 @@ function App() {
         <Route path="/" element={<PartList />} />
         <Route path="/parts" element={<PartList />} />
         <Route path="/parts/create" element={<CreatePart />} />
-        <Route path="/parts/modify/:id/:revisionId/:versionId" element={<ModifyPart />} />
+        <Route path="/parts/modify/:id" element={<ModifyPart />} />
+        <Route path="/parts/modify/:id/:revisionId" element={<ModifyPart />} />
       </Routes>
     </BrowserRouter>
   );
