@@ -1,4 +1,4 @@
-import React, { useEffect, useState, version } from 'react';
+import React, { useState } from 'react';
 import { Table, Typography, Space, Tag, Tooltip } from 'antd';
 import {
     EditOutlined,
@@ -59,8 +59,8 @@ const RevisionAndVersion: React.FC = () => {
             key: revision.id,
             order: revIndex + 1,
             revision: revision.revision_code,
-            updatedAt: revision.created_at,
-            updatedBy: revision.created_by,
+            updatedAt: revision.updated_at,
+            updatedBy: revision.creator.email,
             isPublished: latest?.status === 'Published',
             latestStatus: latest?.status ?? '-',
             latestVersion: revision.versions?.length != null ? `1.${revision.versions.length - 1}` : '-',
@@ -68,8 +68,8 @@ const RevisionAndVersion: React.FC = () => {
                 key: v.id,
                 order: i + 1,
                 version: `1.${i}`,
-                updatedAt: v.created_at,
-                updatedBy: v.created_by,
+                updatedAt: v.updated_at,
+                updatedBy: v.creator.email,
                 name: v.name,
                 latestStatus: v.status,
                 basedUpon: v.based_upon_version_id ?? '-',
@@ -91,8 +91,8 @@ const RevisionAndVersion: React.FC = () => {
             render: (val: number) => <Link>{val}</Link>,
         },
         { title: 'Revision', dataIndex: 'revision' },
-        { title: 'Updated at', dataIndex: 'updatedAt' },
-        { title: 'Updated by', dataIndex: 'updatedBy' },
+        { title: 'Updated at', dataIndex: 'updatedAt', width: 200 },
+        { title: 'Updated by', dataIndex: 'updatedBy', width: 220 },
         { title: 'Latest version', dataIndex: 'latestVersion' },
         {
             title: 'Is published?',
@@ -108,6 +108,7 @@ const RevisionAndVersion: React.FC = () => {
             title: <SettingTwoTone />,
             key: 'actions',
             align: 'right' as const,
+            width: 600,
             render: (_: any, record: any) => (
                 <Space>
                     <CustomButton
@@ -172,8 +173,11 @@ const RevisionAndVersion: React.FC = () => {
                     {expandedRowKeys.includes(item.key) && (
                         <div className="child-expanded-wrapper">
                             <div className="noteRow">
-                                <Text strong>Author:</Text> {item.updatedBy}
-                                <Text strong >Versions</Text>
+                                <div>
+                                    <Text strong>Author:</Text>
+                                    <Text style={{ marginLeft: 10 }}>{item.updatedBy}</Text>
+                                </div>
+                                <Text strong style={{ fontSize: 20, color: '#bbb', fontStyle: 'italic' }}>Versions</Text>
                             </div>
 
                             <Table
@@ -185,8 +189,8 @@ const RevisionAndVersion: React.FC = () => {
                                         render: (val: number) => <Link>{val}</Link>,
                                     },
                                     { title: 'Version', dataIndex: 'version', render: (t: any) => <Link>{t}</Link> },
-                                    { title: 'Updated at', dataIndex: 'updatedAt' },
-                                    { title: 'Updated by', dataIndex: 'updatedBy' },
+                                    { title: 'Updated at', dataIndex: 'updatedAt', render: (t: string) => <Link>{t}</Link> },
+                                    { title: 'Updated by', dataIndex: 'updatedBy', render: (t: string) => <Link>{t}</Link> },
                                     {
                                         title: 'Latest status',
                                         dataIndex: 'latestStatus',
@@ -200,7 +204,9 @@ const RevisionAndVersion: React.FC = () => {
                                         render: (_: any, record: any) => (
                                             <Space>
                                                 <CustomButton variant="white" layout="iconFirst" icon={<PlusOutlined />} text="Create revision" />
-                                                <CustomButton variant="blue" layout="noIcon" text="Publish" />
+                                                {!(record.latestStatus === 'Published') && (
+                                                    <CustomButton variant="blue" layout="noIcon" text="Publish" />
+                                                )}
                                                 <CustomButton
                                                     variant="white"
                                                     layout="iconFirst"
