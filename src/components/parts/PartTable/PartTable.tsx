@@ -47,7 +47,7 @@ const PartTable: React.FC = () => {
   const handleEdit = (part: { id: number; revisionId?: number; versionId?: number; name: string; type: string; code: string; }) => {
     navigate(
       `/parts/modify/${part.id}`,
-      { state: { name: part.name, type: part.type, code: part.code } }
+      { state: { name: part.name, type: part.type, code: part.code, id: part.id } }
     );
   };
 
@@ -75,7 +75,7 @@ const PartTable: React.FC = () => {
               className="p-3 text-blue-600 cursor-pointer"
               onClick={() => handleView(part)}
             >
-              {part.version}
+              {part.name}
             </td>
             <td className="p-3">{part.type}</td>
             <td className="p-3">{part.code}</td>

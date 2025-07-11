@@ -7,8 +7,9 @@ import PartAssemblerGroup from '../../components/parts/PartAssemblerGroup/PartAs
 import AssemblyOutcomes from '../../components/parts/AssemblyOutcome/AssemblyOutcomes';
 import { useLocation, useParams, useSearchParams } from 'react-router-dom';
 import RevisionAndVersion from '../../components/parts/RevisionAndVersion/RevisionAndVersion';
-import { GET_PART_BY_ID } from "../../graphQL/partQueries";
+import { GET_PART_BY_ID, GET_PART_ENABLE_BY_ID, GET_PART_TYPES } from "../../graphQL/partQueries";
 import { useQuery } from '@apollo/client';
+import type PartType from '../../types/partType';
 
 export interface ActiveBarItem {
     key: string;
@@ -19,13 +20,47 @@ export interface ActiveBarItem {
 const ModifyPart: React.FC = () => {
     const [searchParams] = useSearchParams();
     const [activeKey, setActiveKey] = useState<string>('code-builder');
-
+    const [partType, setPartType] = useState('');
+    const { data: typeData, loading: typeLoading, error: typeError } = useQuery(GET_PART_TYPES);
     const [versionId, setVersionId] = useState<string | null>(null);
+    const location = useLocation();
+    const state = location.state as { name?: string; type?: string; code?: string } | null;
+    const { id } = useParams();
+    const { data: enableData, loading: enableLoading, error: enableError } = useQuery(GET_PART_ENABLE_BY_ID, {
+        variables: { id }
+    });
 
+    const { data } = useQuery(GET_PART_BY_ID, { variables: { id } });
+    const part = data?.getPartById;
+
+    console.log('part', part);
+
+    const partName = state?.name || part?.name || 'Unknown';
+    const partCode = state?.code || part?.code || '';
+
+    console.log('location.state:', location.state);
     useEffect(() => {
         const currentVersionId = searchParams.get("versionId");
         setVersionId(currentVersionId);
     }, [searchParams]);
+
+    const fetchedPartTypes: PartType[] =
+        typeData?.types?.map((t: any) => ({
+            id: t.id,
+            value: t.name,
+            label: t.name,
+            desc: 'Some description here...'
+        })) ?? [];
+
+    useEffect(() => {
+        if (!part) return;
+
+        const type = state?.type || part?.type;
+        if (type) {
+            setPartType(type);
+        }
+    }, [state, part]);
+
 
     const tabs: ActiveBarItem[] = [
         { key: 'properties', label: 'Properties', icon: <FileTextOutlined /> },
@@ -40,25 +75,13 @@ const ModifyPart: React.FC = () => {
     ];
 
     const [mode, setMode] = useState<PartTypeMode>('editable');
-    const location = useLocation();
-    const state = location.state as { name?: string; type?: string; code?: string } | null;
 
-    const { id } = useParams();
-    const { data } = useQuery(GET_PART_BY_ID, { variables: { id } });
+    const enable: boolean | undefined =
+        enableData?.getPartById?.revisions?.[0]?.version?.enable_assembly_groups;
 
-    console.log('data', data);
-
-    if (!data) {
+    if (!data || !partType) {
         return <div>Loading...</div>;
     }
-
-    const part = data?.getPartById;
-
-    const partName = state?.name || part?.name || 'Unknown';
-    const partType = state?.type || part?.type || '';
-    const partCode = state?.code || part?.code || '';
-
-    console.log('location.state:', location.state);
 
     return (
         <div style={{ flex: 1 }}>
@@ -93,16 +116,19 @@ const ModifyPart: React.FC = () => {
                         activeKey={activeKey}
                         onTabChange={setActiveKey}
                         mode={mode}
-                        selectedPartType=''
-                        partTypes={[]}
-                        onSelectPartType={() => { }}
+                        selectedPartType={partType}
+                        partTypes={fetchedPartTypes}
+                        onSelectPartType={(value) => {
+                            console.log("Selected Part Type:", value);
+                            setPartType(value);
+                        }}
                     />
 
                     {
                         activeKey === 'code-builder' ? (
                             <CodeBuilder />
                         ) : activeKey === 'assembler' ? (
-                            <PartAssemblerGroup />
+                            enable && <PartAssemblerGroup />
                         ) : activeKey === 'assembly-outcomes' ? (
                             <AssemblyOutcomes />
                         ) : null
