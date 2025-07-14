@@ -31,7 +31,6 @@
 .title-container{
     display: flex;
     flex-direction: row;
-    padding-bottom: 16px;
 }
 
 .manage-properties-modal {

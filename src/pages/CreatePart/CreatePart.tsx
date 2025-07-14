@@ -43,13 +43,16 @@ const CreatePart: React.FC = () => {
 
     const requiredFields = useMemo(() => {
         const baseFields = ['name', 'customerCode'];
+        const ledFields = ['led-part-no'];
+        const opticSetFields = ['lor', 'primary-beam-angle'];
+
 
         if (selectedPartType === 'Led') {
-            return [...baseFields, 'led-part-no'];
+            return [...baseFields, ...ledFields];
         }
 
         if (selectedPartType === 'Optic set') {
-            return [...baseFields, 'lor', 'primary-beam-angle'];
+            return [...baseFields, ...opticSetFields];
         }
 
         return baseFields;
@@ -158,18 +161,18 @@ const CreatePart: React.FC = () => {
 
             />
 
-            {/* ---------- STANDARD PROPERTIES ---------- */}
-            <div className="section-card">
-                <div className='title-container'>
-                    <Typography.Title level={5} className="section-title">
-                        Standard properties&nbsp;
-                    </Typography.Title>
-                    <Tooltip title="I don't know what to put in here.">
-                        <QuestionCircleOutlined style={{ fontSize: 14 }} />
-                    </Tooltip>
-                </div>
+            <Form form={form}>
+                {/* ---------- STANDARD PROPERTIES ---------- */}
+                <div className="section-card">
+                    <div className='title-container'>
+                        <Typography.Title level={5} className="section-title">
+                            Standard properties&nbsp;
+                        </Typography.Title>
+                        <Tooltip title="I don't know what to put in here.">
+                            <QuestionCircleOutlined style={{ fontSize: 14 }} />
+                        </Tooltip>
+                    </div>
 
-                <Form form={form}>
                     <Form.Item label="Enable assembly groups (combination generator)" colon={false}>
                         <Row align="middle" gutter={16}>
                             <Col>
@@ -184,7 +187,7 @@ const CreatePart: React.FC = () => {
 
                     <Row gutter={24} align="top">
                         <Col span={12}>
-                            <Form.Item label="Customer Order Code" name="customerCode" rules={[{ required: true }]}>
+                            <Form.Item label="Customer Order Code" name="customerCode" rules={[{ required: true }]} validateTrigger="onSubmit">
                                 <Input placeholder="Enter unique code" />
                             </Form.Item>
                         </Col>
@@ -195,17 +198,17 @@ const CreatePart: React.FC = () => {
                         </Col>
                     </Row>
 
-                    <Form.Item label="Name" name="name" rules={[{ required: true }]}>
+                    <Form.Item label="Name" name="name" rules={[{ required: true }]} validateTrigger="onSubmit">
                         <Input placeholder="Part name" />
                     </Form.Item>
 
                     {selectedPartType === 'Optic set' ? (
                         <>
-                            <Form.Item label="LOR" name="lor" rules={[{ required: true }]}>
+                            <Form.Item label="LOR" name="lor" rules={[{ required: true }]} validateTrigger="onSubmit">
                                 <Input placeholder="Enter LOR" />
                             </Form.Item>
 
-                            <Form.Item label="Primary Beam Angle" name="primary-beam-angle" rules={[{ required: true }]}>
+                            <Form.Item label="Primary Beam Angle" name="primary-beam-angle" rules={[{ required: true }]} validateTrigger="onSubmit">
                                 <Input placeholder="Enter primary beam angle" />
                             </Form.Item>
                         </>
@@ -213,7 +216,7 @@ const CreatePart: React.FC = () => {
                         <>
                             <Row gutter={20} align="top">
                                 <Col span={5}>
-                                    <Form.Item label="Colour Temperature (K)" name="led-part-no" rules={[{ required: true }]}>
+                                    <Form.Item label="Colour Temperature (K)" name="led-part-no" rules={[{ required: true }]} validateTrigger="onSubmit">
                                         <Select defaultValue="30000K" onChange={(value) => console.log(value)}>
                                             <Option value="27000K">2700K</Option>
                                             <Option value="30000K">3000K</Option>
@@ -222,7 +225,7 @@ const CreatePart: React.FC = () => {
                                     </Form.Item>
                                 </Col>
                                 <Col span={19}>
-                                    <Form.Item label="LED Part No" name="led-part-no" rules={[{ required: true }]}>
+                                    <Form.Item label="LED Part No" name="led-part-no" rules={[{ required: true }]} validateTrigger="onSubmit">
                                         <Input placeholder="..." />
                                     </Form.Item>
                                 </Col>
@@ -246,6 +249,22 @@ const CreatePart: React.FC = () => {
                         <></>
                     )}
 
+
+                </div>
+
+                <Divider />
+
+                {/* ---------- CUSTOM PROPERTIES ---------- */}
+                <div className="custom-section">
+                    <div className='title-container'>
+                        <Typography.Title level={5} className="custom-section-title">
+                            Custom properties&nbsp;
+                        </Typography.Title>
+                        <Tooltip title="I don't know what to put in here.">
+                            <QuestionCircleOutlined style={{ fontSize: 14 }} />
+                        </Tooltip>
+                    </div>
+
                     <Row gutter={32}>
                         {selectedFields.map((fieldKey, index) => (
                             <Col span={8} key={fieldKey}>
@@ -268,21 +287,11 @@ const CreatePart: React.FC = () => {
                             </Col>
                         ))}
                     </Row>
-                </Form>
-            </div>
 
-            <Divider />
 
-            {/* ---------- CUSTOM PROPERTIES ---------- */}
-            <div className="custom-section">
-                <div className='title-container'>
-                    <Typography.Title level={5} className="custom-section-title">
-                        Custom properties&nbsp;
-                    </Typography.Title>
-                    <Tooltip title="I don't know what to put in here.">
-                        <QuestionCircleOutlined style={{ fontSize: 14 }} />
-                    </Tooltip>
                 </div>
+            </Form>
+            <div style={{ textAlign: 'start', margin: 30 }}>
 
                 <CustomButton
                     variant='white'
