@@ -34,6 +34,7 @@ export const GET_PART_TYPES = gql`
   }
 `;
 
+
 export const GET_PART_BY_ID = gql`
   query GetPartById($id: ID!) {
     getPartById(id: $id) {
@@ -72,3 +73,13 @@ export const GET_PART_ENABLE_BY_ID = gql`
     }
   }
 `;
+
+export const GET_TYPES = gql`
+  query GetTypes {
+     types {
+      name
+    }
+  }
+`;
+
+

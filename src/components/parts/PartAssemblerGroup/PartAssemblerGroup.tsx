@@ -1,14 +1,18 @@
 import React from 'react';
-import { Table, Checkbox, Space, Typography, Tooltip } from 'antd';
+import { Table, Checkbox, Space, Typography, Tooltip, Modal } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import {
   ArrowsAltOutlined, CloseOutlined, DeleteOutlined,
-  DoubleRightOutlined, EditOutlined, PlusOutlined, QuestionCircleFilled, SettingOutlined
+  DoubleRightOutlined, EditOutlined, PlusOutlined, QuestionCircleFilled, SettingOutlined, QuestionCircleOutlined
 } from '@ant-design/icons';
 import CustomButton from '../../common/CustomButton/CustomButton';
 import './PartAssemblerGroup.css';
-import type PartItem from '../../types/part';
-import type PartGroup from '../../types/partGroup';
+import type PartItem from '../../../types/part';
+import type PartGroup from '../../../types/partGroup';
+import { useState } from 'react';
+import { Form, Input, Select, Button } from 'antd';
+import CreatePart from '../../../pages/CreatePart/CreatePart';
+import Addpart from '../Addpart/Addpart';
 
 const { Title } = Typography;
 
@@ -81,6 +85,20 @@ const partGroups: PartGroup[] = [
 
 /* ---------- Component ---------- */
 const PartAssemblerGroup: React.FC = () => {
+  // State và hàm toggle modal
+  const [isEditModalVisible, setEditModalVisible] = useState(false);
+  const [isCreatePartModalVisible, setCreatePartModalVisible] = useState(false);
+  const [isAddPartModalVisible, setAddPartModalVisible] = useState(false);
+
+  const showEditModal = () => setEditModalVisible(true);
+  const handleCancel = () => setEditModalVisible(false);;
+
+  const showCreatePartModal = () => setCreatePartModalVisible(true);
+  const handleCreatePartCancel = () => setCreatePartModalVisible(false);
+
+  const showAddPartModal = () => setAddPartModalVisible(true);
+  const handleAddPartCancel = () => setAddPartModalVisible(false);
+
   return (
     <>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 30, marginLeft: 30 }}>
@@ -93,8 +111,47 @@ const PartAssemblerGroup: React.FC = () => {
           <header className="headerRow">
             <div className="titleBox">
               <Title level={4} className="title">{group.name}</Title>
-              <CustomButton variant="black" layout="iconFirst" icon={<EditOutlined />} text="Edit group" />
+              <CustomButton
+                variant="black"
+                layout="iconFirst"
+                icon={<EditOutlined />}
+                text="Edit group"
+                onClick={showEditModal} />
             </div>
+            {/* Modal Edit Assembly Group */}
+            <Modal
+              title="Edit Assembly Group"
+              open={isEditModalVisible}
+              onCancel={handleCancel}
+              footer={null}
+              width={800}
+            >
+              <div style={{ marginBottom: 16 }}>
+                <Typography.Text strong style={{ color: 'blue' }}>Standard properties</Typography.Text>
+                <Tooltip title="...">
+                  <QuestionCircleOutlined style={{ marginLeft: 8 }} />
+                </Tooltip>
+              </div>
+              <Form layout="vertical">
+                <Form.Item
+                  label="Name"
+                  name="name"
+                  rules={[{ required: true, message: 'Please enter group name' }]}
+                >
+                  <Input defaultValue="Standard Group Default" />
+                </Form.Item>
+                <Form.Item label="Part Type" name="partType">
+                  <Select placeholder="Select option...">
+                    <Select.Option value="type1">Type 1</Select.Option>
+                    <Select.Option value="type2">Type 2</Select.Option>
+                  </Select>
+                </Form.Item>
+                <Button type="primary" disabled block>
+                  Update Assembly Group
+                </Button>
+              </Form>
+            </Modal>
+            {/* End Modal Edit Assembly Group */}
 
             <div className="optionBox">
               <Checkbox defaultChecked={group.optional}>Is an optional group</Checkbox>
@@ -111,11 +168,42 @@ const PartAssemblerGroup: React.FC = () => {
           />
 
           <div className="actionRow">
-            <CustomButton variant="blue" layout="iconFirst" icon={<PlusOutlined />} text="Add Part" />
-            <CustomButton variant="white" layout="iconFirst" icon={<PlusOutlined />} text="Create and Add new part" />
+            <CustomButton
+              variant="blue"
+              layout="iconFirst"
+              icon={<PlusOutlined />}
+              text="Add Part"
+              onClick={showAddPartModal}
+            />
+
+
+            <CustomButton
+              variant="white"
+              layout="iconFirst"
+              icon={<PlusOutlined />}
+              text="Create and Add new part"
+              onClick={showCreatePartModal}
+            />
+            <Modal
+              open={isCreatePartModalVisible}
+              onCancel={handleCreatePartCancel}
+              footer={null}
+              width={1200}
+            >
+              <CreatePart />
+            </Modal>
           </div>
         </div>
       ))}
+
+      <Modal
+        open={isAddPartModalVisible}
+        onCancel={handleAddPartCancel}
+        footer={null}
+        width={1200}
+      >
+        <Addpart />
+      </Modal>
     </>
   );
 };

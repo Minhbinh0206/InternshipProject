@@ -14,6 +14,7 @@ import type ActiveBarItem from '../../types/activeBarItem';
 import { useMutation } from '@apollo/client';
 import { CREATE_PART } from '../../graphQL/partActions';
 import { useNavigate } from 'react-router-dom';
+import ModalCustomProperties from '../../components/parts/ModalCustomProperties/ModalCustomProperties';
 
 const { Option } = Select;
 
@@ -136,6 +137,12 @@ const CreatePart: React.FC = () => {
         setIsModalVisible(false);
         setCheckedKeys([]);
     };
+
+    const finishOption = [
+        { value: "B", label: "Black" },
+        { value: "R", label: "Red" },
+        { value: "Y", label: "Yellow" },
+    ]
 
     return (
         <>
@@ -275,11 +282,11 @@ const CreatePart: React.FC = () => {
                                     name={fieldKey}
                                 >
                                     {fieldKey === 'finish' ? (
-                                        <Select placeholder="Select Finish" defaultValue='Black'>
-                                            <Option value="B">Black</Option>
-                                            <Option value="R">Red</Option>
-                                            <Option value="Y">Yellow</Option>
-                                        </Select>
+                                        <Select placeholder="Select Finish" defaultValue='B'>
+                                            {finishOption.map((opt) => (
+                                                <Option key={opt.value}value={opt.value}> {opt.label}</Option>
+                                            ))}
+                                        </Select> 
                                     ) : (
                                         <Input placeholder={`Enter ${fieldKey}`} />
                                     )}
@@ -312,51 +319,14 @@ const CreatePart: React.FC = () => {
                 />
             </div>
 
-
-            <Modal
-                title={<span className="modal-title">Manage properties</span>}
-                open={isModalVisible}
-                onCancel={() => setIsModalVisible(false)}
-                footer={[
-                    <div className='footer-modal'>
-                        <CustomButton className='button-modal' variant='blue' layout='noIcon' text='Accept' onClick={handleAcceptModal} />
-                        <CustomButton className='button-modal' variant='white' layout='noIcon' text='Cancel' onClick={() => setIsModalVisible(false)} />
-                    </div>
-                ]}
-                width={1000}
-                className="manage-properties-modal"
-            >
-                <Typography.Title level={5} className="custom-properties-title">
-                    <span>Custom properties</span>&nbsp;
-                    <Tooltip title="I don't know what to put in here.">
-                        <QuestionCircleFilled style={{ fontSize: 14 }} />
-                    </Tooltip>
-                </Typography.Title>
-
-                <Row gutter={32}>
-                    {propertyGroups.map(group => (
-                        <Col span={8} key={group.category}>
-                            <div className="category-title">{group.category}</div>
-                            {group.fields.map(f => (
-                                <label key={f.key} className="field-row">
-                                    <input
-                                        type="checkbox"
-                                        checked={checkedKeys.includes(f.key)}
-                                        onChange={e => {
-                                            setCheckedKeys(prev =>
-                                                e.target.checked
-                                                    ? [...prev, f.key]
-                                                    : prev.filter(k => k !== f.key)
-                                            );
-                                        }}
-                                    />
-                                    <span className="field-label">{f.label}</span>
-                                </label>
-                            ))}
-                        </Col>
-                    ))}
-                </Row>
-            </Modal>
+            <ModalCustomProperties
+              open={isModalVisible}
+              onClose={() => setIsModalVisible(false)}
+              onAccept={handleAcceptModal}
+              propertyGroups={propertyGroups}
+              checkedKeys={checkedKeys}
+              setCheckedKeys={setCheckedKeys}
+              />
 
         </>
     );

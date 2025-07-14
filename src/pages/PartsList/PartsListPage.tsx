@@ -34,7 +34,7 @@ const PartList: React.FC = () => {
                 onSearchTextChange={setSearch}
                 onSearch={handleSearch}
                 onReset={handleReset}
-                extraFilter={<PartFilters />}
+                extraFilter={<PartFilters/>}
             />
             <PartTable />
         </>

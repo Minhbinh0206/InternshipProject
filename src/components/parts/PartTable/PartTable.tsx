@@ -1,4 +1,5 @@
 import React from "react";
+import { useState } from 'react';
 import { useQuery } from "@apollo/client";
 import { SettingOutlined, EditOutlined, DeleteOutlined, CopyOutlined } from "@ant-design/icons";
 import CustomButton from "../../common/CustomButton/CustomButton";
@@ -6,15 +7,16 @@ import { useNavigate } from "react-router-dom";
 import { GET_PARTS } from "../../../graphQL/partQueries";
 import "./PartTable.css";
 
+
 const PartTable: React.FC = () => {
   const navigate = useNavigate();
   const { loading, error, data } = useQuery(GET_PARTS);
   if (loading) return <p>Đang tải...</p>;
   if (error) return <p>Lỗi tải dữ liệu</p>;
 
-  const handleView = (part: { id: number; revisionId?: number; versionId?: number }) => {
-    navigate(`/parts/modify/${part.id}/${part.revisionId ?? 3}/${part.versionId ?? "3.0"}`);
-  };
+  // const handleView = (part: { id: number; revisionId?: number; versionId?: number }) => {
+  //   navigate(`/parts/modify/${part.id}/${part.revisionId ?? 3}/${part.versionId ?? "3.0"}`);
+  // };
 
   const partList = data.parts.map((part: any) => {
     let allVersions: any[] = [];
@@ -67,13 +69,13 @@ const PartTable: React.FC = () => {
           <tr key={index} className="border-b">
             <td
               className="p-3 text-blue-600 cursor-pointer"
-              onClick={() => handleView(part)}
+            // onClick={() => handleView(part)}
             >
               {part.id}
             </td>
             <td
               className="p-3 text-blue-600 cursor-pointer"
-              onClick={() => handleView(part)}
+            // onClick={() => handleView(part)}
             >
               {part.name}
             </td>

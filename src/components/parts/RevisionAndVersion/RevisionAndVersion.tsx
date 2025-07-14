@@ -32,6 +32,7 @@ const RevisionAndVersion: React.FC = () => {
 
     console.log('part', part);
 
+    // handleViewVersion 
     const handleView = (part: { id: number; revisionId?: number; versionId?: number; version: string; type: string; code: string; name: string }) => {
         navigate(
             `/parts/modify/${part.id}/${part.revisionId}/?versionId=${part.versionId}`,
@@ -45,6 +46,13 @@ const RevisionAndVersion: React.FC = () => {
             }
         );
     };
+//     const handleView = (part: { id: number; revisionId?: number; versionId?: number }) => {
+//     navigate(
+//       `/parts/modify/${part.id}/${part.revisionId}/${part.versionId}`,
+//         { state: { partId: part.id, revisionId: part.revisionId, versionId: part.versionId } }
+//      { state: { name: part.name, type: part.type, code: part.code } }
+//     );
+//   };
 
     const dataSource = part?.revisions?.map((revision: any, revIndex: any) => {
         const sortedVersions = [...revision.versions].sort((a, b) => {

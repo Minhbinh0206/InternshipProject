@@ -14,8 +14,10 @@ function App() {
         <Route path="/parts/create" element={<CreatePart />} />
         <Route path="/parts/modify/:id" element={<ModifyPart />} />
         <Route path="/parts/modify/:id/:revisionId" element={<ModifyPart />} />
+        {/* <Route path="/parts/modify/:id/:revisionId/:versionId" element={<ModifyPart />} /> */}
       </Routes>
     </BrowserRouter>
+    
   );
 }
 
