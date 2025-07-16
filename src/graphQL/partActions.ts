@@ -8,6 +8,20 @@ export const CREATE_PART = gql`
       type{
         id
       }
+      revisions {
+        versions {
+          enable_assembly_groups
+        }
+      }
+    }
+  }
+`;
+
+export const UPDATE_VERSION_STATUS = gql`
+  mutation UpdateVersionStatus($id: ID!) {
+    updateVersionStatus(id: $id) {
+      id
+      status
     }
   }
 `;

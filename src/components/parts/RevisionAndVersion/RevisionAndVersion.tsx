@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Table, Typography, Space, Tag, Tooltip } from 'antd';
+import { Table, Typography, Space, Tag, Tooltip, Modal } from 'antd';
 import {
     EditOutlined,
     EyeOutlined,
@@ -9,9 +9,10 @@ import {
 } from '@ant-design/icons';
 import './RevisionAndVersion.css';
 import CustomButton from '../../common/CustomButton/CustomButton';
-import { useQuery } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client';
 import { GET_PART_BY_ID } from '../../../graphQL/partQueries';
 import { useNavigate, useParams } from 'react-router-dom';
+import { UPDATE_VERSION_STATUS } from '../../../graphQL/partActions';
 
 const { Text, Title, Link } = Typography;
 
@@ -22,8 +23,11 @@ const RevisionAndVersion: React.FC = () => {
     const { data, loading, error } = useQuery(GET_PART_BY_ID, {
         variables: { id },
     });
-
+    const [updateVersionStatus] = useMutation(UPDATE_VERSION_STATUS);
     const [expandedRowKeys, setExpandedRowKeys] = useState<string[]>([]);
+    const [isModalVisible, setIsModalVisible] = useState(false);
+    const [selectedVersion, setSelectedVersion] = useState<any>(null);
+    const [selectedVersionsList, setSelectedVersionsList] = useState<any[]>([]);
 
     const part = data?.getPartById;
 
@@ -46,38 +50,33 @@ const RevisionAndVersion: React.FC = () => {
         );
     };
 
-    const dataSource = part?.revisions?.map((revision: any, revIndex: any) => {
-        const sortedVersions = [...revision.versions].sort((a, b) => {
-            const weight = (status: string) =>
-                status === 'Published' ? 0 : status === 'Draft' ? 1 : 2;
-            return weight(a.status) - weight(b.status);
-        });
+    const dataSource = part?.revisions
+        ?.slice() 
+            .sort((a: any, b: any) => b.revision_code.localeCompare(a.revision_code))
+            .map((revision: any, revIndex: any) => {
+                return {
+                    key: revision.id,
+                    order: revIndex + 1,
+                    revision: revision.revision_code,
+                    updatedAt: revision.updated_at,
+                    updatedBy: revision.creator.email,
+                    latestVersion: revision.latestVersion?.version_code,
+                    isPublished: revision.latestVersion?.status === 'Published',
+                    latestStatus: revision.latestVersion?.status ?? '-',
+                    versions: revision.versions.map((v: any, i: any) => ({
+                        key: v.id,
+                        order: i + 1,
+                        version: v.version_code,
+                        updatedAt: v.updated_at,
+                        updatedBy: v.creator.email,
+                        name: v.name,
+                        latestStatus: v.status,
+                        basedUpon: v.based_upon_version_id ?? '-',
+                    })),
 
-        let latest = sortedVersions[0];
+                };
 
-        return {
-            key: revision.id,
-            order: revIndex + 1,
-            revision: revision.revision_code,
-            updatedAt: revision.updated_at,
-            updatedBy: revision.creator.email,
-            isPublished: latest?.status === 'Published',
-            latestStatus: latest?.status ?? '-',
-            latestVersion: revision.versions?.length != null ? `1.${revision.versions.length - 1}` : '-',
-            versions: revision.versions.map((v: any, i: any) => ({
-                key: v.id,
-                order: i + 1,
-                version: `1.${i}`,
-                updatedAt: v.updated_at,
-                updatedBy: v.creator.email,
-                name: v.name,
-                latestStatus: v.status,
-                basedUpon: v.based_upon_version_id ?? '-',
-            })),
-
-        };
-
-    }) ?? [];
+            }) ?? [];
 
     if (dataSource.length > 0 && expandedRowKeys.length === 0) {
         setExpandedRowKeys([dataSource[0].key]);
@@ -144,6 +143,34 @@ const RevisionAndVersion: React.FC = () => {
 
     ];
 
+    const openCustomModal = (version: any, versions: any[]) => {
+        setSelectedVersion(version);
+        setSelectedVersionsList(versions);
+        setIsModalVisible(true);
+    };
+
+    const handlePublishConfirm = async () => {
+        try {
+            if (!selectedVersion) return;
+
+            // 1. Publish version được chọn
+            await updateVersionStatus({
+                variables: {
+                    id: selectedVersion.key,
+                },
+            });
+
+            setIsModalVisible(false);
+            setSelectedVersion(null);
+            setSelectedVersionsList([]);
+
+            window.location.reload();
+        } catch (error) {
+            console.error('Publish error:', error);
+        }
+    };
+
+
     if (loading) return <p>Loading...</p>;
     if (error) return <p>Error loading part data.</p>;
 
@@ -205,7 +232,14 @@ const RevisionAndVersion: React.FC = () => {
                                             <Space>
                                                 <CustomButton variant="white" layout="iconFirst" icon={<PlusOutlined />} text="Create revision" />
                                                 {!(record.latestStatus === 'Published') && (
-                                                    <CustomButton variant="blue" layout="noIcon" text="Publish" />
+                                                    <CustomButton
+                                                        variant="blue"
+                                                        layout="noIcon"
+                                                        text="Publish"
+                                                        onClick={() =>
+                                                            openCustomModal(record, item.versions)
+                                                        }
+                                                    />
                                                 )}
                                                 <CustomButton
                                                     variant="white"
@@ -237,6 +271,17 @@ const RevisionAndVersion: React.FC = () => {
                     )}
                 </div>
             ))}
+            <Modal
+                title="Confirm Publish"
+                visible={isModalVisible}
+                onOk={handlePublishConfirm}
+                onCancel={() => setIsModalVisible(false)}
+                okText="Yes, publish"
+                cancelText="Cancel"
+            >
+                <p>Are you sure you want to publish this version? All other versions in this revision will be archived.</p>
+            </Modal>
+
         </div>
     );
 };
