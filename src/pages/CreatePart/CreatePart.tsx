@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { BarsOutlined, FileTextOutlined, HomeOutlined, LoadingOutlined, PlusOutlined, QuestionCircleFilled, QuestionCircleOutlined, SearchOutlined } from '@ant-design/icons';
 import PageHeader from '../../components/layout/PageHeader/PageHeader';
 import { type PartTypeMode } from '../../components/parts/FilterPartType/FilterPartType';
@@ -27,7 +27,7 @@ const CreatePart: React.FC = () => {
     const [checkedKeys, setCheckedKeys] = useState<string[]>([]);
     const [selectedFields, setSelectedFields] = useState<string[]>([]);
     const navigation = useNavigate();
-    const [selectedPartTypeId, setSelectedPartTypeId] = useState<string | null>(null);
+    const [selectedPartTypeId, setSelectedPartTypeId] = useState<string>('1');
 
     const fetchedPartTypes: PartType[] =
         typeData?.types?.map((t: any) => ({
@@ -104,10 +104,12 @@ const CreatePart: React.FC = () => {
                 name: values.name,
                 type_id: selectedPartTypeId,
                 code: values.customerCode,
-                additional_fields: selectedFields.map((key) => ({
-                    key,
-                    value: values[key] || '',
-                })),
+                additional_fields: selectedFields
+                    .filter(field => values[field] !== undefined && values[field] !== null)
+                    .map(field => ({
+                        name: field,
+                        value: values[field].toString(),
+                    })),
                 enable_assembly_groups: isChecked,
             };
 
@@ -127,6 +129,14 @@ const CreatePart: React.FC = () => {
             }
         );
     };
+
+    useEffect(() => {
+        if (selectedPartType === 'Luminaire') {
+            setChecked(true);
+        }
+    }, [selectedPartType]);
+
+    console.log('enable', isChecked);
 
     const handleAcceptModal = () => {
         setSelectedFields(prev =>
@@ -156,7 +166,7 @@ const CreatePart: React.FC = () => {
                 onSelectPartType={(typeName) => {
                     setSelectedPartType(typeName);
                     const found = fetchedPartTypes.find(t => t.value === typeName);
-                    setSelectedPartTypeId(found?.id ?? null);
+                    setSelectedPartTypeId(found?.id ?? '1');
                 }}
 
             />
@@ -177,7 +187,7 @@ const CreatePart: React.FC = () => {
                         <Row align="middle" gutter={16}>
                             <Col>
                                 {selectedPartType === 'Luminaire' ? (
-                                    <CustomSwitch checked={true} onChange={() => setChecked(!isChecked)} disabled />
+                                    <CustomSwitch checked={isChecked} onChange={() => { }} disabled />
                                 ) : (
                                     <CustomSwitch checked={isChecked} onChange={() => setChecked(!isChecked)} />
                                 )}

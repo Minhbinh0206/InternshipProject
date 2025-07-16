@@ -67,13 +67,11 @@ const PartTable: React.FC = () => {
           <tr key={index} className="border-b">
             <td
               className="p-3 text-blue-600 cursor-pointer"
-              onClick={() => handleView(part)}
             >
               {part.id}
             </td>
             <td
               className="p-3 text-blue-600 cursor-pointer"
-              onClick={() => handleView(part)}
             >
               {part.name}
             </td>
@@ -86,7 +84,7 @@ const PartTable: React.FC = () => {
                 icon={<EditOutlined />}
                 text="Edit"
                 style={{ marginRight: 10 }}
-                onClick={() => handleEdit(part)}
+                onClick={() => handleEdit(part)}  
               />
               <CustomButton variant="red" layout="iconFirst" icon={<DeleteOutlined />} text="Delete" style={{ marginRight: 10 }} />
               <CustomButton variant="white" layout="iconFirst" icon={<CopyOutlined />} text="Duplicate" />

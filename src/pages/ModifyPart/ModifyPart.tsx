@@ -26,9 +26,13 @@ const ModifyPart: React.FC = () => {
     const location = useLocation();
     const state = location.state as { name?: string; type?: string; code?: string } | null;
     const { id } = useParams();
-    const { data: enableData, loading: enableLoading, error: enableError } = useQuery(GET_PART_ENABLE_BY_ID, {
-        variables: { id }
+    console.log(id);
+
+    const { data: enableData } = useQuery(GET_PART_ENABLE_BY_ID, {
+        variables: { partId: id },
+        skip: !id, 
     });
+    const enable = enableData?.getLatestVersion.enable_assembly_groups
 
     const { data } = useQuery(GET_PART_BY_ID, { variables: { id } });
     const part = data?.getPartById;
@@ -76,8 +80,8 @@ const ModifyPart: React.FC = () => {
 
     const [mode, setMode] = useState<PartTypeMode>('editable');
 
-    const enable: boolean | undefined =
-        enableData?.getPartById?.revisions?.[0]?.version?.enable_assembly_groups;
+
+    console.log('enable Data', enable);
 
     if (!data || !partType) {
         return <div>Loading...</div>;

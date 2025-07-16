@@ -42,33 +42,38 @@ export const GET_PART_BY_ID = gql`
         id
         revision_code
         updated_at
+        latestVersion {
+          status
+          version_code
+        }
         creator {
           email
         }
         versions {
           id
           name
+          version_code
           updated_at
+          additional_fields {
+            name
+          }
           creator {
             email
           }
           status
         }
       }
+
     }
   }
 `;
 
 export const GET_PART_ENABLE_BY_ID = gql`
-  query GetPartEnableById($id: ID!) {
-    getPartById(id: $id) {
-      revisions {
-        id
-        versions {
-          id
-          enable_assembly_groups
-        }
-      }
+  query getLatestVersion($partId: ID!) {
+    getLatestVersion(partId: $partId) {
+      id
+      enable_assembly_groups
     }
   }
 `;
+
