@@ -39,12 +39,14 @@ const RevisionAndVersion: React.FC = () => {
     const handleView = (part: { id: number; revisionId?: number; versionId?: number; version: string; type: string; code: string; name: string }) => {
         navigate(
             `/parts/modify/${part.id}/${part.revisionId}/?versionId=${part.versionId}`,
-            {
+            // `/parts/modify/${part.id}/${part.revisionId}/${part.versionId}`,
+             {
                 replace: true,
                 state: {
                     partId: part.id,
                     versionId: part.versionId,
-                    name: part.name
+                    name: part.name,
+                    version: part.code
                 },
             }
         );

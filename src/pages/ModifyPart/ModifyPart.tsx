@@ -5,6 +5,7 @@ import PageHeader from '../../components/layout/PageHeader/PageHeader';
 import CodeBuilder from '../../components/parts/CodeBuilder/CodeBuilder';
 import PartAssemblerGroup from '../../components/parts/PartAssemblerGroup/PartAssemblerGroup';
 import AssemblyOutcomes from '../../components/parts/AssemblyOutcome/AssemblyOutcomes';
+import Properties from '../../components/parts/Properties/Properties';
 import { useLocation, useParams, useSearchParams } from 'react-router-dom';
 import RevisionAndVersion from '../../components/parts/RevisionAndVersion/RevisionAndVersion';
 import { GET_PART_BY_ID, GET_PART_ENABLE_BY_ID, GET_PART_TYPES } from "../../graphQL/partQueries";
@@ -19,20 +20,30 @@ export interface ActiveBarItem {
 
 const ModifyPart: React.FC = () => {
     const [searchParams] = useSearchParams();
-    const [activeKey, setActiveKey] = useState<string>('code-builder');
+    const [activeKey, setActiveKey] = useState<string>('properties');
     const [partType, setPartType] = useState('');
     const { data: typeData, loading: typeLoading, error: typeError } = useQuery(GET_PART_TYPES);
     const [versionId, setVersionId] = useState<string | null>(null);
     const location = useLocation();
     const state = location.state as { name?: string; type?: string; code?: string } | null;
     const { id } = useParams();
+
     console.log(id);
 
     const { data: enableData } = useQuery(GET_PART_ENABLE_BY_ID, {
         variables: { partId: id },
-        skip: !id, 
+        skip: !id,
     });
-    const enable = enableData?.getLatestVersion.enable_assembly_groups
+    const versionDetails = enableData?.getLatestVersion;
+    const enable = versionDetails?.enable_assembly_groups;
+    const versionCode = versionDetails?.version_code || '';
+    const versionStatus = versionDetails?.status || '';
+
+    const versionLabel = versionCode && versionStatus
+        ? `${versionCode} (${versionStatus})`
+        : versionId;
+
+    // const enable = enableData?.getLatestVersion.enable_assembly_groups
 
     const { data } = useQuery(GET_PART_BY_ID, { variables: { id } });
     const part = data?.getPartById;
@@ -114,7 +125,9 @@ const ModifyPart: React.FC = () => {
                         breadcrumbs={[
                             { title: '', href: '/', icon: <HomeOutlined /> },
                             { title: 'Parts', href: '/parts' },
-                            { title: 'Modify', href: '/modifies' }
+                            { title: 'Modify', href: '/modifies' },
+                            { title: partName, href: `/${partName}` },
+                            { title: versionLabel, href: `/${versionId}` },
                         ]}
                         tabs={tabs}
                         activeKey={activeKey}
@@ -127,9 +140,10 @@ const ModifyPart: React.FC = () => {
                             setPartType(value);
                         }}
                     />
-
                     {
-                        activeKey === 'code-builder' ? (
+                        activeKey === 'properties' ? (
+                           <Properties customerCode={partCode} />
+                        ) : activeKey === 'code-builder' ? (
                             <CodeBuilder />
                         ) : activeKey === 'assembler' ? (
                             enable && <PartAssemblerGroup />

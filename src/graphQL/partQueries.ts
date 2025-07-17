@@ -71,6 +71,8 @@ export const GET_PART_BY_ID = gql`
 export const GET_PART_ENABLE_BY_ID = gql`
   query getLatestVersion($partId: ID!) {
     getLatestVersion(partId: $partId) {
+      version_code
+      status
       id
       enable_assembly_groups
     }
