@@ -58,10 +58,15 @@ export const GET_PART_BY_ID = gql`
         versions {
           id
           name
+          type {
+            name
+          }
+          code
           version_code
           updated_at
           additional_fields {
             name
+            type_group
           }
           creator {
             email
