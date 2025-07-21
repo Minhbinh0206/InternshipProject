@@ -25,11 +25,11 @@ const PartAssemblerGroup: React.FC = () => {
   const versionId = query.get('versionId');
 
   console.log(versionId);
-  const { data, loading, error } = useQuery(GET_GROUPS_BY_VERSIONID, {
+  const { data, loading, error, refetch } = useQuery(GET_GROUPS_BY_VERSIONID, {
     variables: { versionId },
   });
 
-  console.log(data);
+  console.log("ghghghg", data);
 
   const { data: partTypeData } = useQuery(GET_PART_TYPES);
   console.log(partTypeData);
@@ -37,6 +37,7 @@ const PartAssemblerGroup: React.FC = () => {
   const [isEditModalVisible, setEditModalVisible] = useState(false);
   const [isCreatePartModalVisible, setCreatePartModalVisible] = useState(false);
   const [isAddPartModalVisible, setAddPartModalVisible] = useState(false);
+  const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
 
   const showEditModal = () => setEditModalVisible(true);
   const handleCancel = () => setEditModalVisible(false);
@@ -53,25 +54,15 @@ const PartAssemblerGroup: React.FC = () => {
   const partGroups = data?.groups ?? [];
 
   const columns: ColumnsType<any> = [
-    // {
-    //   title: 'ID',
-    //   dataIndex: 'id',
-    //   key: 'id',
-    // },
     {
       title: 'ID',
-      dataIndex: 'part_id',
       key: 'part_id',
+      render: (_: any, record: any) => record.part?.id
     },
-    // {
-    //   title: 'Version ID',
-    //   dataIndex: 'version_id',
-    //   key: 'version_id',
-    // },
     {
       title: 'Version',
-      dataIndex: 'version',
       key: 'version',
+      render: (_: any, record: any) => record.part?.version_code
     },
     {
       title: 'Publish Version',
@@ -80,18 +71,20 @@ const PartAssemblerGroup: React.FC = () => {
     },
     {
       title: 'Name',
-      dataIndex: 'name',
       key: 'name',
+      render: (_: any, record: any) => record.part?.name
     },
     {
       title: 'Type',
       dataIndex: 'type',
       key: 'type',
+      render: (_: any, record: any) => record.part?.type.name
     },
     {
       title: 'Code',
       dataIndex: 'code',
       key: 'code',
+      render: (_: any, record: any) => record.part?.code
     },
     {
       title: <SettingOutlined style={{ float: "right" }} />,
@@ -106,6 +99,8 @@ const PartAssemblerGroup: React.FC = () => {
       ),
     },
   ];
+
+  console.log("hfjhjf", partGroups?.[0].groupParts)
 
   return (
     <>
@@ -187,13 +182,17 @@ const PartAssemblerGroup: React.FC = () => {
               layout="iconFirst"
               icon={<PlusOutlined />}
               text="Add Part"
-              onClick={showAddPartModal}
+              //onClick={showAddPartModal}
+              onClick={() => {
+                setSelectedGroupId(group.id);
+                setAddPartModalVisible(true);
+              }}
             />
 
-            <CustomButton
+            < CustomButton
               variant="white"
               layout="iconFirst"
-              icon={<PlusOutlined />}
+              icon={< PlusOutlined />}
               text="Create and Add new part"
               onClick={showCreatePartModal}
             />
@@ -215,7 +214,17 @@ const PartAssemblerGroup: React.FC = () => {
         footer={null}
         width={1200}
       >
-        {/* <Addpart groupId={group.id} /> */}
+        {selectedGroupId &&
+          <Addpart
+            groupId={selectedGroupId as string}
+            activeTab='part-assembler'
+            onSuccess={() => {
+              refetch();
+              // handleAddPartCancel();
+              setSelectedGroupId(null);
+            }}
+          />}
+
       </Modal>
     </>
   );

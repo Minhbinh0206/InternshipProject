@@ -98,29 +98,38 @@ export const GET_GROUPS_BY_VERSIONID = gql`
       assembler_id
       groupParts {
         id
-        part_id
+        part {
+        id
+          name
+          type {
+            name
+          }
+          code
+        }
         version_id
       }
     }
   }
 `;
+
 export const GET_PUBLISHED_PART = gql`
-  query {
-    publishedPart {
+   query publishedPart ($groupId: ID!){
+  publishedPart (groupId: $groupId){
+    id
+    revisions {
+      id
+      versions {
         id
         name
-        type {
-            name
-        }
         code
-        revisions {
-          id
-          versions {
-            version_code
-            status
-          }
+        status
+        type {
+          name
         }
+      }
     }
+  }
 }
+
 `;
 

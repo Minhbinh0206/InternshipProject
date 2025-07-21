@@ -32,6 +32,7 @@ const ModifyPart: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [activeKey, setActiveKey] = useState<string>('properties');
   const [versionId, setVersionId] = useState<string | null>(null);
+
   const { id } = useParams();
   const location = useLocation();
   const state = location.state as { name?: string; type?: string; code?: string } | null;
@@ -56,7 +57,7 @@ const ModifyPart: React.FC = () => {
   const partName = state?.name || part?.name || 'Unknown';
   const partCode = state?.code || part?.code || '';
   const partType = state?.type || part?.type || '';
-  
+
   // Lấy versionId từ query string
   useEffect(() => {
     const currentVersionId = searchParams.get("versionId");
@@ -74,9 +75,6 @@ const ModifyPart: React.FC = () => {
     { key: 'compatible', label: 'Part compatible', icon: <QuestionOutlined /> },
     { key: 'edit', label: 'Revision & Version', icon: <EditOutlined /> },
   ];
-
-  console.log(`Part Type: ${partType}, Part Name: ${partName}, Part Code: ${partCode}`);
-  
 
   return (
     <div style={{ flex: 1 }}>
