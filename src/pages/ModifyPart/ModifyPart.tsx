@@ -142,7 +142,7 @@ const ModifyPart: React.FC = () => {
                     />
                     {
                         activeKey === 'properties' ? (
-                           <Properties customerCode={partCode} />
+                            <Properties customerCode={partCode} />
                         ) : activeKey === 'code-builder' ? (
                             <CodeBuilder />
                         ) : activeKey === 'assembler' ? (
