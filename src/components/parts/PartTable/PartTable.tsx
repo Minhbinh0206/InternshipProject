@@ -42,7 +42,7 @@ const PartTable: React.FC = () => {
     };
   }).filter(Boolean);
 
-  console.log(JSON.stringify(data.parts, null, 2));
+   console.log(JSON.stringify(data.parts, null, 2));
 
   const handleEdit = (part: { id: number; revisionId?: number; versionId?: number; name: string; type: string; code: string; }) => {
     navigate(

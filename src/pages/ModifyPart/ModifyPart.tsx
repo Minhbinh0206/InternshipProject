@@ -83,6 +83,67 @@ const ModifyPart: React.FC = () => {
       setFetchedPartTypes(mapped);
       setSelectedPartType(partType.name)
     }
+
+
+    return (
+        <div style={{ flex: 1 }}>
+            {!searchParams.get("versionId") ? (
+                <>
+                    <PageHeader
+                        title={partName}
+                        breadcrumbs={[
+                            { title: '', href: '/', icon: <HomeOutlined /> },
+                            { title: 'Parts', href: '/parts' },
+                            { title: `Modify`, href: '/parts/modify' },
+                            { title: partName, href: `/${partName}` }
+                        ]}
+                        onTabChange={setActiveKey}
+                        mode='read-only'
+                        selectedPartType={partType}
+                        code={partCode}
+                    />
+
+                    <RevisionAndVersion />
+                </>
+            ) : (
+                <>
+                    <PageHeader
+                        title={`Modify Part - ${partName}`}
+                        breadcrumbs={[
+                            { title: '', href: '/', icon: <HomeOutlined /> },
+                            { title: 'Parts', href: '/parts' },
+                            { title: 'Modify', href: '/modifies' },
+                            { title: partName, href: `/${partName}` },
+                            { title: versionLabel, href: `/${versionId}` },
+                        ]}
+                        tabs={tabs}
+                        activeKey={activeKey}
+                        onTabChange={setActiveKey}
+                        mode={mode}
+                        selectedPartType={partType}
+                        partTypes={fetchedPartTypes}
+                        onSelectPartType={(value) => {
+                            console.log("Selected Part Type:", value);
+                            setPartType(value);
+                        }}
+                    />
+                    {
+                        activeKey === 'properties' ? (
+                            <Properties customerCode={partCode} />
+                        ) : activeKey === 'code-builder' ? (
+                            <CodeBuilder />
+                        ) : activeKey === 'assembler' ? (
+                            enable && <PartAssemblerGroup />
+                        ) : activeKey === 'assembly-outcomes' ? (
+                            <AssemblyOutcomes />
+                        ) : null
+                    }
+                </>
+            )
+            }
+        </div>
+    );
+<!-- =======
   }, [typeData]);
 
   const tabs: ActiveBarItem[] = [
@@ -163,6 +224,7 @@ const ModifyPart: React.FC = () => {
       )}
     </div>
   );
+-->
 };
 
 export default ModifyPart;

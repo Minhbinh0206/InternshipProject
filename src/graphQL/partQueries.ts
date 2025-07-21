@@ -85,3 +85,37 @@ export const GET_PART_ENABLE_BY_ID = gql`
   }
 `;
 
+export const GET_GROUPS_BY_VERSIONID = gql`
+  query groups($versionId: ID!) {
+    groups(versionId: $versionId) {
+      id
+      name
+      assembler_id
+      groupParts {
+        id
+        part_id
+        version_id
+      }
+    }
+  }
+`;
+export const GET_PUBLISHED_PART = gql`
+  query {
+    publishedPart {
+        id
+        name
+        type {
+            name
+        }
+        code
+        revisions {
+          id
+          versions {
+            version_code
+            status
+          }
+        }
+    }
+}
+`;
+
