@@ -13,20 +13,25 @@ import { GET_PART_TYPES } from '../../graphQL/partQueries';
 import type ActiveBarItem from '../../types/activeBarItem';
 import { useMutation } from '@apollo/client';
 import { CREATE_PART } from '../../graphQL/partActions';
-import { useNavigate } from 'react-router-dom';
+import { ADD_PART_TO_GROUP } from '../../graphQL/partActions';
 
 const { Option } = Select;
 
-const CreatePart: React.FC = () => {
+interface CreatePartProps {
+    createModalVisible: (visible: boolean) => void;
+    groupId?: string;
+}
+
+const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId }) => {
+    const [addPartToGroup] = useMutation(ADD_PART_TO_GROUP);
     const [activeKey, setActiveKey] = useState('properties');
-    const { data: typeData, loading: typeLoading, error: typeError } = useQuery(GET_PART_TYPES);
-    const [mode, setMode] = useState<PartTypeMode>('detailed');
+    const { data: typeData, loading: typeLoading } = useQuery(GET_PART_TYPES);
+    const [mode] = useState<PartTypeMode>('detailed');
     const [isChecked, setChecked] = useState(false);
     const [selectedPartType, setSelectedPartType] = useState('Standard');
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [checkedKeys, setCheckedKeys] = useState<string[]>([]);
     const [selectedFields, setSelectedFields] = useState<string[]>([]);
-    const navigation = useNavigate();
     const [selectedPartTypeId, setSelectedPartTypeId] = useState<string>('1');
 
     const fetchedPartTypes: PartType[] =
@@ -42,16 +47,15 @@ const CreatePart: React.FC = () => {
     const [form] = Form.useForm();
 
     const partTypeFieldConfig: Record<string, string[]> = {
-        Led: ['led-part-no'],
-        'Optic set': ['lor', 'primary-beam-angle'],
-        Engine: ['led-lifetime', 'maximum-drive-current', 'minimum-drive-current'],
+        Led: ['LED Part No', 'Colour Temperature (K)'],
+        'Optic set': ['LOR', 'Primary Beam Angle'],
+        Engine: ['LED Lifetime', 'Maximum Drive Current (mA)', 'Minimum Drive Current (mA)'],
     };
 
     const requiredFields = useMemo(() => {
         const baseFields = ['name', 'customerCode'];
-        const ledFields = ['led-part-no'];
-        const opticSetFields = ['lor', 'primary-beam-angle'];
-
+        const ledFields = ['LED Part No', 'Colour Temperature (K)'];
+        const opticSetFields = ['LOR', 'Primary Beam Angle'];
 
         if (selectedPartType === 'Led') {
             return [...baseFields, ...ledFields];
@@ -68,7 +72,13 @@ const CreatePart: React.FC = () => {
 
     const isCreateDisabled = requiredFields.some(field => {
         const value = formValues?.[field];
-        return !value || value.trim?.() === '';
+        // Xử lý cho các trường dạng chuỗi
+        if (typeof value === 'string') {
+            return value.trim() === '';
+        }
+
+        // Xử lý cho các trường không phải chuỗi (số, object, v.v.)
+        return value === undefined || value === null;
     });
 
     const tabs: ActiveBarItem[] = [
@@ -105,40 +115,54 @@ const CreatePart: React.FC = () => {
 
     const handleCreate = async () => {
         const partTypeExtraFields = partTypeFieldConfig[selectedPartType] || [];
-        const allFieldKeys = Array.from(new Set([...selectedFields, ...partTypeExtraFields]));
+        const customFields = selectedFields;
+        const standardFields = partTypeExtraFields.filter(field => !selectedFields.includes(field));
 
         try {
-            const values = await form.validateFields(); // Lấy dữ liệu từ form
+            const values = await form.validateFields();
             const input = {
                 name: values.name,
                 type_id: selectedPartTypeId,
                 code: values.customerCode,
                 description: values.description,
-                additional_fields: allFieldKeys
+                additional_fields: [...customFields, ...standardFields]
                     .filter(field => values[field] !== undefined && values[field] !== null)
                     .map(field => ({
                         name: field,
                         value: values[field].toString(),
+                        type_group: customFields.includes(field) ? 'custom' : 'standard',
                     })),
                 enable_assembly_groups: isChecked,
             };
-
-            console.log('Create input:', input);
+            
+            console.log(input.additional_fields);
 
             const { data } = await createPart({ variables: { input } });
+            const createdPart = data?.createPart;
 
-            console.log('Created:', data.createPart);
+            if (createdPart?.id && createdPart?.latest_version_id) {
+                // 👇 Add to group
+                await addPartToGroup({
+                    variables: {
+                        input: [
+                            {
+                                group_id: groupId,
+                                part_id: createdPart.id,
+                                version_id: createdPart.latest_version_id,
+                            }
+                        ]
+                    }
+                });
+                console.log('✅ Part added to group');
+            }            
+
+            createModalVisible(false);
+            form.resetFields();
         } catch (error) {
-            console.error('Error creating part:', error);
+            console.error('❌ Error creating or adding part:', error);
         }
-
-        // navigation(
-        //     `/parts`,
-        //     {
-        //         replace: true,
-        //     }
-        // );
     };
+
 
     useEffect(() => {
         if (selectedPartType === 'Luminaire') {
@@ -224,11 +248,11 @@ const CreatePart: React.FC = () => {
 
                     {selectedPartType === 'Optic set' ? (
                         <>
-                            <Form.Item label="LOR" name="lor" rules={[{ required: true }]} validateTrigger="onSubmit">
+                            <Form.Item label="LOR" name="LOR" rules={[{ required: true }]} validateTrigger="onSubmit">
                                 <Input placeholder="Enter LOR" />
                             </Form.Item>
 
-                            <Form.Item label="Primary Beam Angle" name="primary-beam-angle" rules={[{ required: true }]} validateTrigger="onSubmit">
+                            <Form.Item label="Primary Beam Angle" name="Primary Beam Angle" rules={[{ required: true }]} validateTrigger="onSubmit">
                                 <Input placeholder="Enter primary beam angle" />
                             </Form.Item>
                         </>
@@ -236,7 +260,7 @@ const CreatePart: React.FC = () => {
                         <>
                             <Row gutter={20} align="top">
                                 <Col span={5}>
-                                    <Form.Item label="Colour Temperature (K)" name="color-temperature" rules={[{ required: true }]} validateTrigger="onSubmit">
+                                    <Form.Item label="Colour Temperature (K)" name="Colour Temperature (K)" rules={[{ required: true }]} validateTrigger="onSubmit">
                                         <Select defaultValue="30000K" onChange={(value) => console.log(value)}>
                                             <Option value="27000K">2700K</Option>
                                             <Option value="30000K">3000K</Option>
@@ -245,7 +269,7 @@ const CreatePart: React.FC = () => {
                                     </Form.Item>
                                 </Col>
                                 <Col span={19}>
-                                    <Form.Item label="LED Part No" name="led-part-no" rules={[{ required: true }]} validateTrigger="onSubmit">
+                                    <Form.Item label="LED Part No" name="LED Part No" rules={[{ required: true }]} validateTrigger="onSubmit">
                                         <Input placeholder="..." />
                                     </Form.Item>
                                 </Col>
@@ -253,15 +277,15 @@ const CreatePart: React.FC = () => {
                         </>
                     ) : selectedPartType === 'Engine' ? (
                         <>
-                            <Form.Item label="LED Lifetime" name="led-lifetime">
+                            <Form.Item label="LED Lifetime" name="LED Lifetime">
                                 <Input placeholder="..." />
                             </Form.Item>
 
-                            <Form.Item label="Maximum Drive Current (mA)" name="maximum-drive-current">
+                            <Form.Item label="Maximum Drive Current (mA)" name="Maximum Drive Current (mA)">
                                 <Input placeholder="..." />
                             </Form.Item>
 
-                            <Form.Item label="Minimum Drive Current (mA)" name="minimum-drive-current">
+                            <Form.Item label="Minimum Drive Current (mA)" name="Minimum Drive Current (mA)">
                                 <Input placeholder="..." />
                             </Form.Item>
                         </>
@@ -286,7 +310,7 @@ const CreatePart: React.FC = () => {
                     </div>
 
                     <Row gutter={32}>
-                        {selectedFields.map((fieldKey, index) => (
+                        {selectedFields.map((fieldKey) => (
                             <Col span={8} key={fieldKey}>
                                 <Form.Item
                                     label={propertyGroups

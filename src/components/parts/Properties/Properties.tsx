@@ -1,17 +1,20 @@
-import React, { useMemo, useState, useEffect } from 'react';
-import { Col, Divider, Form, Input, Row, Select, Tooltip, Typography, Modal } from 'antd';
+import React, { useState, useEffect } from 'react';
+import { Col, Divider, Form, Input, Row, Select, Tooltip, Typography, Modal, message } from 'antd';
 import { QuestionCircleOutlined, PlusOutlined, QuestionCircleFilled } from '@ant-design/icons';
 import CustomButton from '../../../components/common/CustomButton/CustomButton';
 import { useQuery, useMutation } from '@apollo/client';
-import { CREATE_PART } from '../../../graphQL/partActions';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
+import { UPDATE_PART } from '../../../graphQL/versionActions';
 import '../../../pages/CreatePart/CreatePart.css';
 import { GET_VERSION_BY_ID } from '../../../graphQL/versionQueries';
+import type PartType from '../../../types/partType';
+import { GET_PART_TYPES } from '../../../graphQL/partQueries';
 
 const { Option } = Select;
 
 interface PropertiesProps {
-  customerCode: string;
+  code: string;
+  partType: string;
 }
 
 interface Field {
@@ -19,19 +22,24 @@ interface Field {
   value: string;
 }
 
-const Properties: React.FC<PropertiesProps> = ({ customerCode }) => {
-  const [createPart] = useMutation(CREATE_PART);
-  const navigation = useNavigate();
+const Properties: React.FC<PropertiesProps> = ({ code, partType }) => {
   const [searchParams] = useSearchParams();
 
   const [form] = Form.useForm();
-  const [selectedPartType, setSelectedPartType] = useState('Standard');
-  const [isChecked, setChecked] = useState(false);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [versionId, setVersionId] = useState<number | null>(null);
   const [checkedKeys, setCheckedKeys] = useState<string[]>([]);
+  const { data: typeData } = useQuery(GET_PART_TYPES);
   const [selectedFields, setSelectedFields] = useState<Field[]>([]);
-  const [selectedPartTypeId, setSelectedPartTypeId] = useState<string | null>(null);
+  const [updatePart] = useMutation(UPDATE_PART);
+
+  const fetchedPartTypes: PartType[] =
+    typeData?.types?.map((t: any) => ({
+      id: t.id,
+      value: t.name,
+      label: t.name,
+      desc: 'Some description here...'
+    })) ?? [];
 
   useEffect(() => {
     const currentVersionId = searchParams.get("versionId");
@@ -53,12 +61,12 @@ const Properties: React.FC<PropertiesProps> = ({ customerCode }) => {
   }, [loading, error, data]);
 
   useEffect(() => {
-    if (customerCode) {
+    if (code) {
       form.setFieldsValue({
-        customerCode: customerCode,
+        code: code,
       });
     }
-  }, [customerCode, form]);
+  }, [code, form]);
 
   useEffect(() => {
     const fields = data?.getVersion?.additional_fields;
@@ -100,30 +108,63 @@ const Properties: React.FC<PropertiesProps> = ({ customerCode }) => {
     },
   ];
 
-  const getFieldLabel = (key: string): string => {
-    return propertyGroups.flatMap(g => g.fields).find(f => f.key === key)?.label || key;
+  const standardKeys = propertyGroups.flatMap(g => g.fields.map(f => f.key));
+
+  const standardFields = selectedFields.filter(f => standardKeys.includes(f.key));
+  const customFields = selectedFields.filter(f => !standardKeys.includes(f.key));
+
+  const getFieldValue = (key: string) => {
+    const found = customFields.find((f) => f.key === key);
+    return found ? found.value : undefined;
   };
 
-  const handleCreate = async () => {
+  const handleConfirmEdit = async () => {
     try {
       const values = await form.validateFields();
+
+      if (!versionId) {
+        message.error('Không có versionId hợp lệ');
+        return;
+      }
+
+      const { name, description, code, ...rest } = values;
+
+      const additional_fields = Object.entries(rest).map(([key, value]) => ({
+        name: key,
+        value: String(value),
+        data_type: typeof value === 'number' ? 'number' : 'string',
+        type_group: 'custom',
+      }));
+
+      const matchedType = fetchedPartTypes.find((type) => type.label === partType);
+
+      if (!matchedType) {
+        message.error('Không tìm thấy type_id tương ứng với partType');
+        return;
+      }
+
       const input = {
-        name: values.name,
-        type_id: selectedPartTypeId,
-        code: values.customerCode,
-        additional_fields: selectedFields.map((field) => ({
-          key: field.key,
-          value: values[field.key] || '',
-        })),
-        enable_assembly_groups: isChecked,
+        version_id: versionId,
+        name,
+        description,
+        code,
+        type_id: parseInt(matchedType.id, 10),
+        additional_fields,
       };
 
-      await createPart({ variables: { input } });
-      navigation('/parts');
-    } catch (error) {
-      console.error('Error creating part:', error);
+      const res = await updatePart({
+        variables: { input },
+      });
+
+      message.success('Cập nhật thành công!');
+      window.location.reload();
+      console.log('Response updatePart:', res);
+    } catch (err: any) {
+      console.error('Lỗi cập nhật:', err);
+      message.error('Cập nhật thất bại!');
     }
   };
+
 
   const handleAcceptModal = () => {
     const newFields: Field[] = checkedKeys
@@ -177,11 +218,11 @@ const Properties: React.FC<PropertiesProps> = ({ customerCode }) => {
             <Col span={12}>
               <Form.Item
                 label="Customer Order Code"
-                name="customerCode"
+                name="code"
                 rules={[{ required: true }]}
                 validateTrigger="onSubmit"
               >
-                <Input disabled value={customerCode} />
+                <Input disabled value={code} />
               </Form.Item>
             </Col>
             <Col span={12}>
@@ -195,22 +236,41 @@ const Properties: React.FC<PropertiesProps> = ({ customerCode }) => {
             <Input placeholder="Part name" value={data?.getVersion?.name} />
           </Form.Item>
 
-          {selectedPartType === 'Optic set' && (
+
+          {partType === 'Optic set' && (
             <>
-              <Form.Item label="LOR" name="lor" rules={[{ required: true }]} validateTrigger="onSubmit">
+              <Form.Item
+                label="LOR"
+                name="LOR"
+                initialValue={getFieldValue('LOR')}
+                rules={[{ required: true }]}
+                validateTrigger="onSubmit"
+              >
                 <Input placeholder="Enter LOR" />
               </Form.Item>
-              <Form.Item label="Primary Beam Angle" name="primary-beam-angle" rules={[{ required: true }]} validateTrigger="onSubmit">
+              <Form.Item
+                label="Primary Beam Angle"
+                name="Primary Beam Angle"
+                initialValue={getFieldValue('Primary Beam Angle')}
+                rules={[{ required: true }]}
+                validateTrigger="onSubmit"
+              >
                 <Input placeholder="Enter primary beam angle" />
               </Form.Item>
             </>
           )}
 
-          {selectedPartType === 'Led' && (
+          {partType === 'Led' && (
             <Row gutter={20} align="top">
               <Col span={5}>
-                <Form.Item label="Colour Temperature (K)" name="led-temperature" rules={[{ required: true }]} validateTrigger="onSubmit">
-                  <Select defaultValue="30000K">
+                <Form.Item
+                  label="Colour Temperature (K)"
+                  name="Colour Temperature (K)"
+                  initialValue={getFieldValue('Colour Temperature (K)')}
+                  rules={[{ required: true }]}
+                  validateTrigger="onSubmit"
+                >
+                  <Select>
                     <Option value="27000K">2700K</Option>
                     <Option value="30000K">3000K</Option>
                     <Option value="40000K">4000K</Option>
@@ -218,26 +278,45 @@ const Properties: React.FC<PropertiesProps> = ({ customerCode }) => {
                 </Form.Item>
               </Col>
               <Col span={19}>
-                <Form.Item label="LED Part No" name="led-part-no" rules={[{ required: true }]} validateTrigger="onSubmit">
+                <Form.Item
+                  label="LED Part No"
+                  name="LED Part No"
+                  initialValue={getFieldValue('LED Part No')}
+                  rules={[{ required: true }]}
+                  validateTrigger="onSubmit"
+                >
                   <Input placeholder="..." />
                 </Form.Item>
               </Col>
             </Row>
           )}
 
-          {selectedPartType === 'Engine' && (
+          {partType === 'Engine' && (
             <>
-              <Form.Item label="LED Lifetime" name="led-lifetime">
+              <Form.Item
+                label="LED Lifetime"
+                name="LED Lifetime"
+                initialValue={getFieldValue('LED Lifetime')}
+              >
                 <Input placeholder="..." />
               </Form.Item>
-              <Form.Item label="Maximum Drive Current (mA)" name="maximum-drive-current">
+              <Form.Item
+                label="Maximum Drive Current (mA)"
+                name="Maximum Drive Current (mA)"
+                initialValue={getFieldValue('Maximum Drive Current (mA)')}
+              >
                 <Input placeholder="..." />
               </Form.Item>
-              <Form.Item label="Minimum Drive Current (mA)" name="minimum-drive-current">
+              <Form.Item
+                label="Minimum Drive Current (mA)"
+                name="Minimum Drive Current (mA)"
+                initialValue={getFieldValue('Minimum Drive Current (mA)')}
+              >
                 <Input placeholder="..." />
               </Form.Item>
             </>
           )}
+
         </div>
 
         <Divider />
@@ -265,26 +344,42 @@ const Properties: React.FC<PropertiesProps> = ({ customerCode }) => {
             </Tooltip>
           </div>
 
-          <Row gutter={32}>
-            {selectedFields.map((field) => (
-              <Col span={8} key={field.key}>
-                <Form.Item
-                  label={getFieldLabel(field.key)}
-                  name={field.key}
-                  initialValue={field.value}
-                >
-                  {field.key === 'finish' ? (
-                    <Select placeholder="Select Finish" defaultValue={field.value || 'B'}>
-                      <Option value="B">Black</Option>
-                      <Option value="R">Red</Option>
-                      <Option value="Y">Yellow</Option>
-                    </Select>
-                  ) : (
-                    <Input placeholder={`Enter ${field.key}`} />
-                  )}
-                </Form.Item>
-              </Col>
-            ))}
+          <Row gutter={[32, 16]}>
+            {propertyGroups.map(group => {
+              const groupFields = group.fields.filter(f =>
+                standardFields.find(sf => sf.key === f.key)
+              );
+
+              if (groupFields.length === 0) return null;
+
+              return groupFields.map(field => {
+                const matchedField = standardFields.find(f => f.key === field.key);
+                if (!matchedField) return null;
+
+                return (
+                  <Col span={8} key={field.key}>
+                    <Form.Item
+                      label={field.label}
+                      name={field.key}
+                      initialValue={matchedField.value}
+                    >
+                      {field.key === 'finish' ? (
+                        <Select
+                          placeholder="Select Finish"
+                          defaultValue={matchedField.value || 'B'}
+                        >
+                          <Option value="B">Black</Option>
+                          <Option value="R">Red</Option>
+                          <Option value="Y">Yellow</Option>
+                        </Select>
+                      ) : (
+                        <Input placeholder={`Enter ${field.label}`} />
+                      )}
+                    </Form.Item>
+                  </Col>
+                );
+              });
+            })}
           </Row>
         </div>
       </Form>
@@ -296,6 +391,14 @@ const Properties: React.FC<PropertiesProps> = ({ customerCode }) => {
           icon={<PlusOutlined />}
           text='Manage Properties'
           onClick={() => setIsModalVisible(true)}
+        />
+      </div>
+
+      <div style={{ textAlign: 'start', margin: 30 }}>
+        <CustomButton
+          variant='blue'
+          text='Confirm'
+          onClick={handleConfirmEdit}
         />
       </div>
 

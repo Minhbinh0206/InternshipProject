@@ -4,7 +4,7 @@ import CustomButton from '../../common/CustomButton/CustomButton';
 import type PartType from '../../../types/partType';
 const { Text } = Typography;
 
-export type PartTypeMode = 'editable' | 'read-only' | 'detailed';
+export type PartTypeMode = 'editable' | 'read-only' | 'detailed' | 'modify';
 
 interface FilterPartTypeProps {
   value?: string;
@@ -62,8 +62,10 @@ const FilterPartType: React.FC<FilterPartTypeProps> = ({
           value={value}
           style={{ width: 180 }}
           onChange={onChange}
+          disabled={mode === 'modify'}
           options={partTypes?.map(p => ({ value: p.value, label: p.label }))}
         />
+
       </div>
 
       {/* Nút phụ (chỉ mode editable) */}
