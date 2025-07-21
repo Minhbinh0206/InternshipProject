@@ -75,6 +75,8 @@ const RevisionAndVersion: React.FC = () => {
                     version: v.version_code,
                     updatedAt: v.updated_at,
                     updatedBy: v.creator.email,
+                    type: v.type.name,
+                    code: v.code,   
                     name: v.name,
                     latestStatus: v.status,
                     basedUpon: v.based_upon_version_id ?? '-',
@@ -127,7 +129,7 @@ const RevisionAndVersion: React.FC = () => {
                                 revisionId: record.key,
                                 versionId: record.latestVersion?.id,
                                 version: record.version,
-                                type: record.latestVersion?.type,
+                                type: record.latestVersion?.type.name,
                                 code: record.latestVersion?.code,
                                 name: record.latestVersion?.name
                             });

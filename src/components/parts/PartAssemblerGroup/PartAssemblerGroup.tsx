@@ -10,7 +10,6 @@ import {
 
 import CustomButton from '../../common/CustomButton/CustomButton';
 import CreatePart from '../../../pages/CreatePart/CreatePart';
-import Addpart from '../Addpart/Addpart.tsx';
 import { GET_GROUPS_BY_VERSIONID, GET_PART_TYPES } from '../../../graphQL/partQueries.ts';
 import type { ColumnsType } from 'antd/es/table';
 import './PartAssemblerGroup.css';
@@ -203,7 +202,7 @@ const PartAssemblerGroup: React.FC = () => {
               footer={null}
               width={1200}
             >
-              <CreatePart />
+              <CreatePart createModalVisible={(visible: boolean) => setCreatePartModalVisible(visible)} groupId={group.id} />
             </Modal>
           </div>
         </div>

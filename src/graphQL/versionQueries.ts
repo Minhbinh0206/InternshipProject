@@ -15,6 +15,7 @@ export const GET_VERSION_BY_ID = gql`
             id
             name
             value
+            type_group
         }
     }
   }

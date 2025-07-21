@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import type { PartTypeMode } from '../../components/parts/FilterPartType/FilterPartType';
 import {
   BarsOutlined,
   CheckCircleOutlined,
@@ -20,7 +19,6 @@ import RevisionAndVersion from '../../components/parts/RevisionAndVersion/Revisi
 import {
   GET_PART_BY_ID,
   GET_PART_ENABLE_BY_ID,
-  GET_PART_TYPES
 } from "../../graphQL/partQueries";
 import { useQuery } from '@apollo/client';
 
@@ -112,11 +110,11 @@ const ModifyPart: React.FC = () => {
             activeKey={activeKey}
             onTabChange={setActiveKey}
             mode='modify'
-            selectedPartType={partType.name}
+            selectedPartType={partType}
           />
           {
             activeKey === 'properties' ? (
-              <Properties customerCode={partCode} />
+              <Properties code={partCode} partType={partType} />
             ) : activeKey === 'code-builder' ? (
               <CodeBuilder />
             ) : activeKey === 'assembler' ? (
