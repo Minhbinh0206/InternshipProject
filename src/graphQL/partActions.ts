@@ -5,6 +5,7 @@ export const CREATE_PART = gql`
     createPart(input: $input) {
       id
       name
+      description
       type{
         id
       }
@@ -22,6 +23,15 @@ export const UPDATE_VERSION_STATUS = gql`
     updateVersionStatus(id: $id) {
       id
       status
+    }
+  }
+`;
+
+export const CREATE_REVISION = gql`
+  mutation createRevision($id: ID!) {
+    createRevision(id: $id) {
+      id
+      revision_code
     }
   }
 `;
