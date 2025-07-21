@@ -27,7 +27,16 @@ export const UPDATE_VERSION_STATUS = gql`
   }
 `;
 
+export const CREATE_REVISION = gql`
+  mutation createRevision($id: ID!) {
+    createRevision(id: $id) {
+      id
+      revision_code
+    }
+  }
+`;
 
+// GROUP
 export const ADD_PART_TO_GROUP = gql`
   mutation AddPartToGroup($input: [CreateGroupPartInput!]!) {
     addPartToGroup(input: $input) {
@@ -39,11 +48,13 @@ export const ADD_PART_TO_GROUP = gql`
   }
 `;
 
-export const CREATE_REVISION = gql`
-  mutation createRevision($id: ID!) {
-    createRevision(id: $id) {
+export const UPDATE_GROUP = gql`
+  mutation UpdateGroup($id: ID!, $input: UpdateGroupInput!) {
+    updateGroup(id: $id, input: $input) {
       id
-      revision_code
+      name
+      part_type_id
     }
   }
 `;
+

@@ -23,7 +23,6 @@ import {
   GET_PART_TYPES
 } from "../../graphQL/partQueries";
 import { useQuery } from '@apollo/client';
-import type PartType from '../../types/partType';
 
 export interface ActiveBarItem {
   key: string;
@@ -34,12 +33,8 @@ export interface ActiveBarItem {
 const ModifyPart: React.FC = () => {
   const [searchParams] = useSearchParams();
   const [activeKey, setActiveKey] = useState<string>('properties');
-  const [selectedPartType, setSelectedPartType] = useState<string>('');
-  const [fetchedPartTypes, setFetchedPartTypes] = useState<PartType[]>([]);
   const [versionId, setVersionId] = useState<string | null>(null);
-  const [mode, setMode] = useState<PartTypeMode>('editable');
 
-  const { data: typeData, loading: typeLoading } = useQuery(GET_PART_TYPES);
   const { id } = useParams();
   const location = useLocation();
   const state = location.state as { name?: string; type?: string; code?: string } | null;
@@ -64,87 +59,12 @@ const ModifyPart: React.FC = () => {
   const partName = state?.name || part?.name || 'Unknown';
   const partCode = state?.code || part?.code || '';
   const partType = state?.type || part?.type || '';
-  
+
   // Lấy versionId từ query string
   useEffect(() => {
     const currentVersionId = searchParams.get("versionId");
     setVersionId(currentVersionId);
   }, [searchParams]);
-
-  // Gán danh sách part types
-  useEffect(() => {
-    if (typeData?.types) {
-      const mapped: PartType[] = typeData.types.map((t: any) => ({
-        id: t.id,
-        value: t.name,
-        label: t.name,
-        desc: 'Some description here...',
-      }));
-      setFetchedPartTypes(mapped);
-      setSelectedPartType(partType.name)
-    }
-
-
-    return (
-        <div style={{ flex: 1 }}>
-            {!searchParams.get("versionId") ? (
-                <>
-                    <PageHeader
-                        title={partName}
-                        breadcrumbs={[
-                            { title: '', href: '/', icon: <HomeOutlined /> },
-                            { title: 'Parts', href: '/parts' },
-                            { title: `Modify`, href: '/parts/modify' },
-                            { title: partName, href: `/${partName}` }
-                        ]}
-                        onTabChange={setActiveKey}
-                        mode='read-only'
-                        selectedPartType={partType}
-                        code={partCode}
-                    />
-
-                    <RevisionAndVersion />
-                </>
-            ) : (
-                <>
-                    <PageHeader
-                        title={`Modify Part - ${partName}`}
-                        breadcrumbs={[
-                            { title: '', href: '/', icon: <HomeOutlined /> },
-                            { title: 'Parts', href: '/parts' },
-                            { title: 'Modify', href: '/modifies' },
-                            { title: partName, href: `/${partName}` },
-                            { title: versionLabel, href: `/${versionId}` },
-                        ]}
-                        tabs={tabs}
-                        activeKey={activeKey}
-                        onTabChange={setActiveKey}
-                        mode={mode}
-                        selectedPartType={partType}
-                        partTypes={fetchedPartTypes}
-                        onSelectPartType={(value) => {
-                            console.log("Selected Part Type:", value);
-                            setPartType(value);
-                        }}
-                    />
-                    {
-                        activeKey === 'properties' ? (
-                            <Properties customerCode={partCode} />
-                        ) : activeKey === 'code-builder' ? (
-                            <CodeBuilder />
-                        ) : activeKey === 'assembler' ? (
-                            enable && <PartAssemblerGroup />
-                        ) : activeKey === 'assembly-outcomes' ? (
-                            <AssemblyOutcomes />
-                        ) : null
-                    }
-                </>
-            )
-            }
-        </div>
-    );
-<!-- =======
-  }, [typeData]);
 
   const tabs: ActiveBarItem[] = [
     { key: 'properties', label: 'Properties', icon: <FileTextOutlined /> },
@@ -157,17 +77,6 @@ const ModifyPart: React.FC = () => {
     { key: 'compatible', label: 'Part compatible', icon: <QuestionOutlined /> },
     { key: 'edit', label: 'Revision & Version', icon: <EditOutlined /> },
   ];
-
-  // Trường hợp đang loading bất kỳ
-  const isLoading =
-    typeLoading ||
-    !typeData ||
-    !part ||
-    fetchedPartTypes.length === 0;
-
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
 
   return (
     <div style={{ flex: 1 }}>
@@ -183,7 +92,7 @@ const ModifyPart: React.FC = () => {
             ]}
             onTabChange={setActiveKey}
             mode='read-only'
-            selectedPartType={selectedPartType}
+            selectedPartType={partType}
             code={partCode}
           />
           <RevisionAndVersion />
@@ -202,12 +111,8 @@ const ModifyPart: React.FC = () => {
             tabs={tabs}
             activeKey={activeKey}
             onTabChange={setActiveKey}
-            mode={mode}
-            selectedPartType={selectedPartType}
-            partTypes={fetchedPartTypes}
-            onSelectPartType={(value) => {
-              setSelectedPartType(value);
-            }}
+            mode='modify'
+            selectedPartType={partType.name}
           />
           {
             activeKey === 'properties' ? (
@@ -224,7 +129,6 @@ const ModifyPart: React.FC = () => {
       )}
     </div>
   );
--->
 };
 
 export default ModifyPart;
