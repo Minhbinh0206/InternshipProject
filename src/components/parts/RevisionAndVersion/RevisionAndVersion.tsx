@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState, version } from 'react';
 import { Table, Typography, Space, Tag, Tooltip, Modal } from 'antd';
 import {
     EditOutlined,
@@ -12,7 +12,7 @@ import CustomButton from '../../common/CustomButton/CustomButton';
 import { useMutation, useQuery } from '@apollo/client';
 import { GET_PART_BY_ID } from '../../../graphQL/partQueries';
 import { useNavigate, useParams } from 'react-router-dom';
-import { UPDATE_VERSION_STATUS } from '../../../graphQL/partActions';
+import { CREATE_REVISION, UPDATE_VERSION_STATUS } from '../../../graphQL/partActions';
 
 const { Text, Title, Link } = Typography;
 
@@ -24,6 +24,7 @@ const RevisionAndVersion: React.FC = () => {
         variables: { id },
     });
     const [updateVersionStatus] = useMutation(UPDATE_VERSION_STATUS);
+    const [createRevision] = useMutation(CREATE_REVISION);
     const [expandedRowKeys, setExpandedRowKeys] = useState<string[]>([]);
     const [isModalVisible, setIsModalVisible] = useState(false);
     const [selectedVersion, setSelectedVersion] = useState<any>(null);
@@ -34,51 +35,54 @@ const RevisionAndVersion: React.FC = () => {
     if (!part) return <p>Part not found.</p>;
     if (!part.revisions?.length) return <p>No revisions available.</p>;
 
-    console.log('part', part);
-
     const handleView = (part: { id: number; revisionId?: number; versionId?: number; version: string; type: string; code: string; name: string }) => {
         navigate(
             `/parts/modify/${part.id}/${part.revisionId}/?versionId=${part.versionId}`,
-            // `/parts/modify/${part.id}/${part.revisionId}/${part.versionId}`,
-             {
+            {
                 replace: true,
                 state: {
                     partId: part.id,
                     versionId: part.versionId,
                     name: part.name,
-                    version: part.code
+                    code: part.code,
+                    type: part.type
                 },
             }
         );
+
     };
 
     const dataSource = part?.revisions
-        ?.slice() 
-            .sort((a: any, b: any) => b.revision_code.localeCompare(a.revision_code))
-            .map((revision: any, revIndex: any) => {
-                return {
-                    key: revision.id,
-                    order: revIndex + 1,
-                    revision: revision.revision_code,
-                    updatedAt: revision.updated_at,
-                    updatedBy: revision.creator.email,
-                    latestVersion: revision.latestVersion?.version_code,
-                    isPublished: revision.latestVersion?.status === 'Published',
-                    latestStatus: revision.latestVersion?.status ?? '-',
-                    versions: revision.versions.map((v: any, i: any) => ({
-                        key: v.id,
-                        order: i + 1,
-                        version: v.version_code,
-                        updatedAt: v.updated_at,
-                        updatedBy: v.creator.email,
-                        name: v.name,
-                        latestStatus: v.status,
-                        basedUpon: v.based_upon_version_id ?? '-',
-                    })),
+        ?.slice()
+        .sort((a: any, b: any) => b.revision_code.localeCompare(a.revision_code))
+        .map((revision: any, revIndex: any) => {
+            return {
+                name: revision.latestVersion.name,
+                type: revision.latestVersion.type,
+                code: revision.latestVersion.code,
+                key: revision.id,
+                order: revIndex + 1,
+                revision: revision.revision_code,
+                updatedAt: revision.updated_at,
+                updatedBy: revision.creator.email,
+                latestVersionCode: revision.latestVersion?.version_code,
+                latestVersion: revision.latestVersion,
+                isPublished: revision.latestVersion?.status === 'Published',
+                latestStatus: revision.latestVersion?.status ?? '-',
+                versions: revision.versions.map((v: any, i: any) => ({
+                    key: v.id,
+                    order: i + 1,
+                    version: v.version_code,
+                    updatedAt: v.updated_at,
+                    updatedBy: v.creator.email,
+                    name: v.name,
+                    latestStatus: v.status,
+                    basedUpon: v.based_upon_version_id ?? '-',
+                })),
 
-                };
+            };
 
-            }) ?? [];
+        }) ?? [];
 
     if (dataSource.length > 0 && expandedRowKeys.length === 0) {
         setExpandedRowKeys([dataSource[0].key]);
@@ -94,7 +98,7 @@ const RevisionAndVersion: React.FC = () => {
         { title: 'Revision', dataIndex: 'revision' },
         { title: 'Updated at', dataIndex: 'updatedAt', width: 200 },
         { title: 'Updated by', dataIndex: 'updatedBy', width: 220 },
-        { title: 'Latest version', dataIndex: 'latestVersion' },
+        { title: 'Latest version', dataIndex: 'latestVersionCode' },
         {
             title: 'Is published?',
             dataIndex: 'isPublished',
@@ -117,6 +121,17 @@ const RevisionAndVersion: React.FC = () => {
                         layout="iconFirst"
                         text="Edit lasted version"
                         icon={<EditOutlined />}
+                        onClick={() => {
+                            handleView({
+                                id: part.id,
+                                revisionId: record.key,
+                                versionId: record.latestVersion?.id,
+                                version: record.version,
+                                type: record.latestVersion?.type,
+                                code: record.latestVersion?.code,
+                                name: record.latestVersion?.name
+                            });
+                        }}
                     />
                     <div style={{ margin: 10 }}>
                         <CustomButton
@@ -172,6 +187,21 @@ const RevisionAndVersion: React.FC = () => {
         }
     };
 
+    const handleCreateRevision = async (version: any) => {
+        try {
+
+            // Gọi mutation với phiên bản truyền vào, không dùng selectedVersion
+            await createRevision({
+                variables: {
+                    id: version.key,
+                },
+            });
+
+            window.location.reload();
+        } catch (error) {
+            console.error('Create revision error:', error);
+        }
+    };
 
     if (loading) return <p>Loading...</p>;
     if (error) return <p>Error loading part data.</p>;
@@ -232,7 +262,16 @@ const RevisionAndVersion: React.FC = () => {
                                         align: 'right' as const,
                                         render: (_: any, record: any) => (
                                             <Space>
-                                                <CustomButton variant="white" layout="iconFirst" icon={<PlusOutlined />} text="Create revision" />
+                                                <CustomButton
+                                                    variant="white"
+                                                    layout="iconFirst"
+                                                    icon={<PlusOutlined />}
+                                                    text="Create revision"
+                                                    onClick={() =>
+                                                        handleCreateRevision(record)
+                                                    }
+                                                />
+
                                                 {!(record.latestStatus === 'Published') && (
                                                     <CustomButton
                                                         variant="blue"
@@ -243,6 +282,7 @@ const RevisionAndVersion: React.FC = () => {
                                                         }
                                                     />
                                                 )}
+
                                                 <CustomButton
                                                     variant="white"
                                                     layout="iconFirst"
@@ -254,8 +294,8 @@ const RevisionAndVersion: React.FC = () => {
                                                             revisionId: item.key,
                                                             versionId: record.key,
                                                             version: record.version,
-                                                            type: part.type,
-                                                            code: part.code,
+                                                            type: record.type,
+                                                            code: record.code,
                                                             name: record.name
                                                         })
                                                     }

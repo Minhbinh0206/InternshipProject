@@ -43,8 +43,14 @@ export const GET_PART_BY_ID = gql`
         revision_code
         updated_at
         latestVersion {
+          id
           status
           version_code
+          code
+          type {
+            name
+          }
+          name
         }
         creator {
           email

@@ -41,6 +41,12 @@ const CreatePart: React.FC = () => {
 
     const [form] = Form.useForm();
 
+    const partTypeFieldConfig: Record<string, string[]> = {
+        Led: ['led-part-no'],
+        'Optic set': ['lor', 'primary-beam-angle'],
+        Engine: ['led-lifetime', 'maximum-drive-current', 'minimum-drive-current'],
+    };
+
     const requiredFields = useMemo(() => {
         const baseFields = ['name', 'customerCode'];
         const ledFields = ['led-part-no'];
@@ -98,13 +104,17 @@ const CreatePart: React.FC = () => {
     ];
 
     const handleCreate = async () => {
+        const partTypeExtraFields = partTypeFieldConfig[selectedPartType] || [];
+        const allFieldKeys = Array.from(new Set([...selectedFields, ...partTypeExtraFields]));
+
         try {
             const values = await form.validateFields(); // Lấy dữ liệu từ form
             const input = {
                 name: values.name,
                 type_id: selectedPartTypeId,
                 code: values.customerCode,
-                additional_fields: selectedFields
+                description: values.description,
+                additional_fields: allFieldKeys
                     .filter(field => values[field] !== undefined && values[field] !== null)
                     .map(field => ({
                         name: field,
@@ -122,12 +132,12 @@ const CreatePart: React.FC = () => {
             console.error('Error creating part:', error);
         }
 
-        navigation(
-            `/parts`,
-            {
-                replace: true,
-            }
-        );
+        // navigation(
+        //     `/parts`,
+        //     {
+        //         replace: true,
+        //     }
+        // );
     };
 
     useEffect(() => {
@@ -226,7 +236,7 @@ const CreatePart: React.FC = () => {
                         <>
                             <Row gutter={20} align="top">
                                 <Col span={5}>
-                                    <Form.Item label="Colour Temperature (K)" name="led-part-no" rules={[{ required: true }]} validateTrigger="onSubmit">
+                                    <Form.Item label="Colour Temperature (K)" name="color-temperature" rules={[{ required: true }]} validateTrigger="onSubmit">
                                         <Select defaultValue="30000K" onChange={(value) => console.log(value)}>
                                             <Option value="27000K">2700K</Option>
                                             <Option value="30000K">3000K</Option>

@@ -1,6 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import type { PartTypeMode } from '../../components/parts/FilterPartType/FilterPartType';
-import { BarsOutlined, CheckCircleOutlined, EditOutlined, FileTextOutlined, HomeOutlined, QuestionOutlined, SearchOutlined, SettingOutlined } from '@ant-design/icons';
+import {
+  BarsOutlined,
+  CheckCircleOutlined,
+  EditOutlined,
+  FileTextOutlined,
+  HomeOutlined,
+  QuestionOutlined,
+  SearchOutlined,
+  SettingOutlined
+} from '@ant-design/icons';
 import PageHeader from '../../components/layout/PageHeader/PageHeader';
 import CodeBuilder from '../../components/parts/CodeBuilder/CodeBuilder';
 import PartAssemblerGroup from '../../components/parts/PartAssemblerGroup/PartAssemblerGroup';
@@ -8,95 +17,73 @@ import AssemblyOutcomes from '../../components/parts/AssemblyOutcome/AssemblyOut
 import Properties from '../../components/parts/Properties/Properties';
 import { useLocation, useParams, useSearchParams } from 'react-router-dom';
 import RevisionAndVersion from '../../components/parts/RevisionAndVersion/RevisionAndVersion';
-import { GET_PART_BY_ID, GET_PART_ENABLE_BY_ID, GET_PART_TYPES } from "../../graphQL/partQueries";
+import {
+  GET_PART_BY_ID,
+  GET_PART_ENABLE_BY_ID,
+  GET_PART_TYPES
+} from "../../graphQL/partQueries";
 import { useQuery } from '@apollo/client';
 import type PartType from '../../types/partType';
 
 export interface ActiveBarItem {
-    key: string;
-    label: React.ReactNode;
-    icon?: React.ReactNode;
+  key: string;
+  label: React.ReactNode;
+  icon?: React.ReactNode;
 }
 
 const ModifyPart: React.FC = () => {
-    const [searchParams] = useSearchParams();
-    const [activeKey, setActiveKey] = useState<string>('properties');
-    const [partType, setPartType] = useState('');
-    const { data: typeData, loading: typeLoading, error: typeError } = useQuery(GET_PART_TYPES);
-    const [versionId, setVersionId] = useState<string | null>(null);
-    const location = useLocation();
-    const state = location.state as { name?: string; type?: string; code?: string } | null;
-    const { id } = useParams();
+  const [searchParams] = useSearchParams();
+  const [activeKey, setActiveKey] = useState<string>('properties');
+  const [selectedPartType, setSelectedPartType] = useState<string>('');
+  const [fetchedPartTypes, setFetchedPartTypes] = useState<PartType[]>([]);
+  const [versionId, setVersionId] = useState<string | null>(null);
+  const [mode, setMode] = useState<PartTypeMode>('editable');
 
-    console.log(id);
+  const { data: typeData, loading: typeLoading } = useQuery(GET_PART_TYPES);
+  const { id } = useParams();
+  const location = useLocation();
+  const state = location.state as { name?: string; type?: string; code?: string } | null;
 
-    const { data: enableData } = useQuery(GET_PART_ENABLE_BY_ID, {
-        variables: { partId: id },
-        skip: !id,
-    });
-    const versionDetails = enableData?.getLatestVersion;
-    const enable = versionDetails?.enable_assembly_groups;
-    const versionCode = versionDetails?.version_code || '';
-    const versionStatus = versionDetails?.status || '';
+  const { data: enableData } = useQuery(GET_PART_ENABLE_BY_ID, {
+    variables: { partId: id },
+    skip: !id,
+  });
 
-    const versionLabel = versionCode && versionStatus
-        ? `${versionCode} (${versionStatus})`
-        : versionId;
+  const versionDetails = enableData?.getLatestVersion;
+  const enable = versionDetails?.enable_assembly_groups;
+  const versionCode = versionDetails?.version_code || '';
+  const versionStatus = versionDetails?.status || '';
 
-    // const enable = enableData?.getLatestVersion.enable_assembly_groups
+  const versionLabel = versionCode && versionStatus
+    ? `${versionCode} (${versionStatus})`
+    : versionId;
 
-    const { data } = useQuery(GET_PART_BY_ID, { variables: { id } });
-    const part = data?.getPartById;
+  const { data } = useQuery(GET_PART_BY_ID, { variables: { id } });
+  const part = data?.getPartById;
 
-    console.log('part', part);
+  const partName = state?.name || part?.name || 'Unknown';
+  const partCode = state?.code || part?.code || '';
+  const partType = state?.type || part?.type || '';
+  
+  // Lấy versionId từ query string
+  useEffect(() => {
+    const currentVersionId = searchParams.get("versionId");
+    setVersionId(currentVersionId);
+  }, [searchParams]);
 
-    const partName = state?.name || part?.name || 'Unknown';
-    const partCode = state?.code || part?.code || '';
-
-    console.log('location.state:', location.state);
-    useEffect(() => {
-        const currentVersionId = searchParams.get("versionId");
-        setVersionId(currentVersionId);
-    }, [searchParams]);
-
-    const fetchedPartTypes: PartType[] =
-        typeData?.types?.map((t: any) => ({
-            id: t.id,
-            value: t.name,
-            label: t.name,
-            desc: 'Some description here...'
-        })) ?? [];
-
-    useEffect(() => {
-        if (!part) return;
-
-        const type = state?.type || part?.type;
-        if (type) {
-            setPartType(type);
-        }
-    }, [state, part]);
-
-
-    const tabs: ActiveBarItem[] = [
-        { key: 'properties', label: 'Properties', icon: <FileTextOutlined /> },
-        { key: 'raw-data', label: 'Part raw data', icon: <SearchOutlined /> },
-        { key: 'assembler', label: 'Part assembler', icon: <BarsOutlined /> },
-        { key: 'outcome-settings', label: 'Outcome settings', icon: <SettingOutlined /> },
-        { key: 'supply', label: 'Supply chain', icon: <QuestionOutlined /> },
-        { key: 'code-builder', label: 'Code Builder', icon: <EditOutlined /> },
-        { key: 'assembly-outcomes', label: 'Assembly Outcomes', icon: <CheckCircleOutlined /> },
-        { key: 'compatible', label: 'Part compatible', icon: <QuestionOutlined /> },
-        { key: 'edit', label: 'Revision & Version', icon: <EditOutlined /> },
-    ];
-
-    const [mode, setMode] = useState<PartTypeMode>('editable');
-
-
-    console.log('enable Data', enable);
-
-    if (!data || !partType) {
-        return <div>Loading...</div>;
+  // Gán danh sách part types
+  useEffect(() => {
+    if (typeData?.types) {
+      const mapped: PartType[] = typeData.types.map((t: any) => ({
+        id: t.id,
+        value: t.name,
+        label: t.name,
+        desc: 'Some description here...',
+      }));
+      setFetchedPartTypes(mapped);
+      setSelectedPartType(partType.name)
     }
+
 
     return (
         <div style={{ flex: 1 }}>
@@ -156,6 +143,88 @@ const ModifyPart: React.FC = () => {
             }
         </div>
     );
+<!-- =======
+  }, [typeData]);
+
+  const tabs: ActiveBarItem[] = [
+    { key: 'properties', label: 'Properties', icon: <FileTextOutlined /> },
+    { key: 'raw-data', label: 'Part raw data', icon: <SearchOutlined /> },
+    { key: 'assembler', label: 'Part assembler', icon: <BarsOutlined /> },
+    { key: 'outcome-settings', label: 'Outcome settings', icon: <SettingOutlined /> },
+    { key: 'supply', label: 'Supply chain', icon: <QuestionOutlined /> },
+    { key: 'code-builder', label: 'Code Builder', icon: <EditOutlined /> },
+    { key: 'assembly-outcomes', label: 'Assembly Outcomes', icon: <CheckCircleOutlined /> },
+    { key: 'compatible', label: 'Part compatible', icon: <QuestionOutlined /> },
+    { key: 'edit', label: 'Revision & Version', icon: <EditOutlined /> },
+  ];
+
+  // Trường hợp đang loading bất kỳ
+  const isLoading =
+    typeLoading ||
+    !typeData ||
+    !part ||
+    fetchedPartTypes.length === 0;
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  return (
+    <div style={{ flex: 1 }}>
+      {!searchParams.get("versionId") ? (
+        <>
+          <PageHeader
+            title={partName}
+            breadcrumbs={[
+              { title: '', href: '/', icon: <HomeOutlined /> },
+              { title: 'Parts', href: '/parts' },
+              { title: `Modify`, href: '/parts/modify' },
+              { title: partName, href: `/${partName}` }
+            ]}
+            onTabChange={setActiveKey}
+            mode='read-only'
+            selectedPartType={selectedPartType}
+            code={partCode}
+          />
+          <RevisionAndVersion />
+        </>
+      ) : (
+        <>
+          <PageHeader
+            title={`Modify Part - ${partName}`}
+            breadcrumbs={[
+              { title: '', href: '/', icon: <HomeOutlined /> },
+              { title: 'Parts', href: '/parts' },
+              { title: 'Modify', href: '/modifies' },
+              { title: partName, href: `/${partName}` },
+              { title: versionLabel, href: `/${versionId}` },
+            ]}
+            tabs={tabs}
+            activeKey={activeKey}
+            onTabChange={setActiveKey}
+            mode={mode}
+            selectedPartType={selectedPartType}
+            partTypes={fetchedPartTypes}
+            onSelectPartType={(value) => {
+              setSelectedPartType(value);
+            }}
+          />
+          {
+            activeKey === 'properties' ? (
+              <Properties customerCode={partCode} />
+            ) : activeKey === 'code-builder' ? (
+              <CodeBuilder />
+            ) : activeKey === 'assembler' ? (
+              enable && <PartAssemblerGroup />
+            ) : activeKey === 'assembly-outcomes' ? (
+              <AssemblyOutcomes />
+            ) : null
+          }
+        </>
+      )}
+    </div>
+  );
+-->
 };
 
 export default ModifyPart;
