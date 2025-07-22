@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Table, Checkbox, Space, Typography, Tooltip, Modal, Form, Input, Select, Button } from 'antd';
 import { useLocation } from 'react-router-dom';
-import { useQuery } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client';
 import {
   ArrowsAltOutlined, CloseOutlined, DeleteOutlined,
   DoubleRightOutlined, EditOutlined, PlusOutlined,
@@ -13,6 +13,9 @@ import CreatePart from '../../../pages/CreatePart/CreatePart';
 import { GET_GROUPS_BY_VERSIONID, GET_PART_TYPES } from '../../../graphQL/partQueries.ts';
 import type { ColumnsType } from 'antd/es/table';
 import './PartAssemblerGroup.css';
+import Addpart from '../Addpart/Addpart.tsx';
+import { DELETE_GROUP_PART_BY_ID } from '../../../graphQL/partActions.ts';
+
 
 const { Title } = Typography;
 
@@ -34,6 +37,8 @@ const PartAssemblerGroup: React.FC = () => {
   const { data: partTypeData } = useQuery(GET_PART_TYPES);
   console.log(partTypeData);
 
+  const [deleteGroupPartById] = useMutation(DELETE_GROUP_PART_BY_ID);
+
   const [isEditModalVisible, setEditModalVisible] = useState(false);
   const [isCreatePartModalVisible, setCreatePartModalVisible] = useState(false);
   const [isAddPartModalVisible, setAddPartModalVisible] = useState(false);
@@ -47,6 +52,26 @@ const PartAssemblerGroup: React.FC = () => {
 
   const showAddPartModal = () => setAddPartModalVisible(true);
   const handleAddPartCancel = () => setAddPartModalVisible(false);
+
+  const handleDeleteGroupPartById = async (groupPartId: string) => {
+    const confirm = window.confirm("Co chac chan muon xoa part khoi group?");
+    if(!confirm) return;
+
+    try{
+      const { data } = await deleteGroupPartById({ 
+        variables: { id: parseInt(groupPartId) } }
+      );
+
+      if(data?.deleteGroupPartById) {
+        alert("Xoa thanh cong");
+        refetch();
+      } else {
+        alert("Xoa that bai");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
 
   if (loading) return <p>Đang tải dữ liệu...</p>;
   if (error) return <p>Lỗi khi tải dữ liệu: {error.message}</p>;
@@ -89,12 +114,12 @@ const PartAssemblerGroup: React.FC = () => {
     {
       title: <SettingOutlined style={{ float: "right" }} />,
       key: 'action',
-      render: () => (
+      render: (_:any, record: any) => (
         <Space size="small" style={{ float: "right" }}>
           <CustomButton variant="blue" layout="iconFirst" icon={<EditOutlined />} text="Edit original" />
           <CustomButton variant="blue" layout="iconFirst" icon={<DoubleRightOutlined />} text="Quick edit" />
           <CustomButton variant="blue" layout="iconFirst" icon={<ArrowsAltOutlined />} text="Replace Part" />
-          <CustomButton variant="red" layout="iconFirst" icon={<DeleteOutlined />} text="Remove" />
+          <CustomButton variant="red" layout="iconFirst" icon={<DeleteOutlined />} text="Remove" onClick={() => handleDeleteGroupPartById(record.id)} />
         </Space>
       ),
     },
