@@ -44,13 +44,14 @@ const PartAssemblerGroup: React.FC = () => {
   const [isAddPartModalVisible, setAddPartModalVisible] = useState(false);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
 
+  console.log("selectedGroupId:", selectedGroupId);
+  
   const showEditModal = () => setEditModalVisible(true);
   const handleCancel = () => setEditModalVisible(false);
 
   const showCreatePartModal = () => setCreatePartModalVisible(true);
   const handleCreatePartCancel = () => setCreatePartModalVisible(false);
 
-  const showAddPartModal = () => setAddPartModalVisible(true);
   const handleAddPartCancel = () => setAddPartModalVisible(false);
 
   const handleDeleteGroupPartById = async (groupPartId: string) => {
@@ -87,12 +88,12 @@ const PartAssemblerGroup: React.FC = () => {
     {
       title: 'Version',
       key: 'version',
-      render: (_: any, record: any) => record.part?.version_code
+      render: (_: any, record: any) => record.version?.version_code
     },
     {
-      title: 'Publish Version',
-      dataIndex: 'publish_version',
-      key: 'publish_version',
+      title: 'Published Version',
+      dataIndex: 'published_version',
+      render: (_: any, record: any) => record.part?.selected_version?.version_code
     },
     {
       title: 'Name',
@@ -124,8 +125,6 @@ const PartAssemblerGroup: React.FC = () => {
       ),
     },
   ];
-
-  console.log("hfjhjf", partGroups?.[0].groupParts)
 
   return (
     <>
@@ -241,7 +240,7 @@ const PartAssemblerGroup: React.FC = () => {
       >
         {selectedGroupId &&
           <Addpart
-            groupId={selectedGroupId as string}
+            groupId={selectedGroupId}
             activeTab='part-assembler'
             onSuccess={() => {
               refetch();
