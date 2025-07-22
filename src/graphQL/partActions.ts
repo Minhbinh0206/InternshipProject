@@ -58,3 +58,9 @@ export const UPDATE_GROUP = gql`
   }
 `;
 
+export const DELETE_GROUP_PART_BY_ID = gql`
+  mutation DeleteGroupPartById($id: Int!) {
+    deleteGroupPartById(id: $id) 
+}
+`;
+

@@ -106,7 +106,6 @@ const Addpart: React.FC<AddpartProps> = ({ groupId, onSuccess, activeTab }) => {
             (type === "" || part.type === type)
     );
 
-
     const handleSearch = () => {
     };
 
