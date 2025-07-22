@@ -73,7 +73,6 @@ const ModifyPart: React.FC = () => {
     { key: 'code-builder', label: 'Code Builder', icon: <EditOutlined /> },
     { key: 'assembly-outcomes', label: 'Assembly Outcomes', icon: <CheckCircleOutlined /> },
     { key: 'compatible', label: 'Part compatible', icon: <QuestionOutlined /> },
-    { key: 'edit', label: 'Revision & Version', icon: <EditOutlined /> },
   ];
 
   return (

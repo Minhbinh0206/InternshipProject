@@ -16,3 +16,9 @@ export const UPDATE_PART = gql`
     }
   }
 `;
+
+export const DELETE_VERSION = gql`
+    mutation deleteDraftVersion($id: ID!) {
+        deleteDraftVersion(version_id: $id)
+    }
+`;
