@@ -12,7 +12,7 @@ import { ADD_PART_TO_GROUP } from "../../../graphQL/partActions";
 interface AddpartProps {
     groupId: string;
     onSuccess?: () => void;
-    activeTab: string ;
+    activeTab: string;
 }
 
 const { Title } = Typography;
@@ -29,7 +29,7 @@ const Addpart: React.FC<AddpartProps> = ({ groupId, onSuccess, activeTab }) => {
     if (loading) return <p>Đang tải...</p>;
     if (error) return <p>Lỗi tải dữ liệu</p>;
 
-    console.log("fgffg",data);
+    console.log("fgffg", data);
     // Lấy ds part publish
     // const partList = data.parts.flatMap((part: any) =>
     //     part.revisions.flatMap((revision: any) =>
@@ -82,7 +82,7 @@ const Addpart: React.FC<AddpartProps> = ({ groupId, onSuccess, activeTab }) => {
             code: version.code ?? "",
             type: version.type?.name ?? "",
         };
-        
+
     }).filter(Boolean);
 
     console.log('1111111', partList);
@@ -142,7 +142,7 @@ const Addpart: React.FC<AddpartProps> = ({ groupId, onSuccess, activeTab }) => {
             message.error("Lỗi khi thêm part vào group.");
         }
         activeTab = 'part-assembler'
-        window.location.reload(); 
+        window.location.reload();
     };
 
     return (
