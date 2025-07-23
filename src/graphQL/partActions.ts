@@ -27,6 +27,13 @@ export const UPDATE_VERSION_STATUS = gql`
   }
 `;
 
+export const DELETE_PART = gql`
+  mutation DeletePart($id: ID!) {
+    deletePart(id: $id)
+  }
+`;
+
+
 export const CREATE_REVISION = gql`
   mutation createRevision($id: ID!) {
     createRevision(id: $id) {

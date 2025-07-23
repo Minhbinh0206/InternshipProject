@@ -17,8 +17,8 @@ interface AddpartProps {
 
 const { Title } = Typography;
 
-const Addpart: React.FC<AddpartProps> = ({ groupId, onSuccess, activeTab }) => {
-    const { loading, error, data } = useQuery(GET_PUBLISHED_PART, {
+const Addpart: React.FC<AddpartProps> = ({ groupId, onSuccess }) => {
+    const { loading, error, data, refetch } = useQuery(GET_PUBLISHED_PART, {
         variables: { groupId: groupId },
     });
     const [addPartToGroup] = useMutation(ADD_PART_TO_GROUP);
@@ -136,12 +136,12 @@ const Addpart: React.FC<AddpartProps> = ({ groupId, onSuccess, activeTab }) => {
             const { data } = await addPartToGroup({ variables: { input } });
             console.log("Thêm thành công:", data.addPartToGroup);
             message.success("Thêm part vào group thành công!");
+            await refetch();
             onSuccess?.();
+
         } catch (err) {
             message.error("Lỗi khi thêm part vào group.");
         }
-        activeTab = 'part-assembler'
-        window.location.reload();
     };
 
     return (

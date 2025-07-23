@@ -38,6 +38,24 @@ export const GET_PART_BY_ID = gql`
   query GetPartById($id: ID!) {
     getPartById(id: $id) {
       id
+      selected_version {
+          id
+          status
+          version_code
+          description
+          code
+          enable_assembly_groups
+          type {
+            id
+            name
+          }
+          name
+          additional_fields {
+            name
+            value
+            type_group
+          }
+        }
       revisions {
         id
         revision_code

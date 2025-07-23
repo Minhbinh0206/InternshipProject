@@ -8,8 +8,9 @@ import CustomSwitch from '../../components/common/CustomSwitch/CustomSwitch';
 import CustomButton from '../../components/common/CustomButton/CustomButton';
 import type PartType from '../../types/partType';
 import { useQuery } from '@apollo/client';
-import { GET_PART_TYPES } from '../../graphQL/partQueries';
-
+import { GET_PART_TYPES, GET_PARTS } from '../../graphQL/partQueries';
+import { useParams, useNavigate } from 'react-router-dom';
+import { GET_PART_BY_ID } from '../../graphQL/partQueries';
 import type ActiveBarItem from '../../types/activeBarItem';
 import { useMutation } from '@apollo/client';
 import { CREATE_PART } from '../../graphQL/partActions';
@@ -33,6 +34,17 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId }) 
     const [checkedKeys, setCheckedKeys] = useState<string[]>([]);
     const [selectedFields, setSelectedFields] = useState<string[]>([]);
     const [selectedPartTypeId, setSelectedPartTypeId] = useState<string>('1');
+    const [originalCustomerCode, setOriginalCustomerCode] = useState<string | null>(null);
+    const { data: allPartsData } = useQuery(GET_PARTS);
+
+    const [inputValue, setInputValue] = useState<string>('');
+    const { id } = useParams<{ id?: string }>();
+    const navigate = useNavigate();
+
+    const { data: partData } = useQuery(GET_PART_BY_ID, {
+        variables: { id },
+        skip: !id,
+    });
 
     const fetchedPartTypes: PartType[] =
         typeData?.types?.map((t: any) => ({
@@ -46,11 +58,65 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId }) 
 
     const [form] = Form.useForm();
 
+    useEffect(() => {
+        if (id && partData?.getPartById) {
+            const part = partData.getPartById;
+            const version = part.selected_version;
+
+            console.log('Part data:', part);
+
+            setOriginalCustomerCode(version.code);
+            setSelectedPartTypeId(part.selected_version.type.id);
+
+            // Set form values
+            form.setFieldsValue({
+                name: version.name,
+                customerCode: version.code,
+                typeId: version.type.id,
+                description: version.description,
+                ...version.additional_fields?.reduce((acc: any, field: any) => {
+                    acc[field.name] = field.value;
+                    return acc;
+                }, {}),
+                enable_assembly_groups: version.enable_assembly_groups,
+            });
+
+            // Cập nhật type liên quan
+            setSelectedPartType(part.selected_version.type.name);
+            setChecked(part.selected_version.enable_assembly_groups);
+
+            // Cập nhật các custom field
+            setSelectedFields(
+                version.additional_fields
+                    ?.filter((f: any) => f.type_group === 'custom')
+                    .map((f: any) => f.name) || []
+            );
+        }
+    }, [partData, id]);
+
     const partTypeFieldConfig: Record<string, string[]> = {
         Led: ['LED Part No', 'Colour Temperature (K)'],
         'Optic set': ['LOR', 'Primary Beam Angle'],
         Engine: ['LED Lifetime', 'Maximum Drive Current (mA)', 'Minimum Drive Current (mA)'],
     };
+
+    useEffect(() => {
+        if (partData?.getPartById?.selected_version?.code && inputValue === '') {
+            setInputValue(partData?.getPartById?.selected_version?.code);
+        }
+        console.log('Part data updated:', partData?.getPartById?.selected_version?.code);
+        console.log('value:', inputValue);
+
+    }, [partData]);
+
+    const isDuplicateCode = useMemo(() => {
+        if (!inputValue || !allPartsData?.parts) return false;
+
+        return allPartsData.parts.some(
+            (part: any) => part.code === inputValue
+        );
+    }, [inputValue, allPartsData]);
+
 
     const requiredFields = useMemo(() => {
         const baseFields = ['name', 'customerCode'];
@@ -134,8 +200,8 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId }) 
                     })),
                 enable_assembly_groups: isChecked,
             };
-            
-            console.log(input.additional_fields);
+
+            console.log(input);
 
             const { data } = await createPart({ variables: { input } });
             const createdPart = data?.createPart;
@@ -154,7 +220,9 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId }) 
                     }
                 });
                 console.log('✅ Part added to group');
-            }            
+            }
+
+            navigate(`/parts/modify/${createdPart.id}`);
 
             createModalVisible(false);
             form.resetFields();
@@ -163,14 +231,11 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId }) 
         }
     };
 
-
     useEffect(() => {
         if (selectedPartType === 'Luminaire') {
             setChecked(true);
         }
     }, [selectedPartType]);
-
-    console.log('enable', isChecked);
 
     const handleAcceptModal = () => {
         setSelectedFields(prev =>
@@ -183,27 +248,51 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId }) 
 
     return (
         <>
-            <PageHeader
-                title="Create new part"
-                breadcrumbs={
-                    [
-                        { title: '', href: '/', icon: <HomeOutlined /> },
-                        { title: 'Parts', href: '/parts' },
-                        { title: 'Create new part' }
-                    ]}
-                tabs={tabs}
-                activeKey={activeKey}
-                onTabChange={setActiveKey}
-                mode={mode}
-                partTypes={fetchedPartTypes}
-                selectedPartType={typeLoading ? '...' : selectedPartType}
-                onSelectPartType={(typeName) => {
-                    setSelectedPartType(typeName);
-                    const found = fetchedPartTypes.find(t => t.value === typeName);
-                    setSelectedPartTypeId(found?.id ?? '1');
-                }}
+            {
+                id ? (
+                    <PageHeader
+                        title="Duplicate part"
+                        breadcrumbs={
+                            [
+                                { title: '', href: '/', icon: <HomeOutlined /> },
+                                { title: 'Parts', href: '/parts' },
+                                { title: 'Duplicate part' }
+                            ]}
+                        activeKey={activeKey}
+                        onTabChange={setActiveKey}
+                        mode={'modify'}
+                        partTypes={fetchedPartTypes}
+                        selectedPartType={typeLoading ? '...' : selectedPartType}
+                        onSelectPartType={(typeName) => {
+                            setSelectedPartType(typeName);
+                            const found = fetchedPartTypes.find(t => t.value === typeName);
+                            setSelectedPartTypeId(found?.id ?? '1');
+                        }}
 
-            />
+                    />
+                ) : (
+                    <PageHeader
+                        title="Create new part"
+                        breadcrumbs={
+                            [
+                                { title: '', href: '/', icon: <HomeOutlined /> },
+                                { title: 'Parts', href: '/parts' },
+                                { title: 'Create new part' }
+                            ]}
+                        activeKey={activeKey}
+                        onTabChange={setActiveKey}
+                        mode={mode}
+                        partTypes={fetchedPartTypes}
+                        selectedPartType={typeLoading ? '...' : selectedPartType}
+                        onSelectPartType={(typeName) => {
+                            setSelectedPartType(typeName);
+                            const found = fetchedPartTypes.find(t => t.value === typeName);
+                            setSelectedPartTypeId(found?.id ?? '1');
+                        }}
+
+                    />
+                )
+            }
 
             <Form form={form}>
                 {/* ---------- STANDARD PROPERTIES ---------- */}
@@ -223,7 +312,7 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId }) 
                                 {selectedPartType === 'Luminaire' ? (
                                     <CustomSwitch checked={isChecked} onChange={() => { }} disabled />
                                 ) : (
-                                    <CustomSwitch checked={isChecked} onChange={() => setChecked(!isChecked)} />
+                                    <CustomSwitch checked={isChecked} onChange={() => setChecked(!isChecked)} disabled={!!id} />
                                 )}
                             </Col>
                         </Row>
@@ -231,29 +320,45 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId }) 
 
                     <Row gutter={24} align="top">
                         <Col span={12}>
-                            <Form.Item label="Customer Order Code" name="customerCode" rules={[{ required: true }]} validateTrigger="onSubmit">
-                                <Input placeholder="Enter unique code" />
+                            <Form.Item
+                                label="Customer Order Code"
+                                name="customerCode"
+                                validateStatus={
+                                    isDuplicateCode ? 'error' : undefined
+                                }
+                                help={
+                                    isDuplicateCode
+                                        ? 'Value must be different from original part code'
+                                        : undefined
+                                }
+                                hasFeedback
+                                rules={[{ required: true, message: 'Please input the customer order code!' }]}
+                            >
+                                <Input
+                                    value={inputValue}
+                                    onChange={(e) => setInputValue(e.target.value)}
+                                />
                             </Form.Item>
                         </Col>
                         <Col span={12}>
                             <Form.Item label="Description" name="description">
-                                <Input placeholder="Description" />
+                                <Input placeholder="Description" disabled={!!id} />
                             </Form.Item>
                         </Col>
                     </Row>
 
                     <Form.Item label="Name" name="name" rules={[{ required: true }]} validateTrigger="onSubmit">
-                        <Input placeholder="Part name" />
+                        <Input placeholder="Part name" disabled={!!id} />
                     </Form.Item>
 
                     {selectedPartType === 'Optic set' ? (
                         <>
                             <Form.Item label="LOR" name="LOR" rules={[{ required: true }]} validateTrigger="onSubmit">
-                                <Input placeholder="Enter LOR" />
+                                <Input placeholder="Enter LOR" disabled={!!id} />
                             </Form.Item>
 
                             <Form.Item label="Primary Beam Angle" name="Primary Beam Angle" rules={[{ required: true }]} validateTrigger="onSubmit">
-                                <Input placeholder="Enter primary beam angle" />
+                                <Input placeholder="Enter primary beam angle" disabled={!!id} />
                             </Form.Item>
                         </>
                     ) : selectedPartType === 'Led' ? (
@@ -261,7 +366,7 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId }) 
                             <Row gutter={20} align="top">
                                 <Col span={5}>
                                     <Form.Item label="Colour Temperature (K)" name="Colour Temperature (K)" rules={[{ required: true }]} validateTrigger="onSubmit">
-                                        <Select defaultValue="30000K" onChange={(value) => console.log(value)}>
+                                        <Select defaultValue="30000K" onChange={(value) => console.log(value)} disabled={!!id}>
                                             <Option value="27000K">2700K</Option>
                                             <Option value="30000K">3000K</Option>
                                             <Option value="40000K">4000K</Option>
@@ -270,7 +375,7 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId }) 
                                 </Col>
                                 <Col span={19}>
                                     <Form.Item label="LED Part No" name="LED Part No" rules={[{ required: true }]} validateTrigger="onSubmit">
-                                        <Input placeholder="..." />
+                                        <Input placeholder="..." disabled={!!id} />
                                     </Form.Item>
                                 </Col>
                             </Row>
@@ -278,15 +383,15 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId }) 
                     ) : selectedPartType === 'Engine' ? (
                         <>
                             <Form.Item label="LED Lifetime" name="LED Lifetime">
-                                <Input placeholder="..." />
+                                <Input placeholder="..." disabled={!!id} />
                             </Form.Item>
 
                             <Form.Item label="Maximum Drive Current (mA)" name="Maximum Drive Current (mA)">
-                                <Input placeholder="..." />
+                                <Input placeholder="..." disabled={!!id} />
                             </Form.Item>
 
                             <Form.Item label="Minimum Drive Current (mA)" name="Minimum Drive Current (mA)">
-                                <Input placeholder="..." />
+                                <Input placeholder="..." disabled={!!id} />
                             </Form.Item>
                         </>
                     ) : (
@@ -319,13 +424,13 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId }) 
                                     name={fieldKey}
                                 >
                                     {fieldKey === 'finish' ? (
-                                        <Select placeholder="Select Finish" defaultValue='Black'>
+                                        <Select placeholder="Select Finish" defaultValue='Black' disabled={!!id}>
                                             <Option value="B">Black</Option>
                                             <Option value="R">Red</Option>
                                             <Option value="Y">Yellow</Option>
                                         </Select>
                                     ) : (
-                                        <Input placeholder={`Enter ${fieldKey}`} />
+                                        <Input placeholder={`Enter ${fieldKey}`} disabled={!!id} />
                                     )}
                                 </Form.Item>
                             </Col>
@@ -335,24 +440,28 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId }) 
 
                 </div>
             </Form>
-            <div style={{ textAlign: 'start', margin: 30 }}>
 
-                <CustomButton
-                    variant='white'
-                    layout='iconFirst'
-                    icon={<PlusOutlined />}
-                    text='Manage Properties'
-                    onClick={() => setIsModalVisible(true)}
-                />
-            </div>
+            {
+                !id && (
+                    <div style={{ textAlign: 'start', margin: 30 }}>
+                        <CustomButton
+                            variant='white'
+                            layout='iconFirst'
+                            icon={<PlusOutlined />}
+                            text='Manage Properties'
+                            onClick={() => setIsModalVisible(true)}
+                        />
+                    </div>
+                )
+            }
 
             <div style={{ textAlign: 'start', margin: 30 }}>
                 <CustomButton
                     variant='blue'
-                    text='Create Part'
+                    text={id ? 'Duplicate Part' : 'Create Part'}
                     layout='noIcon'
                     onClick={handleCreate}
-                    disabled={isCreateDisabled}
+                    disabled={!!(isCreateDisabled || isDuplicateCode)}
                 />
             </div>
 
