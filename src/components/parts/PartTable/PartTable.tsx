@@ -1,20 +1,20 @@
 import React from "react";
-import { useQuery } from "@apollo/client";
+import { useMutation, useQuery } from "@apollo/client";
 import { SettingOutlined, EditOutlined, DeleteOutlined, CopyOutlined } from "@ant-design/icons";
 import CustomButton from "../../common/CustomButton/CustomButton";
 import { useNavigate } from "react-router-dom";
 import { GET_PARTS } from "../../../graphQL/partQueries";
+import { DELETE_PART } from "../../../graphQL/partActions";
 import "./PartTable.css";
 
 const PartTable: React.FC = () => {
   const navigate = useNavigate();
+  const [deletePartMutation] = useMutation(DELETE_PART, {
+    refetchQueries: [{ query: GET_PARTS }],
+  });
   const { loading, error, data } = useQuery(GET_PARTS);
   if (loading) return <p>Đang tải...</p>;
   if (error) return <p>Lỗi tải dữ liệu</p>;
-
-  const handleView = (part: { id: number; revisionId?: number; versionId?: number }) => {
-    navigate(`/parts/modify/${part.id}/${part.revisionId ?? 3}/${part.versionId ?? "3.0"}`);
-  };
 
   const partList = data.parts.map((part: any) => {
     let allVersions: any[] = [];
@@ -42,12 +42,31 @@ const PartTable: React.FC = () => {
     };
   }).filter(Boolean);
 
-   console.log(JSON.stringify(data.parts, null, 2));
+  const handleDelete = async (partId: number) => {
+    const confirmed = window.confirm("Are you sure you want to delete this part?");
+    if (!confirmed) return;
+
+    try {
+      await deletePartMutation({
+        variables: { id: partId },
+      });
+      console.log(`Deleted part with ID: ${partId}`);
+    } catch (error) {
+      console.error("Error deleting part:", error);
+      alert("Failed to delete part.");
+    }
+  };
 
   const handleEdit = (part: { id: number; revisionId?: number; versionId?: number; name: string; type: string; code: string; }) => {
     navigate(
       `/parts/modify/${part.id}`,
       { state: { name: part.name, type: part.type, code: part.code, id: part.id } }
+    );
+  };
+
+  const handleDuplicate = (part: { id: number }) => {
+    navigate(
+      `/parts/duplicate/${part.id}`,
     );
   };
 
@@ -84,10 +103,25 @@ const PartTable: React.FC = () => {
                 icon={<EditOutlined />}
                 text="Edit"
                 style={{ marginRight: 10 }}
-                onClick={() => handleEdit(part)}  
+                onClick={() => handleEdit(part)}
               />
-              <CustomButton variant="red" layout="iconFirst" icon={<DeleteOutlined />} text="Delete" style={{ marginRight: 10 }} />
-              <CustomButton variant="white" layout="iconFirst" icon={<CopyOutlined />} text="Duplicate" />
+
+              <CustomButton
+                variant="red"
+                layout="iconFirst"
+                icon={<DeleteOutlined />}
+                text="Delete"
+                style={{ marginRight: 10 }}
+                onClick={() => handleDelete(part.id)}
+              />
+
+              <CustomButton
+                variant="white"
+                layout="iconFirst"
+                icon={<CopyOutlined />}
+                text="Duplicate"
+                onClick={() => handleDuplicate(part)}
+              />
             </td>
           </tr>
         ))}

@@ -20,3 +20,18 @@ export const GET_VERSION_BY_ID = gql`
     }
   }
 `;
+
+export const GET_VERSION_BY_CODE = gql`
+  query GetVersionByVersionCode($input: GetVerisionByVersionCodeInput!) {
+    getVerisionByVersionCode(input: $input) {
+      id
+      name
+      code
+      version_code
+      type {
+        name
+      }
+      status
+    }
+  }
+`;

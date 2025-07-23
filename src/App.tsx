@@ -17,9 +17,10 @@ function App() {
         <Routes>
           <Route path="/" element={<PartList />} />
           <Route path="/parts" element={<PartList />} />
-          <Route path="/parts/create" element={<CreatePart />} />
+          <Route path="/parts/create" element={<CreatePart createModalVisible={(visible) => console.log(visible)} />} />
+          <Route path="/parts/duplicate/:id" element={<CreatePart createModalVisible={(visible) => console.log(visible)} />} />
           <Route path="/parts/modify/:id" element={<ModifyPart />} />
-          <Route path="/parts/modify/:id/:revisionId" element={<ModifyPart />} />
+          <Route path="/parts/modify/:id/:revisionId/:versionCode" element={<ModifyPart />} />
         </Routes>
       </BrowserRouter>
     </ApolloProvider>

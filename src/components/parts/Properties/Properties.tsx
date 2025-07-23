@@ -394,14 +394,6 @@ const Properties: React.FC<PropertiesProps> = ({ code, partType }) => {
         />
       </div>
 
-      <div style={{ textAlign: 'start', margin: 30 }}>
-        <CustomButton
-          variant='blue'
-          text='Confirm'
-          onClick={handleConfirmEdit}
-        />
-      </div>
-
       <Modal
         title={<span className="modal-title">Manage properties</span>}
         open={isModalVisible}

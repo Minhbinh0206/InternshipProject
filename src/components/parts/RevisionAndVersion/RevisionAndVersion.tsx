@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, version } from 'react';
 import { Table, Typography, Space, Tag, Tooltip, Modal, message } from 'antd';
 import {
     EditOutlined,
@@ -34,16 +34,17 @@ const RevisionAndVersion: React.FC = () => {
     const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
     const part = data?.getPartById;
 
-    if (!part) return <p>Part not found.</p>;
+    if (!part) return <p>Loading part</p>;
     if (!part.revisions?.length) return <p>No revisions available.</p>;
 
-    const handleView = (part: { id: number; revisionId?: number; versionId?: number; version: string; type: string; code: string; name: string }) => {
+    const handleView = (part: { id: number; revisionId?: number; versionId?: number; versionCode: string; type: string; code: string; name: string }) => {
         navigate(
-            `/parts/modify/${part.id}/${part.revisionId}/?versionId=${part.versionId}`,
+            `/parts/modify/${part.id}/${part.revisionId}/${part.versionCode}`,
             {
                 replace: true,
                 state: {
                     partId: part.id,
+                    versionCode: part.versionCode,
                     versionId: part.versionId,
                     name: part.name,
                     code: part.code,
@@ -130,7 +131,7 @@ const RevisionAndVersion: React.FC = () => {
                                 id: part.id,
                                 revisionId: record.key,
                                 versionId: record.latestVersion?.id,
-                                version: record.version,
+                                versionCode: record.version,
                                 type: record.latestVersion?.type.name,
                                 code: record.latestVersion?.code,
                                 name: record.latestVersion?.name
@@ -326,7 +327,7 @@ const RevisionAndVersion: React.FC = () => {
                                                             id: part.id,
                                                             revisionId: item.key,
                                                             versionId: record.key,
-                                                            version: record.version,
+                                                            versionCode: record.version,
                                                             type: record.type,
                                                             code: record.code,
                                                             name: record.name

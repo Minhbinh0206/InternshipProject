@@ -45,7 +45,7 @@ const PartAssemblerGroup: React.FC = () => {
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
 
   console.log("selectedGroupId:", selectedGroupId);
-  
+
   const showEditModal = () => setEditModalVisible(true);
   const handleCancel = () => setEditModalVisible(false);
 
@@ -56,14 +56,15 @@ const PartAssemblerGroup: React.FC = () => {
 
   const handleDeleteGroupPartById = async (groupPartId: string) => {
     const confirm = window.confirm("Co chac chan muon xoa part khoi group?");
-    if(!confirm) return;
+    if (!confirm) return;
 
-    try{
-      const { data } = await deleteGroupPartById({ 
-        variables: { id: parseInt(groupPartId) } }
+    try {
+      const { data } = await deleteGroupPartById({
+        variables: { id: parseInt(groupPartId) }
+      }
       );
 
-      if(data?.deleteGroupPartById) {
+      if (data?.deleteGroupPartById) {
         alert("Xoa thanh cong");
         refetch();
       } else {
@@ -115,7 +116,7 @@ const PartAssemblerGroup: React.FC = () => {
     {
       title: <SettingOutlined style={{ float: "right" }} />,
       key: 'action',
-      render: (_:any, record: any) => (
+      render: (_: any, record: any) => (
         <Space size="small" style={{ float: "right" }}>
           <CustomButton variant="blue" layout="iconFirst" icon={<EditOutlined />} text="Edit original" />
           <CustomButton variant="blue" layout="iconFirst" icon={<DoubleRightOutlined />} text="Quick edit" />
@@ -243,9 +244,9 @@ const PartAssemblerGroup: React.FC = () => {
             groupId={selectedGroupId}
             activeTab='part-assembler'
             onSuccess={() => {
-              refetch();
-              // handleAddPartCancel();
-              setSelectedGroupId(null);
+              refetch();                          
+              setAddPartModalVisible(false);  
+              setSelectedGroupId(null);          
             }}
           />}
 

@@ -5,8 +5,6 @@ import {
   EditOutlined,
   FileTextOutlined,
   HomeOutlined,
-  QuestionOutlined,
-  SearchOutlined,
   SettingOutlined
 } from '@ant-design/icons';
 import PageHeader from '../../components/layout/PageHeader/PageHeader';
@@ -14,13 +12,13 @@ import CodeBuilder from '../../components/parts/CodeBuilder/CodeBuilder';
 import PartAssemblerGroup from '../../components/parts/PartAssemblerGroup/PartAssemblerGroup';
 import AssemblyOutcomes from '../../components/parts/AssemblyOutcome/AssemblyOutcomes';
 import Properties from '../../components/parts/Properties/Properties';
-import { useLocation, useParams, useSearchParams } from 'react-router-dom';
 import RevisionAndVersion from '../../components/parts/RevisionAndVersion/RevisionAndVersion';
-import {
-  GET_PART_BY_ID,
-  GET_PART_ENABLE_BY_ID,
-} from "../../graphQL/partQueries";
+
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useQuery } from '@apollo/client';
+
+import { GET_PART_BY_ID } from '../../graphQL/partQueries';
+import { GET_VERSION_BY_CODE } from '../../graphQL/versionQueries';
 
 export interface ActiveBarItem {
   key: string;
@@ -29,66 +27,87 @@ export interface ActiveBarItem {
 }
 
 const ModifyPart: React.FC = () => {
-  const [searchParams] = useSearchParams();
   const [activeKey, setActiveKey] = useState<string>('properties');
-  const [versionId, setVersionId] = useState<string | null>(null);
+  const navigate = useNavigate();
+  const { id, revisionId, versionCode } = useParams<{
+    id: string;
+    revisionId?: string;
+    versionCode?: string;
+  }>();
 
-  const { id } = useParams();
-  const location = useLocation();
-  const state = location.state as { name?: string; type?: string; code?: string } | null;
+  console.log(`ModifyPart: id=${id}, revisionId=${revisionId}, versionCode=${versionCode}`);
 
-  const { data: enableData } = useQuery(GET_PART_ENABLE_BY_ID, {
-    variables: { partId: id },
+  // Get Part by ID
+  const { data: partData, loading: partLoading } = useQuery(GET_PART_BY_ID, {
+    variables: { id },
     skip: !id,
   });
 
-  const versionDetails = enableData?.getLatestVersion;
-  const enable = versionDetails?.enable_assembly_groups;
-  const versionCode = versionDetails?.version_code || '';
-  const versionStatus = versionDetails?.status || '';
+  const part = partData?.getPartById;
+  const selectedVersion = part?.selected_version;
 
-  const versionLabel = versionCode && versionStatus
-    ? `${versionCode} (${versionStatus})`
-    : versionId;
+  // Get version data by versionCode (if exists)
+  const { data: versionData, loading: versionLoading } = useQuery(GET_VERSION_BY_CODE, {
+    variables: {
+      input: {
+        partId: Number(id),
+        revisionId: Number(revisionId),
+        versionCode: versionCode,
+      },
+    },
+    skip: !id || !revisionId || !versionCode,
+  });
 
-  const { data } = useQuery(GET_PART_BY_ID, { variables: { id } });
-  const part = data?.getPartById;
+  const version = versionData?.getVerisionByVersionCode;
 
-  const partName = state?.name || part?.name || 'Unknown';
-  const partCode = state?.code || part?.code || '';
-  const partType = state?.type || part?.type || '';
+  // Prefer data from versionCode if available
+  const partCode = versionCode ? version?.code || '' : selectedVersion?.code || '';
+  const partType = versionCode ? version?.type?.name || '' : selectedVersion?.type?.name || '';
+  const versionLabel = version?.version_code && version?.status
+    ? `${version.version_code} (${version.status})`
+    : version?.version_code || versionCode;
 
-  // Lấy versionId từ query string
-  useEffect(() => {
-    const currentVersionId = searchParams.get("versionId");
-    setVersionId(currentVersionId);
-  }, [searchParams]);
+  const enable = version?.enable_assembly_groups;
 
   const tabs: ActiveBarItem[] = [
     { key: 'properties', label: 'Properties', icon: <FileTextOutlined /> },
-    { key: 'raw-data', label: 'Part raw data', icon: <SearchOutlined /> },
     { key: 'assembler', label: 'Part assembler', icon: <BarsOutlined /> },
     { key: 'outcome-settings', label: 'Outcome settings', icon: <SettingOutlined /> },
-    { key: 'supply', label: 'Supply chain', icon: <QuestionOutlined /> },
     { key: 'code-builder', label: 'Code Builder', icon: <EditOutlined /> },
     { key: 'assembly-outcomes', label: 'Assembly Outcomes', icon: <CheckCircleOutlined /> },
-    { key: 'compatible', label: 'Part compatible', icon: <QuestionOutlined /> },
   ];
+
+  const location = useLocation();
+
+  useEffect(() => {
+    return () => {
+      if (location.pathname === `/parts/modify/${id}/${revisionId}/${versionCode}`) {
+        const nextPath = `/parts/modify/${id}`;
+        setTimeout(() => {
+          navigate(nextPath, { replace: true });
+        }, 0);
+      }
+    };
+  }, [location]);
+
+  if (partLoading || (versionCode && versionLoading)) {
+    return <div>Loading...</div>;
+  }
 
   return (
     <div style={{ flex: 1 }}>
-      {!searchParams.get("versionId") ? (
+      {!versionCode ? (
         <>
           <PageHeader
-            title={partName}
+            title={partCode}
             breadcrumbs={[
               { title: '', href: '/', icon: <HomeOutlined /> },
               { title: 'Parts', href: '/parts' },
-              { title: `Modify`, href: '/parts/modify' },
-              { title: partName, href: `/${partName}` }
+              { title: 'Modify', href: '/parts/modify' },
+              { title: partCode, href: `/${partCode}` }
             ]}
             onTabChange={setActiveKey}
-            mode='read-only'
+            mode="read-only"
             selectedPartType={partType}
             code={partCode}
           />
@@ -97,31 +116,32 @@ const ModifyPart: React.FC = () => {
       ) : (
         <>
           <PageHeader
-            title={`Modify Part - ${partName}`}
+            title={`Modify Part - ${partCode}`}
             breadcrumbs={[
               { title: '', href: '/', icon: <HomeOutlined /> },
               { title: 'Parts', href: '/parts' },
-              { title: 'Modify', href: '/modifies' },
-              { title: partName, href: `/${partName}` },
-              { title: versionLabel, href: `/${versionId}` },
+              { title: 'Modify', href: '/parts/modify' },
+              { title: partCode, href: `/parts/${id}` },
+              {
+                title: versionLabel,
+                href: `/parts/modify/${id}/${revisionId}/${versionCode}`,
+              },
             ]}
             tabs={tabs}
             activeKey={activeKey}
             onTabChange={setActiveKey}
-            mode='modify'
+            mode="modify"
             selectedPartType={partType}
           />
-          {
-            activeKey === 'properties' ? (
-              <Properties code={partCode} partType={partType} />
-            ) : activeKey === 'code-builder' ? (
-              <CodeBuilder />
-            ) : activeKey === 'assembler' ? (
-              enable && <PartAssemblerGroup />
-            ) : activeKey === 'assembly-outcomes' ? (
-              <AssemblyOutcomes />
-            ) : null
-          }
+          {activeKey === 'properties' ? (
+            <Properties code={partCode} partType={partType} />
+          ) : activeKey === 'code-builder' ? (
+            <CodeBuilder />
+          ) : activeKey === 'assembler' ? (
+            enable && <PartAssemblerGroup />
+          ) : activeKey === 'assembly-outcomes' ? (
+            <AssemblyOutcomes />
+          ) : null}
         </>
       )}
     </div>
