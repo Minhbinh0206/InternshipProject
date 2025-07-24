@@ -23,19 +23,19 @@ function useQueryParams() {
   return new URLSearchParams(useLocation().search);
 }
 
-const PartAssemblerGroup: React.FC = () => {
-  const query = useQueryParams();
-  const versionId = query.get('versionId');
+interface PartAssemblerGroupProps {
+  versionId?: string;
+}
 
-  console.log(versionId);
+const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) => {
+
+  console.log(`PartAssemblerGroup: versionId=${versionId}`);
+
   const { data, loading, error, refetch } = useQuery(GET_GROUPS_BY_VERSIONID, {
     variables: { versionId },
   });
-
-  console.log("ghghghg", data);
-
+  
   const { data: partTypeData } = useQuery(GET_PART_TYPES);
-  console.log(partTypeData);
 
   const [deleteGroupPartById] = useMutation(DELETE_GROUP_PART_BY_ID);
 
@@ -54,15 +54,16 @@ const PartAssemblerGroup: React.FC = () => {
 
   const handleAddPartCancel = () => setAddPartModalVisible(false);
 
-  const handleDeleteGroupPartById = async (groupPartId: string) => {
+  const handleDeleteGroupPartById = async (partId: string) => {
+    console.log(`Deleting group part with ID part: ${partId}`);
+
     const confirm = window.confirm("Co chac chan muon xoa part khoi group?");
     if (!confirm) return;
 
     try {
       const { data } = await deleteGroupPartById({
-        variables: { id: parseInt(groupPartId) }
-      }
-      );
+        variables: { id: parseInt(partId) }
+      });
 
       if (data?.deleteGroupPartById) {
         alert("Xoa thanh cong");
@@ -121,7 +122,7 @@ const PartAssemblerGroup: React.FC = () => {
           <CustomButton variant="blue" layout="iconFirst" icon={<EditOutlined />} text="Edit original" />
           <CustomButton variant="blue" layout="iconFirst" icon={<DoubleRightOutlined />} text="Quick edit" />
           <CustomButton variant="blue" layout="iconFirst" icon={<ArrowsAltOutlined />} text="Replace Part" />
-          <CustomButton variant="red" layout="iconFirst" icon={<DeleteOutlined />} text="Remove" onClick={() => handleDeleteGroupPartById(record.id)} />
+          <CustomButton variant="red" layout="iconFirst" icon={<DeleteOutlined />} text="Remove" onClick={() => handleDeleteGroupPartById(record.part?.id)} />
         </Space>
       ),
     },
@@ -207,7 +208,6 @@ const PartAssemblerGroup: React.FC = () => {
               layout="iconFirst"
               icon={<PlusOutlined />}
               text="Add Part"
-              //onClick={showAddPartModal}
               onClick={() => {
                 setSelectedGroupId(group.id);
                 setAddPartModalVisible(true);

@@ -28,6 +28,13 @@ export const GET_VERSION_BY_CODE = gql`
       name
       code
       version_code
+      description
+      enable_assembly_groups
+      additional_fields {
+        name
+        value
+        type_group
+      }
       type {
         name
       }
