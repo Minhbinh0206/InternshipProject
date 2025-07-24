@@ -77,19 +77,6 @@ const ModifyPart: React.FC = () => {
     { key: 'assembly-outcomes', label: 'Assembly Outcomes', icon: <CheckCircleOutlined /> },
   ];
 
-  const location = useLocation();
-
-  useEffect(() => {
-    return () => {
-      if (location.pathname === `/parts/modify/${id}/${revisionId}/${versionCode}`) {
-        const nextPath = `/parts/modify/${id}`;
-        setTimeout(() => {
-          navigate(nextPath, { replace: true });
-        }, 0);
-      }
-    };
-  }, [location]);
-
   if (partLoading || (versionCode && versionLoading)) {
     return <div>Loading...</div>;
   }
@@ -134,11 +121,15 @@ const ModifyPart: React.FC = () => {
             selectedPartType={partType}
           />
           {activeKey === 'properties' ? (
-            <Properties code={partCode} partType={partType} />
+            <Properties
+              id={id || ''}
+              revisionId={revisionId || ''}
+              versionCode={versionCode || ''}
+            />
           ) : activeKey === 'code-builder' ? (
             <CodeBuilder />
           ) : activeKey === 'assembler' ? (
-            enable && <PartAssemblerGroup />
+            enable && <PartAssemblerGroup versionId={version.id}/>
           ) : activeKey === 'assembly-outcomes' ? (
             <AssemblyOutcomes />
           ) : null}

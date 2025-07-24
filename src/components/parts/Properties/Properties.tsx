@@ -6,15 +6,16 @@ import { useQuery, useMutation } from '@apollo/client';
 import { useSearchParams } from 'react-router-dom';
 import { UPDATE_PART } from '../../../graphQL/versionActions';
 import '../../../pages/CreatePart/CreatePart.css';
-import { GET_VERSION_BY_ID } from '../../../graphQL/versionQueries';
 import type PartType from '../../../types/partType';
 import { GET_PART_TYPES } from '../../../graphQL/partQueries';
+import { GET_VERSION_BY_CODE } from '../../../graphQL/versionQueries';
 
 const { Option } = Select;
 
 interface PropertiesProps {
-  code: string;
-  partType: string;
+  id: string;
+  revisionId: string;
+  versionCode: string;
 }
 
 interface Field {
@@ -22,7 +23,7 @@ interface Field {
   value: string;
 }
 
-const Properties: React.FC<PropertiesProps> = ({ code, partType }) => {
+const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) => {
   const [searchParams] = useSearchParams();
 
   const [form] = Form.useForm();
@@ -33,6 +34,21 @@ const Properties: React.FC<PropertiesProps> = ({ code, partType }) => {
   const [selectedFields, setSelectedFields] = useState<Field[]>([]);
   const [updatePart] = useMutation(UPDATE_PART);
 
+  // Get version data by versionCode (if exists)
+  const { data: versionData } = useQuery(GET_VERSION_BY_CODE, {
+    variables: {
+      input: {
+        partId: Number(id),
+        revisionId: Number(revisionId),
+        versionCode: versionCode,
+      },
+    },
+    skip: !id || !revisionId || !versionCode,
+  });
+
+  const version = versionData?.getVerisionByVersionCode;
+  const partType = version?.type?.name || '';
+
   const fetchedPartTypes: PartType[] =
     typeData?.types?.map((t: any) => ({
       id: t.id,
@@ -42,34 +58,9 @@ const Properties: React.FC<PropertiesProps> = ({ code, partType }) => {
     })) ?? [];
 
   useEffect(() => {
-    const currentVersionId = searchParams.get("versionId");
-    if (currentVersionId) {
-      setVersionId(Number(currentVersionId));
-    }
-  }, [searchParams]);
+    const fields = version?.additional_fields;
+    console.log('Fields from version:', fields);
 
-  const { data, loading, error } = useQuery(GET_VERSION_BY_ID, {
-    variables: { id: versionId },
-    skip: !versionId,
-  });
-
-  useEffect(() => {
-    console.log('versionId:', versionId);
-    console.log('loading:', loading);
-    console.log('error:', error);
-    console.log('versionData:', data);
-  }, [loading, error, data]);
-
-  useEffect(() => {
-    if (code) {
-      form.setFieldsValue({
-        code: code,
-      });
-    }
-  }, [code, form]);
-
-  useEffect(() => {
-    const fields = data?.getVersion?.additional_fields;
     if (fields && Array.isArray(fields)) {
       const transformed = fields.map((f: any) => ({
         key: f.name,
@@ -82,7 +73,7 @@ const Properties: React.FC<PropertiesProps> = ({ code, partType }) => {
       });
       form.setFieldsValue(initialValues);
     }
-  }, [data]);
+  }, [versionData]);
 
   const propertyGroups = [
     {
@@ -165,7 +156,6 @@ const Properties: React.FC<PropertiesProps> = ({ code, partType }) => {
     }
   };
 
-
   const handleAcceptModal = () => {
     const newFields: Field[] = checkedKeys
       .filter(key => !selectedFields.some(f => f.key === key))
@@ -176,30 +166,27 @@ const Properties: React.FC<PropertiesProps> = ({ code, partType }) => {
   };
 
   useEffect(() => {
-    const fields = data?.getVersion?.additional_fields;
-    const versionName = data?.getVersion?.name;
-    const description = data?.getVersion?.description;
+    if (versionData?.getVerisionByVersionCode) {
+      const version = versionData.getVerisionByVersionCode;
 
-    console.log(fields);
-
-    const initialValues: Record<string, string> = {};
-
-    if (fields && Array.isArray(fields)) {
-      fields.forEach(f => {
-        initialValues[f.name] = f.value;
+      form.setFieldsValue({
+        name: version.name,
+        code: version.code,
+        description: version.description,
+        ...version.additional_fields?.reduce((acc: any, field: any) => {
+          acc[field.name] = field.value;
+          return acc;
+        }, {}),
       });
-    }
 
-    if (versionName) {
-      initialValues.name = versionName;
-    }
+      const allFields: Field[] = version.additional_fields?.map((f: any) => ({
+        key: f.name,
+        value: f.value,
+      })) || [];
 
-    if (description) {
-      initialValues.description = description;
+      setSelectedFields(allFields);
     }
-
-    form.setFieldsValue(initialValues);
-  }, [data]);
+  }, [versionData]);
 
   return (
     <>
@@ -222,18 +209,18 @@ const Properties: React.FC<PropertiesProps> = ({ code, partType }) => {
                 rules={[{ required: true }]}
                 validateTrigger="onSubmit"
               >
-                <Input disabled value={code} />
+                <Input disabled />
               </Form.Item>
             </Col>
             <Col span={12}>
               <Form.Item label="Description" name="description">
-                <Input placeholder="Description" value={data?.getVersion?.des} />
+                <Input placeholder="Description" value={versionData?.getVersion?.des} />
               </Form.Item>
             </Col>
           </Row>
 
           <Form.Item label="Name" name="name" rules={[{ required: true }]} validateTrigger="onSubmit">
-            <Input placeholder="Part name" value={data?.getVersion?.name} />
+            <Input placeholder="Part name" value={versionData?.getVersion?.name} />
           </Form.Item>
 
 

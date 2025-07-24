@@ -131,7 +131,7 @@ const RevisionAndVersion: React.FC = () => {
                                 id: part.id,
                                 revisionId: record.key,
                                 versionId: record.latestVersion?.id,
-                                versionCode: record.version,
+                                versionCode: record.latestVersion?.version_code,
                                 type: record.latestVersion?.type.name,
                                 code: record.latestVersion?.code,
                                 name: record.latestVersion?.name
