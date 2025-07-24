@@ -37,22 +37,33 @@ const RevisionAndVersion: React.FC = () => {
     if (!part) return <p>Loading part</p>;
     if (!part.revisions?.length) return <p>No revisions available.</p>;
 
-    const handleView = (part: { id: number; revisionId?: number; versionId?: number; versionCode: string; type: string; code: string; name: string }) => {
-        navigate(
-            `/parts/modify/${part.id}/${part.revisionId}/${part.versionCode}`,
-            {
-                replace: true,
-                state: {
-                    partId: part.id,
-                    versionCode: part.versionCode,
-                    versionId: part.versionId,
-                    name: part.name,
-                    code: part.code,
-                    type: part.type
-                },
-            }
-        );
+    const handleView = (part: {
+        id: number;
+        revisionId?: number;
+        versionId?: number;
+        versionCode: string;
+        type: string;
+        code: string;
+        name: string;
+    }) => {
+        navigate(`/parts/modify/${part.id}`);
 
+        setTimeout(() => {
+            navigate(
+                `/parts/modify/${part.id}/${part.revisionId}/${part.versionCode}`,
+                {
+                    replace: false, 
+                    state: {
+                        partId: part.id,
+                        versionCode: part.versionCode,
+                        versionId: part.versionId,
+                        name: part.name,
+                        code: part.code,
+                        type: part.type
+                    },
+                }
+            );
+        }, 0); // delay 1 chút để đảm bảo push đầu tiên được ghi vào history
     };
 
     const dataSource = part?.revisions

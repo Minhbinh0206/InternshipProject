@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   BarsOutlined,
   CheckCircleOutlined,
@@ -13,8 +13,7 @@ import PartAssemblerGroup from '../../components/parts/PartAssemblerGroup/PartAs
 import AssemblyOutcomes from '../../components/parts/AssemblyOutcome/AssemblyOutcomes';
 import Properties from '../../components/parts/Properties/Properties';
 import RevisionAndVersion from '../../components/parts/RevisionAndVersion/RevisionAndVersion';
-
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useQuery } from '@apollo/client';
 
 import { GET_PART_BY_ID } from '../../graphQL/partQueries';
@@ -29,11 +28,14 @@ export interface ActiveBarItem {
 const ModifyPart: React.FC = () => {
   const [activeKey, setActiveKey] = useState<string>('properties');
   const navigate = useNavigate();
+  const location = useLocation();
+
   const { id, revisionId, versionCode } = useParams<{
     id: string;
     revisionId?: string;
     versionCode?: string;
   }>();
+  const prevVersionCode = useRef<string | undefined>(versionCode);
 
   console.log(`ModifyPart: id=${id}, revisionId=${revisionId}, versionCode=${versionCode}`);
 
@@ -58,11 +60,19 @@ const ModifyPart: React.FC = () => {
     skip: !id || !revisionId || !versionCode,
   });
 
-  const version = versionData?.getVerisionByVersionCode;
+  const version = versionData?.getVersionByVersionCode;
 
-  // Prefer data from versionCode if available
-  const partCode = versionCode ? version?.code || '' : selectedVersion?.code || '';
-  const partType = versionCode ? version?.type?.name || '' : selectedVersion?.type?.name || '';
+  useEffect(() => {
+    const pathSegments = location.pathname.split("/");
+    const hasVersionCode = pathSegments.length >= 6;
+
+    if (!hasVersionCode && revisionId) {
+      navigate(`/parts/modify/${id}`);
+    }
+  }, [location.pathname, revisionId, id, navigate]);
+
+  const partCode = versionCode ? version?.code || '-' : selectedVersion?.code || '-';
+  const partType = versionCode ? version?.type?.name || '-' : selectedVersion?.type?.name || '-';
   const versionLabel = version?.version_code && version?.status
     ? `${version.version_code} (${version.status})`
     : version?.version_code || versionCode;
@@ -129,7 +139,7 @@ const ModifyPart: React.FC = () => {
           ) : activeKey === 'code-builder' ? (
             <CodeBuilder />
           ) : activeKey === 'assembler' ? (
-            enable && <PartAssemblerGroup versionId={version.id}/>
+            enable && <PartAssemblerGroup versionId={version.id} />
           ) : activeKey === 'assembly-outcomes' ? (
             <AssemblyOutcomes />
           ) : null}

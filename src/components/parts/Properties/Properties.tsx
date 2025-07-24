@@ -24,8 +24,8 @@ interface Field {
 }
 
 const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) => {
-  const [searchParams] = useSearchParams();
-
+  console.log('Properties component rendered with:', { id, revisionId, versionCode });
+  
   const [form] = Form.useForm();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [versionId, setVersionId] = useState<number | null>(null);
@@ -46,7 +46,7 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
     skip: !id || !revisionId || !versionCode,
   });
 
-  const version = versionData?.getVerisionByVersionCode;
+  const version = versionData?.getVersionByVersionCode;
   const partType = version?.type?.name || '';
 
   const fetchedPartTypes: PartType[] =
@@ -166,8 +166,8 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
   };
 
   useEffect(() => {
-    if (versionData?.getVerisionByVersionCode) {
-      const version = versionData.getVerisionByVersionCode;
+    if (versionData?.getVersionByVersionCode) {
+      const version = versionData.getVersionByVersionCode;
 
       form.setFieldsValue({
         name: version.name,
