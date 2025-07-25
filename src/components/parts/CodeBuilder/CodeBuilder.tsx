@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
     Checkbox,
     Input,
@@ -21,7 +21,10 @@ import './CodeBuilder.css';
 import CustomButton from '../../common/CustomButton/CustomButton';
 import { flushSync } from 'react-dom';
 import type PartGroup from '../../../types/partGroup';
-
+import { GET_ADDITIONAL_FIELDS_GROUPS, GET_GROUPS_BY_VERSIONID } from '../../../graphQL/partQueries';
+import { useQuery } from '@apollo/client';
+import { useParams } from 'react-router-dom';
+import { GET_VERSION_BY_CODE } from '../../../graphQL/versionQueries';
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 
@@ -37,7 +40,11 @@ interface ValidateState {
     status: 'ok' | 'dup' | 'empty' | null;
 }
 
-const CodeBuilder: React.FC = () => {
+interface CodeBuilderProps {
+    versionId: string;
+}
+
+const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
     const [listCodeBuilders, setListCodeBuilders] = useState<CodePattern[]>([
         {
             id: Date.now(),
@@ -46,53 +53,129 @@ const CodeBuilder: React.FC = () => {
             isDefault: true
         }
     ]);
+    const { id, revisionId, versionCode } = useParams<{
+        id: string;
+        revisionId?: string;
+        versionCode?: string;
+    }>();
     const [editingId, setEditingId] = useState<number | null>(null);
     const [tempName, setTempName] = useState('');
     const inputRef = useRef<any>(null);
     const [showAlert, setShowAlert] = useState(false);
     const [isModalVisible, setIsModalVisible] = useState(false);
-    const [selectedGroup, setSelectedGroup] = useState<string | undefined>();
+    const [selectedGroupId, setSelectedGroupId] = useState<string | undefined>();
     const [selectedProperty, setSelectedProperty] = useState<string | undefined>();
     const [validate, setValidate] = useState<ValidateState>({
         id: null,
         status: null,
     });
+    const [fieldsGroup, setFieldsGroup] = useState<any[]>([]);
 
+    const { data } = useQuery(GET_GROUPS_BY_VERSIONID, {
+        variables: { versionId },
+    });
+
+    const { data: fieldsData } = useQuery(GET_ADDITIONAL_FIELDS_GROUPS, {
+        variables: { groupId: selectedGroupId },
+    });
+    console.log(fieldsData);
+
+    const { data: versionData } = useQuery(GET_VERSION_BY_CODE, {
+        variables: {
+            input: {
+                partId: Number(id),
+                revisionId: Number(revisionId),
+                versionCode: versionCode,
+            },
+        },
+        skip: !id || !revisionId || !versionCode,
+    });
+
+    const version = versionData?.getVersionByVersionCode;
     /* ---------- List of part groups ---------- */
-    const partGroups: PartGroup[] = [
-        {
-            id: 'group-1',
-            name: 'Part Group 1',
-            optional: false,
-            parts: [
+    const partGroups = data?.groups || [];
+    useEffect(() => {
+        if (selectedGroupId === 'this Item') {
+            if (version) {
+                const customFields = [];
+
+                if (version.name) {
+                    customFields.push({
+                        id: 'name',
+                        name: 'Name',
+                        value: version.name,
+                    });
+                }
+
+                if (version.type?.name) {
+                    customFields.push({
+                        id: 'typeName',
+                        name: 'Type',
+                        value: version.type.name,
+                    });
+                }
+
+                if (version.code) {
+                    customFields.push({
+                        id: 'code',
+                        name: 'Code',
+                        value: version.code,
+                    });
+                }
+
+                if (Array.isArray(version.additional_fields)) {
+                    version.additional_fields.forEach((field: any, index: number) => {
+                        customFields.push({
+                            id: `additional_${index}`,
+                            name: field.name,
+                            value: field.value,
+                        });
+                    });
+                }
+
+                setFieldsGroup(customFields);
+            } else {
+                setFieldsGroup([]);
+            }
+        } else {
+            const additionalFields = fieldsData?.getAdditionalFieldsFromGroup || [];
+
+            if (additionalFields.length === 0) {
+                setFieldsGroup([]);
+                return;
+            }
+
+            const version = additionalFields[0].version || {};
+
+            // Các field name riêng
+            const fieldItems = additionalFields.map((field: any, index: number) => ({
+                id: `field_${index}`,
+                name: field.name,
+                value: '', // Hoặc giá trị mặc định tùy bạn
+            }));
+
+            // Các trường version (chỉ lấy 1 lần)
+            const versionFields = [
                 {
-                    key: '1',
-                    id: '6123',
-                    version: '1.0',
-                    publishVersion: '1.0',
-                    name: 'HP test deploy 0625-2',
-                    type: 'standard',
-                    code: 'HPIEST.0625-2',
+                    id: 'version_name',
+                    name: 'Name',
+                    value: version.name || 'N/A',
                 },
-            ],
-        },
-        {
-            id: 'group-2',
-            name: 'Part Group 2',
-            optional: true,
-            parts: [
                 {
-                    key: '2',
-                    id: '6124',
-                    version: '2.0',
-                    publishVersion: '2.0',
-                    name: 'HP deploy test',
-                    type: 'standard',
-                    code: 'HPIEST.0626',
+                    id: 'version_code',
+                    name: 'Code',
+                    value: version.code || 'N/A',
                 },
-            ],
-        },
-    ];
+                {
+                    id: 'version_type',
+                    name: 'Type',
+                    value: version.type?.name || 'N/A',
+                },
+            ];
+
+            setFieldsGroup([...versionFields, ...fieldItems]);
+        }
+    }, [selectedGroupId, versionData, fieldsData]);
 
     const handleRename = (id: number, currentName: string) => {
         setEditingId(id);
@@ -366,14 +449,14 @@ const CodeBuilder: React.FC = () => {
                     <Select
                         style={{ width: '100%', marginTop: 8 }}
                         placeholder="Select option..."
-                        value={selectedGroup}
+                        value={selectedGroupId}
                         onChange={(val) => {
-                            setSelectedGroup(val);
+                            setSelectedGroupId(val);
                             setSelectedProperty(undefined);
                         }}
                     >
                         <Select.Option value='this Item'>This</Select.Option>
-                        {partGroups.map((item) => (
+                        {partGroups.map((item: any) => (
                             <Select.Option value={item.id}>{item.name ? item.name : "Không có tên"}</Select.Option>
                         ))}
                     </Select>
@@ -384,23 +467,18 @@ const CodeBuilder: React.FC = () => {
                     <Text strong>Available properties</Text>
                     <Select
                         style={{ width: '100%', marginTop: 8 }}
-                        placeholder="Select option..."
+                        placeholder="Select property..."
                         value={selectedProperty}
                         onChange={(val) => setSelectedProperty(val)}
+                        disabled={!selectedGroupId}
                     >
-                        {selectedGroup === 'outcome' && (
-                            <>
-                                <Select.Option value="outputPower">Output Power</Select.Option>
-                                <Select.Option value="torque">Torque</Select.Option>
-                            </>
-                        )}
-                        {selectedGroup === 'engine' && (
-                            <>
-                                <Select.Option value="rpm">RPM</Select.Option>
-                                <Select.Option value="temperature">Temperature</Select.Option>
-                            </>
-                        )}
+                        {fieldsGroup.map((item: any, index: number) => (
+                            <Select.Option key={item.id ?? `fallback-${index}`} value={item.id}>
+                                {item.name || "Không có tên"}
+                            </Select.Option>
+                        ))}
                     </Select>
+
                 </div>
 
                 <Row style={{ marginTop: 32 }} justify="start">
