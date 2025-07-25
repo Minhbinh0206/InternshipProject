@@ -22,3 +22,14 @@ export const DELETE_VERSION = gql`
         deleteDraftVersion(version_id: $id)
     }
 `;
+
+export const UPDATE_STANDARD_FIELD = gql`
+  mutation UpdateStandardFieldByVersionCode($input: VersionFieldUpdateInput!) {
+    updateStandardFieldByVersionCode(input: $input) {
+      id
+      name
+      description
+      code
+    }
+  }
+`;
