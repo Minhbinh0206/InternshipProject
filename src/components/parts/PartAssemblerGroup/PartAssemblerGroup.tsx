@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Table, Checkbox, Space, Typography, Tooltip, Modal, Form, Input, Select, Button } from 'antd';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@apollo/client';
 import {
   ArrowsAltOutlined, CloseOutlined, DeleteOutlined,
@@ -14,7 +14,10 @@ import { GET_GROUPS_BY_VERSIONID, GET_PART_TYPES } from '../../../graphQL/partQu
 import type { ColumnsType } from 'antd/es/table';
 import './PartAssemblerGroup.css';
 import Addpart from '../Addpart/Addpart.tsx';
-import { DELETE_GROUP_PART_BY_ID } from '../../../graphQL/partActions.ts';
+import { DELETE_GROUP_PART_BY_ID, CREATE_GROUP, UPDATE_GROUP, DELETE_GROUP } from '../../../graphQL/partActions.ts';
+import { TypeFilter } from '../PartFilters.tsx';
+// import * as partActions from '../../../graphQL/partActions.ts';
+
 
 
 const { Title } = Typography;
@@ -28,25 +31,47 @@ interface PartAssemblerGroupProps {
 }
 
 const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) => {
+  const partId = useParams<{ id: string }>();
 
-  console.log(`PartAssemblerGroup: versionId=${versionId}`);
+  const [form] = Form.useForm();
 
   const { data, loading, error, refetch } = useQuery(GET_GROUPS_BY_VERSIONID, {
     variables: { versionId },
   });
-  
-  const { data: partTypeData } = useQuery(GET_PART_TYPES);
 
+  const { data: partTypeData } = useQuery(GET_PART_TYPES);
   const [deleteGroupPartById] = useMutation(DELETE_GROUP_PART_BY_ID);
+  const [createGroup] = useMutation(CREATE_GROUP);
+  const [updateGroup] = useMutation(UPDATE_GROUP);
+  const [deleteGroup] = useMutation(DELETE_GROUP);
 
   const [isEditModalVisible, setEditModalVisible] = useState(false);
+  const [editMode, setEditMode] = useState<'create' | 'edit'>('edit');
+  const [currentGroupData, setCurrentGroupData] = useState<any>(null);
   const [isCreatePartModalVisible, setCreatePartModalVisible] = useState(false);
   const [isAddPartModalVisible, setAddPartModalVisible] = useState(false);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
 
   console.log("selectedGroupId:", selectedGroupId);
 
-  const showEditModal = () => setEditModalVisible(true);
+  const showEditModal = (group: any) => {
+    setEditMode('edit');
+    setCurrentGroupData(group);
+    setEditModalVisible(true);
+    form.setFieldsValue({
+      name: group.name,
+      partType: group.part_type_id || undefined,
+    });
+
+  }
+
+  const showCreateGroupModal = () => {
+    setEditMode('create');
+    setCurrentGroupData(null);
+    setEditModalVisible(true);
+    form.resetFields();
+  }
+
   const handleCancel = () => setEditModalVisible(false);
 
   const showCreatePartModal = () => setCreatePartModalVisible(true);
@@ -54,32 +79,85 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
 
   const handleAddPartCancel = () => setAddPartModalVisible(false);
 
-  const handleDeleteGroupPartById = async (partId: string) => {
-    console.log(`Deleting group part with ID part: ${partId}`);
+  // const handleDeleteGroupPartById = async (partId: string) => {
+  //   console.log(`Deleting group part with ID part: ${partId}`);
 
-    const confirm = window.confirm("Co chac chan muon xoa part khoi group?");
+  //   const confirm = window.confirm("Co chac chan muon xoa part khoi group?");
+  //   if (!confirm) return;
+
+  //   try {
+  //     const { data } = await deleteGroupPartById({
+  //       variables: { id: parseInt(partId) }
+  //     });
+
+  //     if (data?.deleteGroupPartById) {
+  //       alert("Xoa thanh cong");
+  //       refetch();
+  //     } else {
+  //       alert("Xoa that bai");
+  //     }
+  //   } catch (err) {
+  //     console.error(err);
+  //   }
+  // }
+
+  const handleDeleteGroupPartById = async (groupPartId?: number | string) => {
+    const id = parseInt(String(groupPartId), 10);
+
+    if (!id || isNaN(id)) {
+      console.error("Invalid groupPartId:", groupPartId);
+      return;
+    }
+
+    const confirm = window.confirm("Bạn có chắc chắn muốn xóa part khỏi group?");
     if (!confirm) return;
 
     try {
       const { data } = await deleteGroupPartById({
-        variables: { id: parseInt(partId) }
+        variables: { id }
       });
 
       if (data?.deleteGroupPartById) {
-        alert("Xoa thanh cong");
+        alert("Xóa thành công");
         refetch();
       } else {
-        alert("Xoa that bai");
+        alert("Xóa thất bại");
       }
     } catch (err) {
-      console.error(err);
+      console.error("Lỗi khi xóa:", err);
+    }
+  };
+
+  const handleDeleteGroup = async (groupId: number) => {
+    const confirm = window.confirm("Bạn có chắc chắn muốn xóa group này?");
+
+    if (!confirm) return;
+    try {
+      const { data } = await deleteGroup({
+        variables: { id: groupId }
+      });
+
+      if (data?.deleteGroup) {
+        alert("Xóa group thành công");
+        refetch();
+      } else {
+        alert("Xóa group thất bại");
+      }
+    } catch (error) {
+      console.error("Lỗi khi xóa group:", error);
+      alert("Lỗi khi xóa group");
     }
   }
+
 
   if (loading) return <p>Đang tải dữ liệu...</p>;
   if (error) return <p>Lỗi khi tải dữ liệu: {error.message}</p>;
 
-  const partGroups = data?.groups ?? [];
+  // const partGroups = data?.groups ?? [];
+  
+  const partGroups = [...(data?.groups ?? [])]
+  .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+
 
   const columns: ColumnsType<any> = [
     {
@@ -120,9 +198,11 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
       render: (_: any, record: any) => (
         <Space size="small" style={{ float: "right" }}>
           <CustomButton variant="blue" layout="iconFirst" icon={<EditOutlined />} text="Edit original" />
-          <CustomButton variant="blue" layout="iconFirst" icon={<DoubleRightOutlined />} text="Quick edit" />
           <CustomButton variant="blue" layout="iconFirst" icon={<ArrowsAltOutlined />} text="Replace Part" />
-          <CustomButton variant="red" layout="iconFirst" icon={<DeleteOutlined />} text="Remove" onClick={() => handleDeleteGroupPartById(record.part?.id)} />
+          <CustomButton variant="red" layout="iconFirst" icon={<DeleteOutlined />} text="Remove" onClick={() => {
+            console.log("record:", record);
+            handleDeleteGroupPartById(record.id);
+          }} />
         </Space>
       ),
     },
@@ -135,6 +215,7 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
         <Tooltip title="This section lets you manage part groups and parts."><QuestionCircleFilled /></Tooltip>
       </div>
 
+
       {partGroups.map((group: any) => (
         <div key={group.id} className="wrapper">
           <header className="headerRow">
@@ -145,52 +226,13 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
                 layout="iconFirst"
                 icon={<EditOutlined />}
                 text="Edit group"
-                onClick={showEditModal}
+                onClick={() => showEditModal(group)}
               />
             </div>
 
-            <Modal
-              title="Edit Assembly Group"
-              open={isEditModalVisible}
-              onCancel={handleCancel}
-              footer={null}
-              width={800}
-            >
-              <div style={{ marginBottom: 16 }}>
-                <Typography.Text strong style={{ color: 'blue' }}>Standard properties</Typography.Text>
-                <Tooltip title="...">
-                  <QuestionCircleOutlined style={{ marginLeft: 8 }} />
-                </Tooltip>
-              </div>
-              <Form layout="vertical">
-                <Form.Item
-                  label="Name"
-                  name="name"
-                  rules={[{ required: true, message: 'Please enter group name' }]}
-                >
-                  <Input defaultValue={group.name} />
-                </Form.Item>
-
-                <Form.Item label="Part Type" name="partType">
-                  <Select placeholder="Chọn loại part...">
-                    {partTypeData?.types?.map((type: any) => (
-                      <Select.Option key={type.id} value={type.id}>
-                        {type.name}
-                      </Select.Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-
-
-                <Button type="primary" disabled block>
-                  Update Assembly Group
-                </Button>
-              </Form>
-            </Modal>
-
             <div className="optionBox">
               <Checkbox defaultChecked={false}>Is an optional group</Checkbox>
-              <CustomButton variant="red" layout="textFirst" icon={<CloseOutlined />} text="Remove group" />
+              <CustomButton variant="red" layout="textFirst" icon={<CloseOutlined />} text="Remove group" onClick={() => handleDeleteGroup(group.id)} />
             </div>
           </header>
 
@@ -221,18 +263,110 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
               text="Create and Add new part"
               onClick={showCreatePartModal}
             />
-            <Modal
-              open={isCreatePartModalVisible}
-              onCancel={handleCreatePartCancel}
-              footer={null}
-              width={1200}
-            >
-              <CreatePart createModalVisible={(visible: boolean) => setCreatePartModalVisible(visible)} groupId={group.id} />
-            </Modal>
+
           </div>
+
+          {/* Modal Create and Add new part  */}
+          <Modal
+            open={isCreatePartModalVisible}
+            onCancel={handleCreatePartCancel}
+            footer={null}
+            width={1200}
+          >
+            <TypeFilter/>
+            <CreatePart createModalVisible={(visible: boolean) => setCreatePartModalVisible(visible)} groupId={group.id} hideHeader={true}/>
+          </Modal>
+          {/* End Modal Create and Add new part  */}
         </div>
+
+
       ))}
 
+      <CustomButton variant="blue" layout="textFirst" icon={<CloseOutlined />} text="Create group"
+        onClick={showCreateGroupModal} />
+
+      {/* Modal edit, create */}
+      <Modal
+        title={editMode === 'edit' ? "Edit Assembly Group" : "Create Assembly Group"}
+        open={isEditModalVisible}
+        onCancel={handleCancel}
+        footer={null}
+        width={800}
+      >
+        <div style={{ marginBottom: 16 }}>
+          <Typography.Text strong style={{ color: 'blue' }}>Standard properties</Typography.Text>
+          <Tooltip title="...">
+            <QuestionCircleOutlined style={{ marginLeft: 8 }} />
+          </Tooltip>
+        </div>
+        <Form layout="vertical" form={form} onFinish={async (values) => {
+          const input = {
+            name: values.name,
+            type_id: values.partType || null,
+            version_id: versionId,
+            assembler_id: partId.id,
+            is_optional: false,
+          };
+
+          console.log("Form input:", input);
+
+          try {
+            if (editMode === 'edit') {
+              await updateGroup({
+                variables: {
+                  input: {
+                    ...input,
+                    id: currentGroupData.id
+                  }
+                }
+              });
+              console.log("Final input sent to backend:", input);
+
+            } else {
+              await createGroup({
+                variables: {
+                  input: {
+                    ...input,
+                    version_id: versionId,
+                    assembler_id: 1,
+                  },
+                },
+              });
+            }
+
+            refetch();
+            setEditModalVisible(false);
+            form.resetFields();
+          } catch (error) {
+            console.error(`${editMode === 'edit' ? 'Update' : 'Create'} group error:`, error);
+          }
+        }}>
+          <Form.Item
+            label="Name"
+            name="name"
+            rules={[{ required: true, message: 'Please enter group name' }]}
+          >
+            <Input />
+          </Form.Item>
+
+          <Form.Item label="Part Type" name="partType">
+            <Select placeholder="Chọn loại part...">
+              {partTypeData?.types?.map((type: any) => (
+                <Select.Option key={type.id} value={type.id}>
+                  {type.name}
+                </Select.Option>
+              ))}
+            </Select>
+          </Form.Item>
+
+          <Button type="primary" htmlType="submit">
+            {editMode === 'edit' ? 'Update Assembly Group' : 'Create Assembly Group'}
+          </Button>
+        </Form>
+      </Modal >
+      {/* End Modal edit */}
+
+      {/* Modal Add part  */}
       <Modal
         open={isAddPartModalVisible}
         onCancel={handleAddPartCancel}
@@ -244,15 +378,19 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
             groupId={selectedGroupId}
             activeTab='part-assembler'
             onSuccess={() => {
-              refetch();                          
-              setAddPartModalVisible(false);  
-              setSelectedGroupId(null);          
+              refetch();
+              setAddPartModalVisible(false);
+              setSelectedGroupId(null);
             }}
           />}
 
       </Modal>
+      {/* End Modal Add part  */}
+
+
     </>
   );
 };
+
 
 export default PartAssemblerGroup;

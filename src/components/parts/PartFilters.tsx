@@ -90,8 +90,6 @@ const PartFilters: React.FC<PartFiltersProps> = ({
     <PublishedFilter />
     <IsAssembler />
     <IsAssembly />
-    {/* <LatestVersionFilter />
-    <MoreFiltersButton /> */}
   </>
 );
 
