@@ -55,20 +55,31 @@ export const TypeFilter = ({ value, onChange }: { value?: string; onChange?: (e:
 export const PublishedFilter = ({ value, onChange }: { value?: string; onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void }) => (
   <select style={selectStyle} value={value} onChange={onChange}>
     <option value="">Published: Any</option>
+    <option value="">Published: Yes</option>
+    <option value="">Published: No</option>
   </select>
 );
 
-export const LatestVersionFilter = ({ value, onChange }: { value?: string; onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void }) => (
+export const IsAssembler = ({ value, onChange }: { value?: string; onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void }) => (
   <select style={selectStyle} value={value} onChange={onChange}>
-    <option value="">Latest version only: Any</option>
+    <option value="">Assembler: Any</option>
+    <option value="">Assembler: Yes</option>
+    <option value="">Assembler: No</option>
   </select>
 );
 
-export const MoreFiltersButton = ({ onClick }: { onClick?: () => void }) => (
-  <button style={buttonStyle} onClick={onClick}>
-    + More filters
-  </button>
+export const IsAssembly = ({ value, onChange }: { value?: string; onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void }) => (
+  <select style={selectStyle} value={value} onChange={onChange}>
+    <option value="">Assembly: Any</option>
+    <option value="">Assembly: Yes</option>
+    <option value="">Assembly: No</option>
+  </select>
 );
+// export const MoreFiltersButton = ({ onClick }: { onClick?: () => void }) => (
+//   <button style={buttonStyle} onClick={onClick}>
+//     + More filters
+//   </button>
+// );
 
 const PartFilters: React.FC<PartFiltersProps> = ({
   typeValue,
@@ -77,8 +88,10 @@ const PartFilters: React.FC<PartFiltersProps> = ({
   <>
     <TypeFilter value={typeValue} onChange={onTypeChange} />
     <PublishedFilter />
-    <LatestVersionFilter />
-    <MoreFiltersButton />
+    <IsAssembler />
+    <IsAssembly />
+    {/* <LatestVersionFilter />
+    <MoreFiltersButton /> */}
   </>
 );
 

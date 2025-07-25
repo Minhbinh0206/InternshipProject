@@ -7,7 +7,12 @@ import { GET_PARTS } from "../../../graphQL/partQueries";
 import { DELETE_PART } from "../../../graphQL/partActions";
 import "./PartTable.css";
 
-const PartTable: React.FC = () => {
+interface PartTableProps {
+  searchText: string;
+  typeFilter?: string;
+}
+
+const PartTable: React.FC<PartTableProps> = ({ searchText, typeFilter }) => {
   const navigate = useNavigate();
   const [deletePartMutation] = useMutation(DELETE_PART, {
     refetchQueries: [{ query: GET_PARTS }],
@@ -70,6 +75,18 @@ const PartTable: React.FC = () => {
     );
   };
 
+  const filteredList = partList.filter((part: any) => {
+    const matchesSearch =
+      part.name.toLowerCase().includes(searchText.toLowerCase()) ||
+      part.code.toLowerCase().includes(searchText.toLowerCase()) ||
+      part.type.toLowerCase().includes(searchText.toLowerCase());
+
+    const matchesType =
+      !typeFilter || part.type.toLowerCase() === typeFilter.toLowerCase();
+
+    return matchesSearch && matchesType;
+  });
+
   return (
     <table>
       <thead>
@@ -82,7 +99,7 @@ const PartTable: React.FC = () => {
         </tr>
       </thead>
       <tbody>
-        {partList.map((part: any, index: number) => (
+        {filteredList.map((part: any, index: number) => (
           <tr key={index} className="border-b">
             <td
               className="p-3 text-blue-600 cursor-pointer"
