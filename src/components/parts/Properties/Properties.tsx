@@ -8,6 +8,7 @@ import { UPDATE_PART } from '../../../graphQL/versionActions';
 import '../../../pages/CreatePart/CreatePart.css';
 import type PartType from '../../../types/partType';
 import { GET_PART_TYPES } from '../../../graphQL/partQueries';
+import { UPDATE_STANDARD_FIELD } from '../../../graphQL/versionActions';
 import { GET_VERSION_BY_CODE } from '../../../graphQL/versionQueries';
 
 const { Option } = Select;
@@ -25,14 +26,13 @@ interface Field {
 
 const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) => {
   console.log('Properties component rendered with:', { id, revisionId, versionCode });
-  
+
   const [form] = Form.useForm();
   const [isModalVisible, setIsModalVisible] = useState(false);
-  const [versionId, setVersionId] = useState<number | null>(null);
   const [checkedKeys, setCheckedKeys] = useState<string[]>([]);
   const { data: typeData } = useQuery(GET_PART_TYPES);
   const [selectedFields, setSelectedFields] = useState<Field[]>([]);
-  const [updatePart] = useMutation(UPDATE_PART);
+  const [updateStandardField] = useMutation(UPDATE_STANDARD_FIELD);
 
   // Get version data by versionCode (if exists)
   const { data: versionData } = useQuery(GET_VERSION_BY_CODE, {
@@ -48,14 +48,6 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
 
   const version = versionData?.getVersionByVersionCode;
   const partType = version?.type?.name || '';
-
-  const fetchedPartTypes: PartType[] =
-    typeData?.types?.map((t: any) => ({
-      id: t.id,
-      value: t.name,
-      label: t.name,
-      desc: 'Some description here...'
-    })) ?? [];
 
   useEffect(() => {
     const fields = version?.additional_fields;
@@ -107,53 +99,6 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
   const getFieldValue = (key: string) => {
     const found = customFields.find((f) => f.key === key);
     return found ? found.value : undefined;
-  };
-
-  const handleConfirmEdit = async () => {
-    try {
-      const values = await form.validateFields();
-
-      if (!versionId) {
-        message.error('Không có versionId hợp lệ');
-        return;
-      }
-
-      const { name, description, code, ...rest } = values;
-
-      const additional_fields = Object.entries(rest).map(([key, value]) => ({
-        name: key,
-        value: String(value),
-        data_type: typeof value === 'number' ? 'number' : 'string',
-        type_group: 'custom',
-      }));
-
-      const matchedType = fetchedPartTypes.find((type) => type.label === partType);
-
-      if (!matchedType) {
-        message.error('Không tìm thấy type_id tương ứng với partType');
-        return;
-      }
-
-      const input = {
-        version_id: versionId,
-        name,
-        description,
-        code,
-        type_id: parseInt(matchedType.id, 10),
-        additional_fields,
-      };
-
-      const res = await updatePart({
-        variables: { input },
-      });
-
-      message.success('Cập nhật thành công!');
-      window.location.reload();
-      console.log('Response updatePart:', res);
-    } catch (err: any) {
-      console.error('Lỗi cập nhật:', err);
-      message.error('Cập nhật thất bại!');
-    }
   };
 
   const handleAcceptModal = () => {
@@ -214,15 +159,62 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
             </Col>
             <Col span={12}>
               <Form.Item label="Description" name="description">
-                <Input placeholder="Description" value={versionData?.getVersion?.des} />
+                <Input
+                  placeholder="Description"
+                  onBlur={(e) => {
+                    const value = e.target.value;
+                    updateStandardField({
+                      variables: {
+                        input: {
+                          part_id: Number(id),
+                          revision_id: Number(revisionId),
+                          version_code: versionCode,
+                          data: value,
+                          field: 'description',
+                        },
+                      },
+                    })
+                      .then(() => message.success('Description updated'))
+                      .catch(() => message.error('Update failed'));
+                  }}
+                />
               </Form.Item>
+
             </Col>
           </Row>
 
-          <Form.Item label="Name" name="name" rules={[{ required: true }]} validateTrigger="onSubmit">
-            <Input placeholder="Part name" value={versionData?.getVersion?.name} />
-          </Form.Item>
+          <Form.Item
+            label="Name"
+            name="name"
+            rules={[{ required: true }]}
+            validateTrigger="onSubmit"
+          >
+            <Input
+              placeholder="Part name"
+              onBlur={(e) => {
+                const value = e.target.value;
+                updateStandardField({
+                  variables: {
+                    input: {
+                      part_id: Number(id),
+                      revision_id: Number(revisionId),
+                      version_code: versionCode,
+                      data: value,
+                      field: 'name',
+                    },
+                  },
+                })
+                  .then(() => {
+                    message.success('Name updated successfully');
+                  })
+                  .catch((error) => {
+                    console.error('GraphQL update error:', error);
+                    message.error(error.message || 'Failed to update name');
+                  });
 
+              }}
+            />
+          </Form.Item>
 
           {partType === 'Optic set' && (
             <>

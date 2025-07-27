@@ -156,3 +156,17 @@ export const GET_PUBLISHED_PART = gql`
   }
 `;
 
+export const GET_ADDITIONAL_FIELDS_GROUPS = gql`
+  query getAdditionalFields($groupId: ID!) {
+    getAdditionalFieldsFromGroup(groupId: $groupId) {
+        name
+        version{
+          name 
+          code
+          type {
+            name
+          }
+        }
+    }
+}
+`;

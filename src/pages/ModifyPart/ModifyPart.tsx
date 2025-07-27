@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   BarsOutlined,
   CheckCircleOutlined,
@@ -15,7 +15,7 @@ import Properties from '../../components/parts/Properties/Properties';
 import RevisionAndVersion from '../../components/parts/RevisionAndVersion/RevisionAndVersion';
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useQuery } from '@apollo/client';
-
+import { useSearchParams } from "react-router-dom";
 import { GET_PART_BY_ID } from '../../graphQL/partQueries';
 import { GET_VERSION_BY_CODE } from '../../graphQL/versionQueries';
 
@@ -30,12 +30,19 @@ const ModifyPart: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  useEffect(() => {
+    const storedTab = localStorage.getItem('activeModifyPartTab');
+    if (storedTab) {
+      setActiveKey(storedTab);
+    }
+  }, []);
+
+
   const { id, revisionId, versionCode } = useParams<{
     id: string;
     revisionId?: string;
     versionCode?: string;
   }>();
-  const prevVersionCode = useRef<string | undefined>(versionCode);
 
   console.log(`ModifyPart: id=${id}, revisionId=${revisionId}, versionCode=${versionCode}`);
 
@@ -71,6 +78,11 @@ const ModifyPart: React.FC = () => {
     }
   }, [location.pathname, revisionId, id, navigate]);
 
+  const handleTabChange = (key: string) => {
+    setActiveKey(key);
+    localStorage.setItem('activeModifyPartTab', key);
+  };
+
   const partCode = versionCode ? version?.code || '-' : selectedVersion?.code || '-';
   const partType = versionCode ? version?.type?.name || '-' : selectedVersion?.type?.name || '-';
   const versionLabel = version?.version_code && version?.status
@@ -103,7 +115,7 @@ const ModifyPart: React.FC = () => {
               { title: 'Modify', href: '/parts/modify' },
               { title: partCode, href: `/${partCode}` }
             ]}
-            onTabChange={setActiveKey}
+            onTabChange={handleTabChange}
             mode="read-only"
             selectedPartType={partType}
             code={partCode}
@@ -126,7 +138,7 @@ const ModifyPart: React.FC = () => {
             ]}
             tabs={tabs}
             activeKey={activeKey}
-            onTabChange={setActiveKey}
+            onTabChange={handleTabChange}
             mode="modify"
             selectedPartType={partType}
           />
@@ -137,7 +149,7 @@ const ModifyPart: React.FC = () => {
               versionCode={versionCode || ''}
             />
           ) : activeKey === 'code-builder' ? (
-            <CodeBuilder />
+            <CodeBuilder versionId={version.id}/>
           ) : activeKey === 'assembler' ? (
             enable && <PartAssemblerGroup versionId={version.id} />
           ) : activeKey === 'assembly-outcomes' ? (
