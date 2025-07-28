@@ -21,9 +21,10 @@ const { Option } = Select;
 interface CreatePartProps {
     createModalVisible: (visible: boolean) => void;
     groupId?: string;
+    hideHeader?: boolean;
 }
 
-const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId }) => {
+const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hideHeader = false}) => {
     const [addPartToGroup] = useMutation(ADD_PART_TO_GROUP);
     const [activeKey, setActiveKey] = useState('properties');
     const { data: typeData, loading: typeLoading } = useQuery(GET_PART_TYPES);
@@ -248,7 +249,8 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId }) 
 
     return (
         <>
-            {
+        {!hideHeader && 
+            (
                 id ? (
                     <PageHeader
                         title="Duplicate part"
@@ -292,7 +294,8 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId }) 
 
                     />
                 )
-            }
+            )
+    }
 
             <Form form={form}>
                 {/* ---------- STANDARD PROPERTIES ---------- */}

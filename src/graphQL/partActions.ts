@@ -51,19 +51,19 @@ export const ADD_PART_TO_GROUP = gql`
       group_id
       part_id
       version_id
-          }
-  }
-`;
-
-export const UPDATE_GROUP = gql`
-  mutation UpdateGroup($id: ID!, $input: UpdateGroupInput!) {
-    updateGroup(id: $id, input: $input) {
-      id
-      name
-      part_type_id
     }
   }
 `;
+
+// export const UPDATE_GROUP = gql`
+//   mutation UpdateGroup($id: ID!, $input: UpdateGroupInput!) {
+//     updateGroup(id: $id, input: $input) {
+//       id
+//       name
+//       part_type_id
+//     }
+//   }
+// `;
 
 export const DELETE_GROUP_PART_BY_ID = gql`
   mutation DeleteGroupPartById($id: Int!) {
@@ -71,3 +71,29 @@ export const DELETE_GROUP_PART_BY_ID = gql`
 }
 `;
 
+export const CREATE_GROUP = gql`
+  mutation CreateGroup($input: CreateGroupInput!) {
+    createGroup(input: $input) {
+      id
+      name
+      type_id
+    }
+  }
+`;
+
+export const UPDATE_GROUP = gql`
+mutation UpdateGroup($input: EditGroupInput!) {
+  updateGroup(input: $input) {
+    id
+    name
+    is_optional
+    type_id
+  }
+}
+`;
+
+export const DELETE_GROUP = gql`
+mutation DeleteGroup($id: ID!) {
+  deleteGroup(id: $id)
+}
+`;

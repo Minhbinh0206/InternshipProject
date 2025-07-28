@@ -32,6 +32,8 @@ const buttonStyle: React.CSSProperties = {
 interface PartFiltersProps {
   typeValue?: string;
   onTypeChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  publishedValue?: string;
+  onPublishedChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
 }
 
 export const TypeFilter = ({ value, onChange }: { value?: string; onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void }) => {
@@ -52,33 +54,53 @@ export const TypeFilter = ({ value, onChange }: { value?: string; onChange?: (e:
   );
 };
 
-export const PublishedFilter = ({ value, onChange }: { value?: string; onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void }) => (
+export const PublishedFilter = ({
+  value,
+  onChange,
+}: {
+  value?: string;
+  onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+}) => (
   <select style={selectStyle} value={value} onChange={onChange}>
     <option value="">Published: Any</option>
+    <option value="true">Published: Yes</option>
+    <option value="false">Published: No</option>
   </select>
 );
 
-export const LatestVersionFilter = ({ value, onChange }: { value?: string; onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void }) => (
+
+export const IsAssembler = ({ value, onChange }: { value?: string; onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void }) => (
   <select style={selectStyle} value={value} onChange={onChange}>
-    <option value="">Latest version only: Any</option>
+    <option value="">Assembler: Any</option>
+    <option value="">Assembler: Yes</option>
+    <option value="">Assembler: No</option>
   </select>
 );
 
-export const MoreFiltersButton = ({ onClick }: { onClick?: () => void }) => (
-  <button style={buttonStyle} onClick={onClick}>
-    + More filters
-  </button>
+export const IsAssembly = ({ value, onChange }: { value?: string; onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void }) => (
+  <select style={selectStyle} value={value} onChange={onChange}>
+    <option value="">Assembly: Any</option>
+    <option value="">Assembly: Yes</option>
+    <option value="">Assembly: No</option>
+  </select>
 );
+// export const MoreFiltersButton = ({ onClick }: { onClick?: () => void }) => (
+//   <button style={buttonStyle} onClick={onClick}>
+//     + More filters
+//   </button>
+// );
 
 const PartFilters: React.FC<PartFiltersProps> = ({
   typeValue,
   onTypeChange,
+  publishedValue,
+  onPublishedChange
 }) => (
   <>
     <TypeFilter value={typeValue} onChange={onTypeChange} />
-    <PublishedFilter />
-    <LatestVersionFilter />
-    <MoreFiltersButton />
+    <PublishedFilter value={publishedValue} onChange={onPublishedChange} />
+    <IsAssembler />
+    <IsAssembly />
   </>
 );
 

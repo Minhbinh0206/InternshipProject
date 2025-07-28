@@ -8,6 +8,9 @@ import PartFilters from '../../components/parts/PartFilters';
 
 const PartList: React.FC = () => {
     const [search, setSearch] = useState("");
+    const [selectedType, setSelectedType] = useState("");
+    const [publishedValue, setPublishedValue] = useState("");
+    const [isAssembler, setIsAssembler] = useState("");
 
     const handleSearch = () => {
         console.log("Searching for:", search);
@@ -15,6 +18,7 @@ const PartList: React.FC = () => {
 
     const handleReset = () => {
         setSearch("");
+        setSelectedType("");
     };
 
     return (
@@ -34,9 +38,20 @@ const PartList: React.FC = () => {
                 onSearchTextChange={setSearch}
                 onSearch={handleSearch}
                 onReset={handleReset}
-                extraFilter={<PartFilters />}
+                extraFilter={
+                <PartFilters 
+                typeValue={selectedType}
+                onTypeChange={(e) => setSelectedType(e.target.value)}
+                publishedValue={publishedValue}
+                onPublishedChange={(e) => setPublishedValue(e.target.value)}
+                />
+            }
             />
-            <PartTable />
+            <PartTable 
+                searchText={search} 
+                typeFilter={selectedType}
+                publishedFilter={publishedValue}
+                />
         </>
     );
 };

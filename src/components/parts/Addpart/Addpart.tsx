@@ -4,7 +4,7 @@ import { SettingOutlined } from "@ant-design/icons";
 import { GET_PUBLISHED_PART } from "../../../graphQL/partQueries";
 import { Form, Checkbox, Typography, Input, Button, message } from "antd";
 import SearchBar from "../../common/SearchBar";
-import { TypeFilter, MoreFiltersButton } from "../PartFilters";
+import { TypeFilter } from "../PartFilters";
 import CustomButton from "../../common/CustomButton/CustomButton";
 import { useMutation } from "@apollo/client";
 import { ADD_PART_TO_GROUP } from "../../../graphQL/partActions";
@@ -30,21 +30,6 @@ const Addpart: React.FC<AddpartProps> = ({ groupId, onSuccess }) => {
     if (error) return <p>Lỗi tải dữ liệu</p>;
 
     console.log("fgffg", data);
-    // Lấy ds part publish
-    // const partList = data.parts.flatMap((part: any) =>
-    //     part.revisions.flatMap((revision: any) =>
-    //         revision.versions
-    //             .filter((v: any) => v.status === "Published")
-    //             .map((v: any) => ({
-    //                 id: Number(part.id),
-    //                 revisionId: Number(revision.id),
-    //                 versionId: Number(v.id),
-    //                 name: v.name,
-    //                 code: v.code ?? "",
-    //                 type: v.type?.name ?? "",
-    //             }))
-    //     )
-    // );
 
     // const partList = data.parts.map((part: any) => {
     //     let allVersions: any[] = [];
@@ -155,7 +140,6 @@ const Addpart: React.FC<AddpartProps> = ({ groupId, onSuccess }) => {
                 extraFilter={
                     <>
                         <TypeFilter value={type} onChange={handleTypeChange} />
-                        <MoreFiltersButton />
                     </>
                 }
             />
@@ -172,9 +156,6 @@ const Addpart: React.FC<AddpartProps> = ({ groupId, onSuccess }) => {
                         <th className="p-3" style={{ width: "30%" }}>
                             Code
                         </th>
-                        {/* <th className="p-3">
-                            <SettingOutlined />
-                        </th> */}
                     </tr>
                 </thead>
                 <tbody>

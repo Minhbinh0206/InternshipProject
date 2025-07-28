@@ -10,6 +10,8 @@ import type PartType from '../../../types/partType';
 import { GET_PART_TYPES } from '../../../graphQL/partQueries';
 import { UPDATE_STANDARD_FIELD } from '../../../graphQL/versionActions';
 import { GET_VERSION_BY_CODE } from '../../../graphQL/versionQueries';
+import AutoSaveInput from '../OnblurProcessing/AutoSaveInput';
+import AutoSaveSelect from '../OnblurProcessing/AutoSaveSelect';
 
 const { Option } = Select;
 
@@ -32,10 +34,11 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
   const [checkedKeys, setCheckedKeys] = useState<string[]>([]);
   const { data: typeData } = useQuery(GET_PART_TYPES);
   const [selectedFields, setSelectedFields] = useState<Field[]>([]);
-  const [updateStandardField] = useMutation(UPDATE_STANDARD_FIELD);
+  //const [updateStandardField] = useMutation(UPDATE_STANDARD_FIELD);
+  const [updatePart] = useMutation(UPDATE_PART)
 
   // Get version data by versionCode (if exists)
-  const { data: versionData } = useQuery(GET_VERSION_BY_CODE, {
+  const { data: versionData, refetch } = useQuery(GET_VERSION_BY_CODE, {
     variables: {
       input: {
         partId: Number(id),
@@ -45,6 +48,11 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
     },
     skip: !id || !revisionId || !versionCode,
   });
+
+  useEffect(() => {
+  console.log("DEBUG - versionData after update:", versionData);
+}, [versionData]);
+
 
   const version = versionData?.getVersionByVersionCode;
   const partType = version?.type?.name || '';
@@ -157,33 +165,16 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
                 <Input disabled />
               </Form.Item>
             </Col>
+
             <Col span={12}>
               <Form.Item label="Description" name="description">
-                <Input
-                  placeholder="Description"
-                  onBlur={(e) => {
-                    const value = e.target.value;
-                    updateStandardField({
-                      variables: {
-                        input: {
-                          part_id: Number(id),
-                          revision_id: Number(revisionId),
-                          version_code: versionCode,
-                          data: value,
-                          field: 'description',
-                        },
-                      },
-                    })
-                      .then(() => message.success('Description updated'))
-                      .catch(() => message.error('Update failed'));
-                  }}
-                />
+                <AutoSaveInput name="description" value={version?.description || ''} versionId={version?.id} refetch={refetch} />
               </Form.Item>
-
             </Col>
+
           </Row>
 
-          <Form.Item
+          {/* <Form.Item
             label="Name"
             name="name"
             rules={[{ required: true }]}
@@ -214,7 +205,37 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
 
               }}
             />
+          </Form.Item> */}
+
+          <Form.Item
+            label="Name"
+            name="name"
+            rules={[{ required: true }]}
+            validateTrigger="onSubmit"
+          >
+          {/* <Input
+    placeholder="Part name"
+    onBlur={(e) => {
+      const value = e.target.value;
+
+      updatePart({
+        variables: {
+          input: {
+            version_id: Number(version?.id), 
+            name: value
+          },
+        },
+      })
+        .then(() => message.success('Name updated successfully'))
+        .catch((error) => {
+          console.error('GraphQL update error:', error);
+          message.error(error.message || 'Failed to update name');
+        });
+    }}
+  /> */}
+            <AutoSaveInput name="name" value={version?.name || ''} versionId={version?.id} refetch={refetch}/>
           </Form.Item>
+
 
           {partType === 'Optic set' && (
             <>
@@ -225,7 +246,16 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
                 rules={[{ required: true }]}
                 validateTrigger="onSubmit"
               >
-                <Input placeholder="Enter LOR" />
+                {/* <Input placeholder="Enter LOR" /> */}
+                <AutoSaveInput
+                  name="LOR"
+                  value={getFieldValue('LOR') || ''}
+                  versionId={version?.id}
+                  isAdditional={true}
+                  dataType="string"
+                  typeGroup="custom"
+                  refetch={refetch}
+                />
               </Form.Item>
               <Form.Item
                 label="Primary Beam Angle"
@@ -234,7 +264,16 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
                 rules={[{ required: true }]}
                 validateTrigger="onSubmit"
               >
-                <Input placeholder="Enter primary beam angle" />
+                {/* <Input placeholder="Enter primary beam angle" /> */}
+                <AutoSaveInput
+                  name="Primary Beam Angle"
+                  value={getFieldValue('Primary Beam Angle') || ''}
+                  versionId={version?.id}
+                  isAdditional={true}
+                  dataType="string"
+                  typeGroup="custom"
+                  refetch={refetch}
+                />
               </Form.Item>
             </>
           )}
@@ -249,11 +288,25 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
                   rules={[{ required: true }]}
                   validateTrigger="onSubmit"
                 >
-                  <Select>
+                  {/* <Select>
                     <Option value="27000K">2700K</Option>
                     <Option value="30000K">3000K</Option>
                     <Option value="40000K">4000K</Option>
-                  </Select>
+                  </Select> */}
+                  <AutoSaveSelect
+                      name="Colour Temperature (K)"
+                      value={getFieldValue('Colour Temperature (K)') || ''}
+                      versionId={version?.id}
+                      isAdditional={true}
+                      dataType="string"
+                      typeGroup="custom"
+                      options={[
+                        { label: '2700K', value: '27000K' },
+                        { label: '3000K', value: '30000K' },
+                        { label: '4000K', value: '40000K' },
+                      ]}
+                      refetch={refetch}
+                    />
                 </Form.Item>
               </Col>
               <Col span={19}>
@@ -264,7 +317,16 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
                   rules={[{ required: true }]}
                   validateTrigger="onSubmit"
                 >
-                  <Input placeholder="..." />
+                  {/* <Input placeholder="..." /> */}
+                  <AutoSaveInput
+                    name="LED Part No"
+                    value={getFieldValue('LED Part No') || ''}
+                    versionId={version?.id}
+                    isAdditional={true}
+                    dataType="string"
+                    typeGroup="custom"
+                    refetch={refetch}
+                  />
                 </Form.Item>
               </Col>
             </Row>
@@ -277,21 +339,48 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
                 name="LED Lifetime"
                 initialValue={getFieldValue('LED Lifetime')}
               >
-                <Input placeholder="..." />
+                {/* <Input placeholder="..." /> */}
+                <AutoSaveInput
+                  name="LED Lifetime"
+                  value={getFieldValue('LED Lifetime') || ''}
+                  versionId={version?.id}
+                  isAdditional={true}
+                  dataType="string"
+                  typeGroup="custom"
+                  refetch={refetch}
+                />
               </Form.Item>
               <Form.Item
                 label="Maximum Drive Current (mA)"
                 name="Maximum Drive Current (mA)"
                 initialValue={getFieldValue('Maximum Drive Current (mA)')}
               >
-                <Input placeholder="..." />
+                {/* <Input placeholder="..." /> */}
+                <AutoSaveInput
+                  name="Maximum Drive Current (mA)"
+                  value={getFieldValue('Maximum Drive Current (mA)') || ''}
+                  versionId={version?.id}
+                  isAdditional={true}
+                  dataType="string"
+                  typeGroup="custom"
+                  refetch={refetch}
+                />
               </Form.Item>
               <Form.Item
                 label="Minimum Drive Current (mA)"
                 name="Minimum Drive Current (mA)"
                 initialValue={getFieldValue('Minimum Drive Current (mA)')}
               >
-                <Input placeholder="..." />
+                {/* <Input placeholder="..." /> */}
+                <AutoSaveInput
+                  name="Minimum Drive Current (mA)"
+                  value={getFieldValue('Minimum Drive Current (mA)') || ''}
+                  versionId={version?.id}
+                  isAdditional={true}
+                  dataType="string"
+                  typeGroup="custom"
+                  refetch={refetch}
+                />
               </Form.Item>
             </>
           )}
@@ -346,13 +435,40 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
                         <Select
                           placeholder="Select Finish"
                           defaultValue={matchedField.value || 'B'}
+                          onChange={(value) => {
+                            updatePart({
+                              variables: {
+                                input: {
+                                  version_id: version?.id,
+                                  additional_fields: [
+                                    {
+                                      name: field.key,
+                                      value,
+                                      data_type: 'string',
+                                      type_group: 'custom',
+                                    },
+                                  ],
+                                },
+                              },
+                            })
+                              .then(() => message.success(`${field.label} updated`))
+                              .catch(() => message.error(`Failed to update ${field.label}`));
+                          }}
                         >
                           <Option value="B">Black</Option>
                           <Option value="R">Red</Option>
                           <Option value="Y">Yellow</Option>
                         </Select>
                       ) : (
-                        <Input placeholder={`Enter ${field.label}`} />
+                        // <Input placeholder={`Enter ${field.label}`} />
+                        <AutoSaveInput
+                          name={field.key}
+                          value={matchedField.value || ''}
+                          versionId={version?.id}
+                          isAdditional={true}
+                          dataType="string"
+                          typeGroup="custom"
+                        />
                       )}
                     </Form.Item>
                   </Col>
