@@ -10,14 +10,25 @@ import "./PartTable.css";
 interface PartTableProps {
   searchText: string;
   typeFilter?: string;
+  publishedFilter?: boolean;
+  isAssembler?: string;
 }
 
-const PartTable: React.FC<PartTableProps> = ({ searchText, typeFilter }) => {
+const PartTable: React.FC<PartTableProps> = ({ searchText, typeFilter, publishedFilter }) => {
+  console.log("publishedFilter", publishedFilter);
+  
   const navigate = useNavigate();
   const [deletePartMutation] = useMutation(DELETE_PART, {
     refetchQueries: [{ query: GET_PARTS }],
   });
-  const { loading, error, data } = useQuery(GET_PARTS);
+  const { loading, error, data } = useQuery(GET_PARTS, {
+  variables: {
+    type: typeFilter || undefined,
+    published: publishedFilter === ""
+      ? undefined
+      : publishedFilter === "true"
+  },
+});
   if (loading) return <p>Đang tải...</p>;
   if (error) return <p>Lỗi tải dữ liệu</p>;
 
@@ -83,6 +94,9 @@ const PartTable: React.FC<PartTableProps> = ({ searchText, typeFilter }) => {
 
     const matchesType =
       !typeFilter || part.type.toLowerCase() === typeFilter.toLowerCase();
+    
+    // const matchesPublished =
+    //   publishedFilter === undefined 
 
     return matchesSearch && matchesType;
   });

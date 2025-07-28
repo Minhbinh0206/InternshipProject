@@ -113,7 +113,7 @@ export const GET_GROUPS_BY_VERSIONID = gql`
     groups(versionId: $versionId) {
       id
       name
-      created_at
+      type_id
       assembler_id
        groupParts {
             id

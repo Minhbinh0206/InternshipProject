@@ -59,11 +59,12 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
     setCurrentGroupData(group);
     setEditModalVisible(true);
     form.setFieldsValue({
-      name: group.name,
-      partType: group.part_type_id || undefined,
-    });
+    name: group.name,
+     partType: group.type_id ? Number(group.type_id) : undefined,
+  });
+}
 
-  }
+  // console.log("Available part types:", partTypeData?.types);
 
   const showCreateGroupModal = () => {
     setEditMode('create');
@@ -128,6 +129,9 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
     }
   };
 
+console.log("versionId",versionId);
+
+
   const handleDeleteGroup = async (groupId: number) => {
     const confirm = window.confirm("Bạn có chắc chắn muốn xóa group này?");
 
@@ -154,6 +158,7 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
   if (error) return <p>Lỗi khi tải dữ liệu: {error.message}</p>;
 
   // const partGroups = data?.groups ?? [];
+
   
   const partGroups = [...(data?.groups ?? [])]
   .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -231,7 +236,7 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
             </div>
 
             <div className="optionBox">
-              <Checkbox defaultChecked={false}>Is an optional group</Checkbox>
+              {/* <Checkbox defaultChecked={false}>Is an optional group</Checkbox> */}
               <CustomButton variant="red" layout="textFirst" icon={<CloseOutlined />} text="Remove group" onClick={() => handleDeleteGroup(group.id)} />
             </div>
           </header>
@@ -351,12 +356,12 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
 
           <Form.Item label="Part Type" name="partType">
             <Select placeholder="Chọn loại part...">
-              {partTypeData?.types?.map((type: any) => (
-                <Select.Option key={type.id} value={type.id}>
-                  {type.name}
-                </Select.Option>
-              ))}
-            </Select>
+  {partTypeData?.types?.map((type: any) => (
+    <Select.Option key={type.id} value={Number(type.id)}>
+      {type.name}
+    </Select.Option>
+  ))}
+</Select>
           </Form.Item>
 
           <Button type="primary" htmlType="submit">
