@@ -18,6 +18,7 @@ import { useQuery } from '@apollo/client';
 import { useSearchParams } from "react-router-dom";
 import { GET_PART_BY_ID } from '../../graphQL/partQueries';
 import { GET_VERSION_BY_CODE } from '../../graphQL/versionQueries';
+import Loading from '../../components/layout/Loading/Loading';
 
 export interface ActiveBarItem {
   key: string;
@@ -100,7 +101,7 @@ const ModifyPart: React.FC = () => {
   ];
 
   if (partLoading || (versionCode && versionLoading)) {
-    return <div>Loading...</div>;
+    return <Loading />;
   }
 
   return (

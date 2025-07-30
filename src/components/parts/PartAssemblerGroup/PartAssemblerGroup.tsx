@@ -16,6 +16,7 @@ import './PartAssemblerGroup.css';
 import Addpart from '../Addpart/Addpart.tsx';
 import { DELETE_GROUP_PART_BY_ID, CREATE_GROUP, UPDATE_GROUP, DELETE_GROUP } from '../../../graphQL/partActions.ts';
 import { TypeFilter } from '../PartFilters.tsx';
+import Loading from '../../layout/Loading/Loading.tsx';
 // import * as partActions from '../../../graphQL/partActions.ts';
 
 
@@ -59,10 +60,10 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
     setCurrentGroupData(group);
     setEditModalVisible(true);
     form.setFieldsValue({
-    name: group.name,
-     partType: group.type_id ? Number(group.type_id) : undefined,
-  });
-}
+      name: group.name,
+      partType: group.type_id ? Number(group.type_id) : undefined,
+    });
+  }
 
   // console.log("Available part types:", partTypeData?.types);
 
@@ -129,8 +130,7 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
     }
   };
 
-console.log("versionId",versionId);
-
+  console.log("versionId", versionId);
 
   const handleDeleteGroup = async (groupId: number) => {
     const confirm = window.confirm("Bạn có chắc chắn muốn xóa group này?");
@@ -153,15 +153,14 @@ console.log("versionId",versionId);
     }
   }
 
-
-  if (loading) return <p>Đang tải dữ liệu...</p>;
+  if (loading) return <Loading />;
   if (error) return <p>Lỗi khi tải dữ liệu: {error.message}</p>;
 
   // const partGroups = data?.groups ?? [];
 
-  
+
   const partGroups = [...(data?.groups ?? [])]
-  .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
 
   const columns: ColumnsType<any> = [
@@ -278,8 +277,8 @@ console.log("versionId",versionId);
             footer={null}
             width={1200}
           >
-            <TypeFilter/>
-            <CreatePart createModalVisible={(visible: boolean) => setCreatePartModalVisible(visible)} groupId={group.id} hideHeader={true}/>
+            <TypeFilter />
+            <CreatePart createModalVisible={(visible: boolean) => setCreatePartModalVisible(visible)} groupId={group.id} hideHeader={true} />
           </Modal>
           {/* End Modal Create and Add new part  */}
         </div>
@@ -356,12 +355,12 @@ console.log("versionId",versionId);
 
           <Form.Item label="Part Type" name="partType">
             <Select placeholder="Chọn loại part...">
-  {partTypeData?.types?.map((type: any) => (
-    <Select.Option key={type.id} value={Number(type.id)}>
-      {type.name}
-    </Select.Option>
-  ))}
-</Select>
+              {partTypeData?.types?.map((type: any) => (
+                <Select.Option key={type.id} value={Number(type.id)}>
+                  {type.name}
+                </Select.Option>
+              ))}
+            </Select>
           </Form.Item>
 
           <Button type="primary" htmlType="submit">

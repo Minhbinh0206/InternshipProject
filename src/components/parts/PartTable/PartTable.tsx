@@ -6,6 +6,8 @@ import { useNavigate } from "react-router-dom";
 import { GET_PARTS } from "../../../graphQL/partQueries";
 import { DELETE_PART } from "../../../graphQL/partActions";
 import "./PartTable.css";
+import Loading from "../../layout/Loading/Loading";
+import { message, Modal } from "antd";
 
 interface PartTableProps {
   searchText: string;
@@ -16,20 +18,20 @@ interface PartTableProps {
 
 const PartTable: React.FC<PartTableProps> = ({ searchText, typeFilter, publishedFilter }) => {
   console.log("publishedFilter", publishedFilter);
-  
+
   const navigate = useNavigate();
   const [deletePartMutation] = useMutation(DELETE_PART, {
     refetchQueries: [{ query: GET_PARTS }],
   });
   const { loading, error, data } = useQuery(GET_PARTS, {
-  variables: {
-    type: typeFilter || undefined,
-    published: publishedFilter === ""
-      ? undefined
-      : publishedFilter === "true"
-  },
-});
-  if (loading) return <p>Đang tải...</p>;
+    variables: {
+      type: typeFilter || undefined,
+      published: publishedFilter === ""
+        ? undefined
+        : publishedFilter === "true"
+    },
+  });
+  if (loading) return <Loading />;
   if (error) return <p>Lỗi tải dữ liệu</p>;
 
   const partList = data.parts.map((part: any) => {
@@ -58,19 +60,28 @@ const PartTable: React.FC<PartTableProps> = ({ searchText, typeFilter, published
     };
   }).filter(Boolean);
 
-  const handleDelete = async (partId: number) => {
-    const confirmed = window.confirm("Are you sure you want to delete this part?");
-    if (!confirmed) return;
-
-    try {
-      await deletePartMutation({
-        variables: { id: partId },
-      });
-      console.log(`Deleted part with ID: ${partId}`);
-    } catch (error) {
-      console.error("Error deleting part:", error);
-      alert("Failed to delete part.");
-    }
+  const handleDelete = (partId: number) => {
+    Modal.confirm({
+      title: 'Confirm Delete',
+      content: 'Are you sure you want to delete this part?',
+      okText: 'Yes, delete',
+      cancelText: 'Cancel',
+      okButtonProps: { danger: true },
+      onOk: async () => {
+        const hide = message.loading('Deleting...');
+        try {
+          await deletePartMutation({
+            variables: { id: partId },
+          });
+          message.success('Part deleted successfully');
+        } catch (error) {
+          console.error("Error deleting part:", error);
+          message.error('Failed to delete part');
+        } finally {
+          hide();
+        }
+      }
+    });
   };
 
   const handleEdit = (part: { id: number; revisionId?: number; versionId?: number; name: string; type: string; code: string; }) => {
@@ -94,7 +105,7 @@ const PartTable: React.FC<PartTableProps> = ({ searchText, typeFilter, published
 
     const matchesType =
       !typeFilter || part.type.toLowerCase() === typeFilter.toLowerCase();
-    
+
     // const matchesPublished =
     //   publishedFilter === undefined 
 
