@@ -9,6 +9,7 @@ import CustomButton from "../../common/CustomButton/CustomButton";
 import { useMutation } from "@apollo/client";
 import { ADD_PART_TO_GROUP } from "../../../graphQL/partActions";
 import { toast } from "react-toastify";
+import Loading from "../../layout/Loading/Loading";
 
 interface AddpartProps {
     groupId: string;
@@ -27,7 +28,7 @@ const Addpart: React.FC<AddpartProps> = ({ groupId, onSuccess }) => {
     const [type, setType] = useState("");
     const [selectedParts, setSelectedParts] = useState<any[]>([]);
 
-    if (loading) return <p>Đang tải...</p>;
+    if (loading) return <Loading />;
     if (error) return <p>Lỗi tải dữ liệu</p>;
 
     const partList = data?.publishedPart?.map((part: any) => {

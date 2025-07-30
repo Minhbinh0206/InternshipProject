@@ -11,6 +11,8 @@ import { useNavigate } from "react-router-dom";
 import { FILTER_PARTS } from "../../../graphQL/partQueries";
 import { DELETE_PART } from "../../../graphQL/partActions";
 import "./PartTable.css";
+import Loading from "../../layout/Loading/Loading";
+import { message, Modal } from "antd";
 
 interface PartTableProps {
   searchText: string;
@@ -18,6 +20,7 @@ interface PartTableProps {
   publishedFilter?: string | boolean;
   isAssembler?: string;
 }
+
 
 interface PartItem {
   id: number;
@@ -35,6 +38,7 @@ const PartTable: React.FC<PartTableProps> = ({
   publishedFilter,
   isAssembler,
 }) => {
+
   const navigate = useNavigate();
 
 
@@ -58,11 +62,13 @@ const PartTable: React.FC<PartTableProps> = ({
     ],
   });
 
+
   const { loading, error, data } = useQuery(FILTER_PARTS, {
     variables: { filter },
   });
 
-  if (loading) return <p>Đang tải...</p>;
+
+  if (loading) return <Loading />;
   if (error) return <p>Lỗi tải dữ liệu</p>;
 
   const partList: PartItem[] = (data?.filterParts || []).map((part: any) => {
@@ -96,6 +102,7 @@ const PartTable: React.FC<PartTableProps> = ({
   }).filter(Boolean)
     .reverse();
 
+
   const handleDelete = async (partId: number) => {
     const confirmed = window.confirm("Are you sure you want to delete this part?");
     if (!confirmed) return;
@@ -107,6 +114,7 @@ const PartTable: React.FC<PartTableProps> = ({
       console.error("Error deleting part:", error);
       alert("Failed to delete part.");
     }
+
   };
 
   const handleEdit = (part: PartItem) => {

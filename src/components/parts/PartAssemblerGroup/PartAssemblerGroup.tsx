@@ -17,6 +17,7 @@ import Addpart from '../Addpart/Addpart.tsx';
 import { DELETE_GROUP_PART_BY_ID, CREATE_GROUP, UPDATE_GROUP, DELETE_GROUP } from '../../../graphQL/partActions.ts';
 import { TypeFilter } from '../PartFilters.tsx';
 import { toast } from 'react-toastify';
+import Loading from '../../layout/Loading/Loading.tsx';
 // import * as partActions from '../../../graphQL/partActions.ts';
 
 
@@ -64,6 +65,7 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
       partType: group.type_id ? Number(group.type_id) : undefined,
     });
   }
+
 
   const showCreateGroupModal = () => {
     setEditMode('create');
@@ -130,8 +132,7 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
     }
   }
 
-
-  if (loading) return <p>Đang tải dữ liệu...</p>;
+  if (loading) return <Loading />;
   if (error) return <p>Lỗi khi tải dữ liệu: {error.message}</p>;
 
   const partGroups = [...(data?.groups ?? [])]

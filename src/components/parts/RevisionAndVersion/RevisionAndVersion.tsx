@@ -1,4 +1,4 @@
-import React, { useState, version } from 'react';
+import React, { useState } from 'react';
 import { Table, Typography, Space, Tag, Tooltip, Modal, message } from 'antd';
 import {
     EditOutlined,
@@ -14,6 +14,7 @@ import { GET_PART_BY_ID } from '../../../graphQL/partQueries';
 import { useNavigate, useParams } from 'react-router-dom';
 import { CREATE_REVISION, UPDATE_VERSION_STATUS } from '../../../graphQL/partActions';
 import { DELETE_VERSION } from '../../../graphQL/versionActions';
+import Loading from '../../layout/Loading/Loading';
 
 const { Text, Title, Link } = Typography;
 
@@ -21,17 +22,13 @@ const { Text, Title, Link } = Typography;
 const RevisionAndVersion: React.FC = () => {
     const navigate = useNavigate();
     const { id } = useParams();
-    const { data, loading, error } = useQuery(GET_PART_BY_ID, {
+    const { data, loading, error, refetch } = useQuery(GET_PART_BY_ID, {
         variables: { id },
     });
     const [updateVersionStatus] = useMutation(UPDATE_VERSION_STATUS);
     const [createRevision] = useMutation(CREATE_REVISION);
     const [expandedRowKeys, setExpandedRowKeys] = useState<string[]>([]);
-    const [isModalVisible, setIsModalVisible] = useState(false);
-    const [selectedVersion, setSelectedVersion] = useState<any>(null);
-    const [selectedVersionsList, setSelectedVersionsList] = useState<any[]>([]);
     const [deleteVersion] = useMutation(DELETE_VERSION);
-    const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
     const part = data?.getPartById;
 
     if (!part) return <p>Loading part</p>;
@@ -52,7 +49,7 @@ const RevisionAndVersion: React.FC = () => {
             navigate(
                 `/parts/modify/${part.id}/${part.revisionId}/${part.versionCode}`,
                 {
-                    replace: false, 
+                    replace: false,
                     state: {
                         partId: part.id,
                         versionCode: part.versionCode,
@@ -176,59 +173,46 @@ const RevisionAndVersion: React.FC = () => {
 
     ];
 
-    const openCustomModal = (version: any, versions: any[]) => {
-        setSelectedVersion(version);
-        setSelectedVersionsList(versions);
-        setIsModalVisible(true);
-    };
+    const handlePublishConfirm = async (versionId: string) => {
+        if (!versionId) return;
 
-    const openDeleteModal = (version: any, versions: any[]) => {
-        setSelectedVersion(version);
-        setSelectedVersionsList(versions);
-        setIsDeleteModalVisible(true);
-    };
-
-    const handlePublishConfirm = async () => {
+        const hide = message.loading('Publishing...');
         try {
-            if (!selectedVersion) return;
-
-            // 1. Publish version được chọn
             await updateVersionStatus({
                 variables: {
-                    id: selectedVersion.key,
+                    id: versionId,
                 },
             });
 
-            setIsModalVisible(false);
-            setSelectedVersion(null);
-            setSelectedVersionsList([]);
-
-            window.location.reload();
+            hide();
+            message.success('Version published successfully');
+            await refetch();
         } catch (error) {
+            hide();
             console.error('Publish error:', error);
+            message.error('Failed to publish version');
         }
     };
 
     const handleDeleteVersionConfirm = async (versionId: string) => {
-        try {
-            if (!versionId) return;
+        if (!versionId) return;
 
-            // 2. Xóa phiên bản đã chọn
+        const hideLoading = message.loading("Deleting version...", 0); // loading vô thời hạn
+        try {
             await deleteVersion({
                 variables: {
                     id: versionId,
                 },
             });
 
-            setIsDeleteModalVisible(false);
-            setSelectedVersion(null);
-            setSelectedVersionsList([]);
+            hideLoading(); // ẩn loading
+            message.success("Version deleted successfully");
 
-            message.success('Version deleted successfully');
-            window.location.reload();
+            await refetch(); // cập nhật lại dữ liệu
         } catch (error) {
-            console.error('Delete version error:', error);
-            message.error('Failed to delete version');
+            console.error("Delete version error:", error);
+            hideLoading(); // dù lỗi cũng cần ẩn loading
+            message.error("Failed to delete version");
         }
     };
 
@@ -248,7 +232,7 @@ const RevisionAndVersion: React.FC = () => {
         }
     };
 
-    if (loading) return <p>Loading...</p>;
+    if (loading) return <Loading />;
     if (error) return <p>Error loading part data.</p>;
 
     return (
@@ -290,7 +274,7 @@ const RevisionAndVersion: React.FC = () => {
                                         title: '',
                                         dataIndex: 'order',
                                         width: 70,
-                                        render: (val: number) => <Link>{val}</Link>,
+                                        render: (_: any, __: any, index: number) => <Link>{index + 1}</Link>,
                                     },
                                     { title: 'Version', dataIndex: 'version', render: (t: any) => <Link>{t}</Link> },
                                     { title: 'Updated at', dataIndex: 'updatedAt', render: (t: string) => <Link>{t}</Link> },
@@ -322,9 +306,15 @@ const RevisionAndVersion: React.FC = () => {
                                                         variant="blue"
                                                         layout="noIcon"
                                                         text="Publish"
-                                                        onClick={() =>
-                                                            openCustomModal(record, item.versions)
-                                                        }
+                                                        onClick={() => {
+                                                            Modal.confirm({
+                                                                title: 'Confirm Publish',
+                                                                content: 'Are you sure you want to publish this version? All other versions in this revision will be archived.',
+                                                                okText: 'Yes, publish',
+                                                                cancelText: 'Cancel',
+                                                                onOk: () => handlePublishConfirm(record.key),
+                                                            });
+                                                        }}
                                                     />
                                                 )}
 
@@ -351,16 +341,23 @@ const RevisionAndVersion: React.FC = () => {
                                                         variant="red"
                                                         layout="noIcon"
                                                         text="Delete"
-                                                        onClick={() =>
-                                                            openDeleteModal(record, item.versions)
-                                                        }
+                                                        onClick={() => {
+                                                            Modal.confirm({
+                                                                title: 'Confirm Delete',
+                                                                content: 'Are you sure you want to delete this version?',
+                                                                okText: 'Yes, delete',
+                                                                cancelText: 'Cancel',
+                                                                okButtonProps: { danger: true },
+                                                                onOk: () => handleDeleteVersionConfirm(record.key),
+                                                            });
+                                                        }}
                                                     />
                                                 )}
                                             </Space>
                                         ),
                                     }
                                 ]}
-                                dataSource={item.versions}
+                                dataSource={[...item.versions].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())}
                                 pagination={false}
                                 rowKey="key"
                                 className="childTable"
@@ -369,27 +366,6 @@ const RevisionAndVersion: React.FC = () => {
                     )}
                 </div>
             ))}
-            <Modal
-                title="Confirm Publish"
-                visible={isModalVisible}
-                onOk={handlePublishConfirm}
-                onCancel={() => setIsModalVisible(false)}
-                okText="Yes, publish"
-                cancelText="Cancel"
-            >
-                <p>Are you sure you want to publish this version? All other versions in this revision will be archived.</p>
-            </Modal>
-
-            <Modal
-                title="Confirm Delete Version"
-                visible={isDeleteModalVisible}
-                onOk={() => handleDeleteVersionConfirm(selectedVersion?.key)}
-                onCancel={() => setIsDeleteModalVisible(false)}
-                okText="Yes, delete"
-                cancelText="Cancel"
-            >
-                <p>Are you sure you want to delete this version? This action cannot be undone.</p>
-            </Modal>
 
         </div>
     );
