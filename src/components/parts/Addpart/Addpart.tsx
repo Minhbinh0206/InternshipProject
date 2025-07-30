@@ -8,6 +8,7 @@ import { TypeFilter } from "../PartFilters";
 import CustomButton from "../../common/CustomButton/CustomButton";
 import { useMutation } from "@apollo/client";
 import { ADD_PART_TO_GROUP } from "../../../graphQL/partActions";
+import { toast } from "react-toastify";
 
 interface AddpartProps {
     groupId: string;
@@ -28,32 +29,6 @@ const Addpart: React.FC<AddpartProps> = ({ groupId, onSuccess }) => {
 
     if (loading) return <p>Đang tải...</p>;
     if (error) return <p>Lỗi tải dữ liệu</p>;
-
-    console.log("fgffg", data);
-
-    // const partList = data.parts.map((part: any) => {
-    //     let allVersions: any[] = [];
-
-    //     part.revisions.forEach((revision: any) => {
-    //         allVersions = [...allVersions, ...revision.versions.map((v: any) => ({
-    //             ...v,
-    //             revisionId: revision.id
-    //         }))];
-    //     });
-
-    //     const publishedVersions = allVersions.find((v: any) => v.status === "Published");
-
-    //     if (!publishedVersions) return null;
-
-    //     return {
-    //         id: Number(part.id),
-    //         revisionId: Number(publishedVersions?.revisionId),
-    //         versionId: Number(publishedVersions?.id),
-    //         name: publishedVersions?.name,
-    //         code: publishedVersions?.code ?? "",
-    //         type: publishedVersions?.type?.name ?? "",
-    //     };
-    // }).filter(Boolean)
 
     const partList = data?.publishedPart?.map((part: any) => {
         const version = part.revisions[0]?.versions[0];
@@ -120,12 +95,12 @@ const Addpart: React.FC<AddpartProps> = ({ groupId, onSuccess }) => {
         try {
             const { data } = await addPartToGroup({ variables: { input } });
             console.log("Thêm thành công:", data.addPartToGroup);
-            message.success("Thêm part vào group thành công!");
+            toast.success("Thêm part vào group thành công!");
             await refetch();
             onSuccess?.();
 
         } catch (err) {
-            message.error("Lỗi khi thêm part vào group.");
+            toast.error("Lỗi khi thêm part vào group.");
         }
     };
 

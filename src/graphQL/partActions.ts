@@ -97,3 +97,13 @@ mutation DeleteGroup($id: ID!) {
   deleteGroup(id: $id)
 }
 `;
+
+export const ADD_PROPERTY_TO_CODEBUILDER = gql`
+  mutation AddPropertyToCodebuilder($input: AddPropertyToCodebuilderInput!) {
+    addPropertyToCodebuilder(input: $input) {
+      id
+      group_name
+      field_name
+    }
+  }
+`;

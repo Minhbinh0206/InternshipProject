@@ -16,6 +16,7 @@ import './PartAssemblerGroup.css';
 import Addpart from '../Addpart/Addpart.tsx';
 import { DELETE_GROUP_PART_BY_ID, CREATE_GROUP, UPDATE_GROUP, DELETE_GROUP } from '../../../graphQL/partActions.ts';
 import { TypeFilter } from '../PartFilters.tsx';
+import { toast } from 'react-toastify';
 // import * as partActions from '../../../graphQL/partActions.ts';
 
 
@@ -59,12 +60,10 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
     setCurrentGroupData(group);
     setEditModalVisible(true);
     form.setFieldsValue({
-    name: group.name,
-     partType: group.type_id ? Number(group.type_id) : undefined,
-  });
-}
-
-  // console.log("Available part types:", partTypeData?.types);
+      name: group.name,
+      partType: group.type_id ? Number(group.type_id) : undefined,
+    });
+  }
 
   const showCreateGroupModal = () => {
     setEditMode('create');
@@ -79,28 +78,6 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
   const handleCreatePartCancel = () => setCreatePartModalVisible(false);
 
   const handleAddPartCancel = () => setAddPartModalVisible(false);
-
-  // const handleDeleteGroupPartById = async (partId: string) => {
-  //   console.log(`Deleting group part with ID part: ${partId}`);
-
-  //   const confirm = window.confirm("Co chac chan muon xoa part khoi group?");
-  //   if (!confirm) return;
-
-  //   try {
-  //     const { data } = await deleteGroupPartById({
-  //       variables: { id: parseInt(partId) }
-  //     });
-
-  //     if (data?.deleteGroupPartById) {
-  //       alert("Xoa thanh cong");
-  //       refetch();
-  //     } else {
-  //       alert("Xoa that bai");
-  //     }
-  //   } catch (err) {
-  //     console.error(err);
-  //   }
-  // }
 
   const handleDeleteGroupPartById = async (groupPartId?: number | string) => {
     const id = parseInt(String(groupPartId), 10);
@@ -119,17 +96,17 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
       });
 
       if (data?.deleteGroupPartById) {
-        alert("Xóa thành công");
+        toast.success("Xóa thành công");
         refetch();
       } else {
-        alert("Xóa thất bại");
+        toast.error("Xóa thất bại");
       }
     } catch (err) {
       console.error("Lỗi khi xóa:", err);
     }
   };
 
-console.log("versionId",versionId);
+  console.log("versionId", versionId);
 
 
   const handleDeleteGroup = async (groupId: number) => {
@@ -142,14 +119,14 @@ console.log("versionId",versionId);
       });
 
       if (data?.deleteGroup) {
-        alert("Xóa group thành công");
+        toast.success("Xóa group thành công");
         refetch();
       } else {
-        alert("Xóa group thất bại");
+        toast.error("Xóa group thất bại");
       }
     } catch (error) {
       console.error("Lỗi khi xóa group:", error);
-      alert("Lỗi khi xóa group");
+      toast.error("Lỗi khi xóa group");
     }
   }
 
@@ -157,11 +134,8 @@ console.log("versionId",versionId);
   if (loading) return <p>Đang tải dữ liệu...</p>;
   if (error) return <p>Lỗi khi tải dữ liệu: {error.message}</p>;
 
-  // const partGroups = data?.groups ?? [];
-
-  
   const partGroups = [...(data?.groups ?? [])]
-  .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+    .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
 
   const columns: ColumnsType<any> = [
@@ -278,8 +252,8 @@ console.log("versionId",versionId);
             footer={null}
             width={1200}
           >
-            <TypeFilter/>
-            <CreatePart createModalVisible={(visible: boolean) => setCreatePartModalVisible(visible)} groupId={group.id} hideHeader={true}/>
+            <TypeFilter />
+            <CreatePart createModalVisible={(visible: boolean) => setCreatePartModalVisible(visible)} groupId={group.id} hideHeader={true} />
           </Modal>
           {/* End Modal Create and Add new part  */}
         </div>
@@ -313,8 +287,6 @@ console.log("versionId",versionId);
             is_optional: false,
           };
 
-          console.log("Form input:", input);
-
           try {
             if (editMode === 'edit') {
               await updateGroup({
@@ -325,8 +297,6 @@ console.log("versionId",versionId);
                   }
                 }
               });
-              console.log("Final input sent to backend:", input);
-
             } else {
               await createGroup({
                 variables: {
@@ -356,12 +326,12 @@ console.log("versionId",versionId);
 
           <Form.Item label="Part Type" name="partType">
             <Select placeholder="Chọn loại part...">
-  {partTypeData?.types?.map((type: any) => (
-    <Select.Option key={type.id} value={Number(type.id)}>
-      {type.name}
-    </Select.Option>
-  ))}
-</Select>
+              {partTypeData?.types?.map((type: any) => (
+                <Select.Option key={type.id} value={Number(type.id)}>
+                  {type.name}
+                </Select.Option>
+              ))}
+            </Select>
           </Form.Item>
 
           <Button type="primary" htmlType="submit">

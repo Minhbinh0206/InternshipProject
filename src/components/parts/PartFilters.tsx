@@ -34,6 +34,8 @@ interface PartFiltersProps {
   onTypeChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   publishedValue?: string;
   onPublishedChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  isAssemblerValue?: string;
+  onIsAssemblerChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
 }
 
 export const TypeFilter = ({ value, onChange }: { value?: string; onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void }) => {
@@ -46,7 +48,7 @@ export const TypeFilter = ({ value, onChange }: { value?: string; onChange?: (e:
     <select style={selectStyle} value={value} onChange={onChange}>
       <option value="">Type: Any</option>
       {data.types.map((type: any) => (
-        <option key={type.name} value={type.name}>
+        <option key={type.id} value={type.id}>
           {type.name}
         </option>
       ))}
@@ -69,11 +71,17 @@ export const PublishedFilter = ({
 );
 
 
-export const IsAssembler = ({ value, onChange }: { value?: string; onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void }) => (
+export const IsAssembler = ({
+  value,
+  onChange,
+}: {
+  value?: string;
+  onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+}) => (
   <select style={selectStyle} value={value} onChange={onChange}>
     <option value="">Assembler: Any</option>
-    <option value="">Assembler: Yes</option>
-    <option value="">Assembler: No</option>
+    <option value="true">Assembler: Yes</option>
+    <option value="false">Assembler: No</option>
   </select>
 );
 
@@ -94,13 +102,15 @@ const PartFilters: React.FC<PartFiltersProps> = ({
   typeValue,
   onTypeChange,
   publishedValue,
-  onPublishedChange
+  onPublishedChange,
+  isAssemblerValue,
+  onIsAssemblerChange,
 }) => (
   <>
     <TypeFilter value={typeValue} onChange={onTypeChange} />
     <PublishedFilter value={publishedValue} onChange={onPublishedChange} />
-    <IsAssembler />
-    <IsAssembly />
+    <IsAssembler value={isAssemblerValue} onChange={onIsAssemblerChange} />
+    <IsAssembly /> 
   </>
 );
 
