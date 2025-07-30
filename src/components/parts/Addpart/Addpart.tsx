@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { useQuery } from "@apollo/client";
-import { SettingOutlined } from "@ant-design/icons";
 import { GET_PUBLISHED_PART } from "../../../graphQL/partQueries";
-import { Form, Checkbox, Typography, Input, Button, message } from "antd";
+import { Form, Typography } from "antd";
 import SearchBar from "../../common/SearchBar";
 import { TypeFilter } from "../PartFilters";
 import CustomButton from "../../common/CustomButton/CustomButton";
@@ -47,17 +46,6 @@ const Addpart: React.FC<AddpartProps> = ({ groupId, onSuccess }) => {
     }).filter(Boolean);
 
     console.log('1111111', partList);
-
-    //search
-    const filteredPartsBySearch = partList.filter((part: any) =>
-        part.name.toLowerCase().includes(search.toLowerCase()) ||
-        part.code.toLowerCase().includes(search.toLowerCase())
-    );
-
-    //Filter Type
-    const filteredPartsOfType = partList.filter(
-        (part: any) => type === "" || part.type === type
-    );
 
     //cả 2
     const filteredParts = partList.filter(

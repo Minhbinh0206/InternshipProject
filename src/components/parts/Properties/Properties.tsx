@@ -389,7 +389,7 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
 
         <Divider />
 
-        <div className="custom-section">
+        {/* <div className="custom-section">
           <div className='title-container'>
             <Typography.Title level={5} className="custom-section-title">
               Inherited properties&nbsp;
@@ -400,7 +400,7 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
           </div>
         </div>
 
-        <Divider />
+        <Divider /> */}
 
         <div className="custom-section">
           <div className='title-container'>

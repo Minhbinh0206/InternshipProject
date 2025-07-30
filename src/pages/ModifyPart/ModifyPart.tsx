@@ -15,7 +15,6 @@ import Properties from '../../components/parts/Properties/Properties';
 import RevisionAndVersion from '../../components/parts/RevisionAndVersion/RevisionAndVersion';
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useQuery } from '@apollo/client';
-import { useSearchParams } from "react-router-dom";
 import { GET_PART_BY_ID } from '../../graphQL/partQueries';
 import { GET_VERSION_BY_CODE } from '../../graphQL/versionQueries';
 import Loading from '../../components/layout/Loading/Loading';
@@ -92,13 +91,21 @@ const ModifyPart: React.FC = () => {
 
   const enable = version?.enable_assembly_groups;
 
-  const tabs: ActiveBarItem[] = [
-    { key: 'properties', label: 'Properties', icon: <FileTextOutlined /> },
-    { key: 'assembler', label: 'Part assembler', icon: <BarsOutlined /> },
-    { key: 'outcome-settings', label: 'Outcome settings', icon: <SettingOutlined /> },
-    { key: 'code-builder', label: 'Code Builder', icon: <EditOutlined /> },
-    { key: 'assembly-outcomes', label: 'Assembly Outcomes', icon: <CheckCircleOutlined /> },
-  ];
+  let tabs: ActiveBarItem[] = []
+
+  if (enable) {
+    tabs = [
+      { key: 'properties', label: 'Properties', icon: <FileTextOutlined /> },
+      { key: 'assembler', label: 'Part assembler', icon: <BarsOutlined /> },
+      { key: 'outcome-settings', label: 'Outcome settings', icon: <SettingOutlined /> },
+      { key: 'code-builder', label: 'Code Builder', icon: <EditOutlined /> },
+      { key: 'assembly-outcomes', label: 'Assembly Outcomes', icon: <CheckCircleOutlined /> },
+    ];
+  } else {
+    tabs = [
+      { key: 'properties', label: 'Properties', icon: <FileTextOutlined /> },
+    ];
+  }
 
   if (partLoading || (versionCode && versionLoading)) {
     return <Loading />;
@@ -150,7 +157,7 @@ const ModifyPart: React.FC = () => {
               versionCode={versionCode || ''}
             />
           ) : activeKey === 'code-builder' ? (
-            <CodeBuilder versionId={version.id}/>
+            <CodeBuilder versionId={version.id} />
           ) : activeKey === 'assembler' ? (
             enable && <PartAssemblerGroup versionId={version.id} />
           ) : activeKey === 'assembly-outcomes' ? (
