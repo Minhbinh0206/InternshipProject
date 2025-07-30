@@ -8,6 +8,7 @@ import { TypeFilter } from "../PartFilters";
 import CustomButton from "../../common/CustomButton/CustomButton";
 import { useMutation } from "@apollo/client";
 import { ADD_PART_TO_GROUP } from "../../../graphQL/partActions";
+import Loading from "../../layout/Loading/Loading";
 
 interface AddpartProps {
     groupId: string;
@@ -26,7 +27,7 @@ const Addpart: React.FC<AddpartProps> = ({ groupId, onSuccess }) => {
     const [type, setType] = useState("");
     const [selectedParts, setSelectedParts] = useState<any[]>([]);
 
-    if (loading) return <p>Đang tải...</p>;
+    if (loading) return <Loading />;
     if (error) return <p>Lỗi tải dữ liệu</p>;
 
     console.log("fgffg", data);
