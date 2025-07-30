@@ -25,6 +25,9 @@ import { GET_ADDITIONAL_FIELDS_GROUPS, GET_GROUPS_BY_VERSIONID } from '../../../
 import { useQuery } from '@apollo/client';
 import { useParams } from 'react-router-dom';
 import { GET_VERSION_BY_CODE } from '../../../graphQL/versionQueries';
+import { useMutation } from '@apollo/client';
+import { ADD_PROPERTY_TO_CODEBUILDER } from '../../../graphQL/partActions';
+
 const { Title, Text } = Typography;
 const { TextArea } = Input;
 
@@ -70,6 +73,9 @@ const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
         status: null,
     });
     const [fieldsGroup, setFieldsGroup] = useState<any[]>([]);
+
+    const [addPropertyToCodebuilder, { loading: addingProperty }] = useMutation(ADD_PROPERTY_TO_CODEBUILDER);
+
 
     const { data } = useQuery(GET_GROUPS_BY_VERSIONID, {
         variables: { versionId },
@@ -484,7 +490,36 @@ const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
                 <Row style={{ marginTop: 32 }} justify="start">
                     <Col>
                         <Space>
-                            <CustomButton className='button-modal' variant='gray' text='Add property' layout='noIcon' />
+                            {/* <CustomButton className='button-modal' variant='gray' text='Add property' layout='noIcon' /> */}
+                            <CustomButton
+                                className='button-modal'
+                                variant='blue'
+                                text={addingProperty ? 'Adding...' : 'Add property'}
+                                layout='noIcon'
+                                onClick={async () => {
+                                    if (!selectedGroupId || !selectedProperty) {
+                                        return; 
+                                    }
+
+                                    try {
+                                        await addPropertyToCodebuilder({
+                                            variables: {
+                                                input: {
+                                                    id: versionId, 
+                                                    group_name: selectedGroupId,
+                                                    field_name: selectedProperty,
+                                                },
+                                            },
+                                        });
+                                        setIsModalVisible(false);
+                                        setSelectedGroupId(undefined);
+                                        setSelectedProperty(undefined);
+                                    } catch (error: any) {
+                                        console.error("Lỗi khi thêm property:", error);
+                                    }
+                                }}
+                            />
+
                         </Space>
                     </Col>
                     <Col>

@@ -1,9 +1,14 @@
 import React from "react";
 import { useMutation, useQuery } from "@apollo/client";
-import { SettingOutlined, EditOutlined, DeleteOutlined, CopyOutlined } from "@ant-design/icons";
+import {
+  SettingOutlined,
+  EditOutlined,
+  DeleteOutlined,
+  CopyOutlined,
+} from "@ant-design/icons";
 import CustomButton from "../../common/CustomButton/CustomButton";
 import { useNavigate } from "react-router-dom";
-import { GET_PARTS } from "../../../graphQL/partQueries";
+import { FILTER_PARTS } from "../../../graphQL/partQueries";
 import { DELETE_PART } from "../../../graphQL/partActions";
 import "./PartTable.css";
 import Loading from "../../layout/Loading/Loading";
@@ -12,41 +17,77 @@ import { message, Modal } from "antd";
 interface PartTableProps {
   searchText: string;
   typeFilter?: string;
-  publishedFilter?: boolean;
+  publishedFilter?: string | boolean;
   isAssembler?: string;
 }
 
-const PartTable: React.FC<PartTableProps> = ({ searchText, typeFilter, publishedFilter }) => {
-  console.log("publishedFilter", publishedFilter);
+
+interface PartItem {
+  id: number;
+  name: string;
+  code: string;
+  type: string;
+  versionId?: number;
+  revisionId?: number;
+  status?: string;
+}
+
+const PartTable: React.FC<PartTableProps> = ({
+  searchText,
+  typeFilter,
+  publishedFilter,
+  isAssembler,
+}) => {
 
   const navigate = useNavigate();
+
+
+  const filter: any = {};
+  if (searchText) filter.keyword = searchText;
+  if (typeFilter) filter.type_id = typeFilter;
+  if (publishedFilter !== undefined && publishedFilter !== "") {
+    filter.published = publishedFilter === "true";
+  }
+  if (isAssembler !== undefined && isAssembler !== "") {
+    filter.is_assembler = isAssembler === "true";
+  }
+
+
   const [deletePartMutation] = useMutation(DELETE_PART, {
-    refetchQueries: [{ query: GET_PARTS }],
+    refetchQueries: [
+      {
+        query: FILTER_PARTS,
+        variables: { filter },
+      },
+    ],
   });
-  const { loading, error, data } = useQuery(GET_PARTS, {
-    variables: {
-      type: typeFilter || undefined,
-      published: publishedFilter === ""
-        ? undefined
-        : publishedFilter === "true"
-    },
+
+
+  const { loading, error, data } = useQuery(FILTER_PARTS, {
+    variables: { filter },
   });
+
+
   if (loading) return <Loading />;
   if (error) return <p>Lỗi tải dữ liệu</p>;
 
-  const partList = data.parts.map((part: any) => {
+  const partList: PartItem[] = (data?.filterParts || []).map((part: any) => {
     let allVersions: any[] = [];
-
-    part.revisions.forEach((revision: any) => {
-      allVersions = [...allVersions, ...revision.versions.map((v: any) => ({
-        ...v,
-        revisionId: revision.id,
-      }))];
-    });
-
+    if (Array.isArray(part.revisions)) {
+      part.revisions.forEach((revision: any) => {
+        allVersions = [
+          ...allVersions,
+          ...(revision.versions || []).map((v: any) => ({
+            ...v,
+            revisionId: revision.id,
+          })),
+        ];
+      });
+    }
     const preferredVersion =
-      allVersions.find((v: any) => v.status === 'Published') ??
-      allVersions.find((v: any) => v.status === 'Draft');
+      allVersions.find((v) => v.status === "Published") ||
+      allVersions.find((v) => v.status === "Draft") ||
+      allVersions[0];
 
     if (!preferredVersion) return null;
 
@@ -55,62 +96,41 @@ const PartTable: React.FC<PartTableProps> = ({ searchText, typeFilter, published
       revisionId: Number(preferredVersion.revisionId),
       versionId: Number(preferredVersion.id),
       name: preferredVersion.name,
-      code: preferredVersion.code ?? '',
-      type: preferredVersion.type?.name ?? '',
+      code: preferredVersion.code ?? "",
+      type: preferredVersion.type?.name ?? "",
     };
-  }).filter(Boolean);
+  }).filter(Boolean)
+    .reverse();
 
-  const handleDelete = (partId: number) => {
-    Modal.confirm({
-      title: 'Confirm Delete',
-      content: 'Are you sure you want to delete this part?',
-      okText: 'Yes, delete',
-      cancelText: 'Cancel',
-      okButtonProps: { danger: true },
-      onOk: async () => {
-        const hide = message.loading('Deleting...');
-        try {
-          await deletePartMutation({
-            variables: { id: partId },
-          });
-          message.success('Part deleted successfully');
-        } catch (error) {
-          console.error("Error deleting part:", error);
-          message.error('Failed to delete part');
-        } finally {
-          hide();
-        }
-      }
+
+  const handleDelete = async (partId: number) => {
+    const confirmed = window.confirm("Are you sure you want to delete this part?");
+    if (!confirmed) return;
+
+    try {
+      await deletePartMutation({ variables: { id: partId } });
+      console.log(`Deleted part with ID: ${partId}`);
+    } catch (error) {
+      console.error("Error deleting part:", error);
+      alert("Failed to delete part.");
+    }
+
+  };
+
+  const handleEdit = (part: PartItem) => {
+    navigate(`/parts/modify/${part.id}`, {
+      state: {
+        name: part.name,
+        type: part.type,
+        code: part.code,
+        id: part.id,
+      },
     });
   };
 
-  const handleEdit = (part: { id: number; revisionId?: number; versionId?: number; name: string; type: string; code: string; }) => {
-    navigate(
-      `/parts/modify/${part.id}`,
-      { state: { name: part.name, type: part.type, code: part.code, id: part.id } }
-    );
+  const handleDuplicate = (part: PartItem) => {
+    navigate(`/parts/duplicate/${part.id}`);
   };
-
-  const handleDuplicate = (part: { id: number }) => {
-    navigate(
-      `/parts/duplicate/${part.id}`,
-    );
-  };
-
-  const filteredList = partList.filter((part: any) => {
-    const matchesSearch =
-      part.name.toLowerCase().includes(searchText.toLowerCase()) ||
-      part.code.toLowerCase().includes(searchText.toLowerCase()) ||
-      part.type.toLowerCase().includes(searchText.toLowerCase());
-
-    const matchesType =
-      !typeFilter || part.type.toLowerCase() === typeFilter.toLowerCase();
-
-    // const matchesPublished =
-    //   publishedFilter === undefined 
-
-    return matchesSearch && matchesType;
-  });
 
   return (
     <table>
@@ -120,22 +140,16 @@ const PartTable: React.FC<PartTableProps> = ({ searchText, typeFilter, published
           <th className="p-3" style={{ width: "30%" }}>Name</th>
           <th className="p-3">Type</th>
           <th className="p-3" style={{ width: "30%" }}>Code</th>
-          <th className="p-3"><SettingOutlined /></th>
+          <th className="p-3">
+            <SettingOutlined />
+          </th>
         </tr>
       </thead>
       <tbody>
-        {filteredList.map((part: any, index: number) => (
+        {partList.map((part, index) => (
           <tr key={index} className="border-b">
-            <td
-              className="p-3 text-blue-600 cursor-pointer"
-            >
-              {part.id}
-            </td>
-            <td
-              className="p-3 text-blue-600 cursor-pointer"
-            >
-              {part.name}
-            </td>
+            <td className="p-3 text-blue-600 cursor-pointer">{part.id}</td>
+            <td className="p-3 text-blue-600 cursor-pointer">{part.name}</td>
             <td className="p-3">{part.type}</td>
             <td className="p-3">{part.code}</td>
             <td className="p-3 flex gap-2">
@@ -147,7 +161,6 @@ const PartTable: React.FC<PartTableProps> = ({ searchText, typeFilter, published
                 style={{ marginRight: 10 }}
                 onClick={() => handleEdit(part)}
               />
-
               <CustomButton
                 variant="red"
                 layout="iconFirst"
@@ -156,7 +169,6 @@ const PartTable: React.FC<PartTableProps> = ({ searchText, typeFilter, published
                 style={{ marginRight: 10 }}
                 onClick={() => handleDelete(part.id)}
               />
-
               <CustomButton
                 variant="white"
                 layout="iconFirst"

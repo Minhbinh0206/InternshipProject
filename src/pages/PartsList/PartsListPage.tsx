@@ -9,7 +9,7 @@ import PartFilters from '../../components/parts/PartFilters';
 const PartList: React.FC = () => {
     const [search, setSearch] = useState("");
     const [selectedType, setSelectedType] = useState("");
-    const [publishedValue, setPublishedValue] = useState("");
+    const [publishedFilter, setPublishedFilter] = useState("");
     const [isAssembler, setIsAssembler] = useState("");
 
     const handleSearch = () => {
@@ -19,6 +19,8 @@ const PartList: React.FC = () => {
     const handleReset = () => {
         setSearch("");
         setSelectedType("");
+        setPublishedFilter("");
+        setIsAssembler("");
     };
 
     return (
@@ -31,7 +33,7 @@ const PartList: React.FC = () => {
                 ]}
                 partTypes={[]}
                 selectedPartType=''
-                onSelectPartType={() => {}}
+                onSelectPartType={() => { }}
             />
             <SearchBar
                 searchText={search}
@@ -39,19 +41,22 @@ const PartList: React.FC = () => {
                 onSearch={handleSearch}
                 onReset={handleReset}
                 extraFilter={
-                <PartFilters 
-                typeValue={selectedType}
-                onTypeChange={(e) => setSelectedType(e.target.value)}
-                publishedValue={publishedValue}
-                onPublishedChange={(e) => setPublishedValue(e.target.value)}
-                />
-            }
+                    <PartFilters
+                        typeValue={selectedType}
+                        onTypeChange={(e) => setSelectedType(e.target.value)}
+                        publishedValue={publishedFilter}
+                        onPublishedChange={(e) => setPublishedFilter(e.target.value)}
+                        isAssemblerValue={isAssembler}
+                        onIsAssemblerChange={(e) => setIsAssembler(e.target.value)}
+                    />
+                }
             />
-            <PartTable 
-                searchText={search} 
+            <PartTable
+                searchText={search}
                 typeFilter={selectedType}
-                publishedFilter={publishedValue}
-                />
+                publishedFilter={publishedFilter}
+                isAssembler={isAssembler}
+            />
         </>
     );
 };

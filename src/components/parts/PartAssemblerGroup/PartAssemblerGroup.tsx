@@ -16,6 +16,7 @@ import './PartAssemblerGroup.css';
 import Addpart from '../Addpart/Addpart.tsx';
 import { DELETE_GROUP_PART_BY_ID, CREATE_GROUP, UPDATE_GROUP, DELETE_GROUP } from '../../../graphQL/partActions.ts';
 import { TypeFilter } from '../PartFilters.tsx';
+import { toast } from 'react-toastify';
 import Loading from '../../layout/Loading/Loading.tsx';
 // import * as partActions from '../../../graphQL/partActions.ts';
 
@@ -65,7 +66,6 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
     });
   }
 
-  // console.log("Available part types:", partTypeData?.types);
 
   const showCreateGroupModal = () => {
     setEditMode('create');
@@ -80,28 +80,6 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
   const handleCreatePartCancel = () => setCreatePartModalVisible(false);
 
   const handleAddPartCancel = () => setAddPartModalVisible(false);
-
-  // const handleDeleteGroupPartById = async (partId: string) => {
-  //   console.log(`Deleting group part with ID part: ${partId}`);
-
-  //   const confirm = window.confirm("Co chac chan muon xoa part khoi group?");
-  //   if (!confirm) return;
-
-  //   try {
-  //     const { data } = await deleteGroupPartById({
-  //       variables: { id: parseInt(partId) }
-  //     });
-
-  //     if (data?.deleteGroupPartById) {
-  //       alert("Xoa thanh cong");
-  //       refetch();
-  //     } else {
-  //       alert("Xoa that bai");
-  //     }
-  //   } catch (err) {
-  //     console.error(err);
-  //   }
-  // }
 
   const handleDeleteGroupPartById = async (groupPartId?: number | string) => {
     const id = parseInt(String(groupPartId), 10);
@@ -120,10 +98,10 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
       });
 
       if (data?.deleteGroupPartById) {
-        alert("Xóa thành công");
+        toast.success("Xóa thành công");
         refetch();
       } else {
-        alert("Xóa thất bại");
+        toast.error("Xóa thất bại");
       }
     } catch (err) {
       console.error("Lỗi khi xóa:", err);
@@ -131,6 +109,7 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
   };
 
   console.log("versionId", versionId);
+
 
   const handleDeleteGroup = async (groupId: number) => {
     const confirm = window.confirm("Bạn có chắc chắn muốn xóa group này?");
@@ -142,22 +121,19 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
       });
 
       if (data?.deleteGroup) {
-        alert("Xóa group thành công");
+        toast.success("Xóa group thành công");
         refetch();
       } else {
-        alert("Xóa group thất bại");
+        toast.error("Xóa group thất bại");
       }
     } catch (error) {
       console.error("Lỗi khi xóa group:", error);
-      alert("Lỗi khi xóa group");
+      toast.error("Lỗi khi xóa group");
     }
   }
 
   if (loading) return <Loading />;
   if (error) return <p>Lỗi khi tải dữ liệu: {error.message}</p>;
-
-  // const partGroups = data?.groups ?? [];
-
 
   const partGroups = [...(data?.groups ?? [])]
     .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -312,8 +288,6 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
             is_optional: false,
           };
 
-          console.log("Form input:", input);
-
           try {
             if (editMode === 'edit') {
               await updateGroup({
@@ -324,8 +298,6 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
                   }
                 }
               });
-              console.log("Final input sent to backend:", input);
-
             } else {
               await createGroup({
                 variables: {
