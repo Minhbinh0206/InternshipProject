@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { Table, Checkbox, Space, Typography, Tooltip, Modal, Form, Input, Select, Button } from 'antd';
-import { useLocation, useParams } from 'react-router-dom';
+import { Table, Space, Typography, Tooltip, Modal, Form, Input, Select, Button } from 'antd';
+import { useParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@apollo/client';
 import {
   ArrowsAltOutlined, CloseOutlined, DeleteOutlined,
-  DoubleRightOutlined, EditOutlined, PlusOutlined,
+  EditOutlined, PlusOutlined,
   QuestionCircleFilled, SettingOutlined, QuestionCircleOutlined
 } from '@ant-design/icons';
 
@@ -18,15 +18,8 @@ import { DELETE_GROUP_PART_BY_ID, CREATE_GROUP, UPDATE_GROUP, DELETE_GROUP } fro
 import { TypeFilter } from '../PartFilters.tsx';
 import { toast } from 'react-toastify';
 import Loading from '../../layout/Loading/Loading.tsx';
-// import * as partActions from '../../../graphQL/partActions.ts';
-
-
 
 const { Title } = Typography;
-
-function useQueryParams() {
-  return new URLSearchParams(useLocation().search);
-}
 
 interface PartAssemblerGroupProps {
   versionId?: string;
@@ -110,7 +103,6 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
 
   console.log("versionId", versionId);
 
-
   const handleDeleteGroup = async (groupId: number) => {
     const confirm = window.confirm("Bạn có chắc chắn muốn xóa group này?");
 
@@ -179,10 +171,15 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
         <Space size="small" style={{ float: "right" }}>
           <CustomButton variant="blue" layout="iconFirst" icon={<EditOutlined />} text="Edit original" />
           <CustomButton variant="blue" layout="iconFirst" icon={<ArrowsAltOutlined />} text="Replace Part" />
-          <CustomButton variant="red" layout="iconFirst" icon={<DeleteOutlined />} text="Remove" onClick={() => {
-            console.log("record:", record);
-            handleDeleteGroupPartById(record.id);
-          }} />
+          <CustomButton
+            variant="red"
+            layout="iconFirst"
+            icon={<DeleteOutlined />}
+            text="Remove"
+            onClick={() => {
+              handleDeleteGroupPartById(record.id);
+            }
+            } />
         </Space>
       ),
     },
@@ -230,10 +227,12 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
               layout="iconFirst"
               icon={<PlusOutlined />}
               text="Add Part"
-              onClick={() => {
+              onClick={async () => {
+                await refetch(); // 💡 Đảm bảo partGroups được cập nhật trước
                 setSelectedGroupId(group.id);
                 setAddPartModalVisible(true);
               }}
+
             />
 
             < CustomButton
@@ -353,6 +352,7 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
           <Addpart
             groupId={selectedGroupId}
             activeTab='part-assembler'
+            existingParts={data?.groups?.find((g: any) => g.id === selectedGroupId)?.groupParts ?? []}
             onSuccess={() => {
               refetch();
               setAddPartModalVisible(false);
@@ -361,9 +361,6 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
           />}
 
       </Modal>
-      {/* End Modal Add part  */}
-
-
     </>
   );
 };

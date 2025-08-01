@@ -17,7 +17,6 @@ import {
     CloseOutlined,
     CheckOutlined,
 } from '@ant-design/icons';
-import { message } from 'antd';
 import './CodeBuilder.css';
 import CustomButton from '../../common/CustomButton/CustomButton';
 import { flushSync } from 'react-dom';

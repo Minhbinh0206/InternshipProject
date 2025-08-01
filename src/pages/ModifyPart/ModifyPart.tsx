@@ -30,14 +30,6 @@ const ModifyPart: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  useEffect(() => {
-    const storedTab = localStorage.getItem('activeModifyPartTab');
-    if (storedTab) {
-      setActiveKey(storedTab);
-    }
-  }, []);
-
-
   const { id, revisionId, versionCode } = useParams<{
     id: string;
     revisionId?: string;
@@ -106,6 +98,23 @@ const ModifyPart: React.FC = () => {
       { key: 'properties', label: 'Properties', icon: <FileTextOutlined /> },
     ];
   }
+
+  useEffect(() => {
+    if (partLoading || (versionCode && versionLoading)) return;
+
+    const validTabKeys = tabs.map(tab => tab.key);
+    const initTab = location.state?.activeTab || localStorage.getItem('activeModifyPartTab');
+
+    if (initTab && validTabKeys.includes(initTab)) {
+      setActiveKey(initTab);
+      localStorage.removeItem('activeModifyPartTab');
+    } else {
+      setActiveKey('properties');
+      localStorage.removeItem('activeModifyPartTab');
+    }
+    // ✅ chỉ chạy 1 lần khi tabs load xong
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (partLoading || (versionCode && versionLoading)) {
     return <Loading />;

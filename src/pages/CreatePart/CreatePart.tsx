@@ -94,9 +94,9 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
     }, [partData, id]);
 
     const partTypeFieldConfig: Record<string, string[]> = {
-        Led: ['LED Part No', 'Colour Temperature (K)'],
-        'Optic set': ['LOR', 'Primary Beam Angle'],
-        Engine: ['LED Lifetime', 'Maximum Drive Current (mA)', 'Minimum Drive Current (mA)'],
+        Led: ['led Part No', 'colour Temperature'],
+        'Optic set': ['lor', 'primary Beam Angle'],
+        Engine: ['led Lifetime', 'maximum Drive Current', 'minimum Drive Current'],
     };
 
     useEffect(() => {
@@ -119,8 +119,8 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
 
     const requiredFields = useMemo(() => {
         const baseFields = ['name', 'customerCode'];
-        const ledFields = ['LED Part No', 'Colour Temperature (K)'];
-        const opticSetFields = ['LOR', 'Primary Beam Angle'];
+        const ledFields = ['led Part No', 'colour Temperature'];
+        const opticSetFields = ['lor', 'primary Beam Angle'];
 
         if (selectedPartType === 'Led') {
             return [...baseFields, ...ledFields];
@@ -347,11 +347,11 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
 
                     {selectedPartType === 'Optic set' ? (
                         <>
-                            <Form.Item label="LOR" name="LOR" rules={[{ required: true }]} validateTrigger="onSubmit">
+                            <Form.Item label="LOR" name="lor" rules={[{ required: true }]} validateTrigger="onSubmit">
                                 <Input placeholder="Enter LOR" disabled={!!id} />
                             </Form.Item>
 
-                            <Form.Item label="Primary Beam Angle" name="Primary Beam Angle" rules={[{ required: true }]} validateTrigger="onSubmit">
+                            <Form.Item label="Primary Beam Angle" name="primary Beam Angle" rules={[{ required: true }]} validateTrigger="onSubmit">
                                 <Input placeholder="Enter primary beam angle" disabled={!!id} />
                             </Form.Item>
                         </>
@@ -359,7 +359,7 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
                         <>
                             <Row gutter={20} align="top">
                                 <Col span={5}>
-                                    <Form.Item label="Colour Temperature (K)" name="Colour Temperature (K)" rules={[{ required: true }]} validateTrigger="onSubmit">
+                                    <Form.Item label="Colour Temperature (K)" name="colour Temperature" rules={[{ required: true }]} validateTrigger="onSubmit">
                                         <Select defaultValue="30000K" onChange={(value) => console.log(value)} disabled={!!id}>
                                             <Option value="27000K">2700K</Option>
                                             <Option value="30000K">3000K</Option>
@@ -368,7 +368,7 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
                                     </Form.Item>
                                 </Col>
                                 <Col span={19}>
-                                    <Form.Item label="LED Part No" name="LED Part No" rules={[{ required: true }]} validateTrigger="onSubmit">
+                                    <Form.Item label="LED Part No" name="led Part No" rules={[{ required: true }]} validateTrigger="onSubmit">
                                         <Input placeholder="..." disabled={!!id} />
                                     </Form.Item>
                                 </Col>
@@ -376,15 +376,15 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
                         </>
                     ) : selectedPartType === 'Engine' ? (
                         <>
-                            <Form.Item label="LED Lifetime" name="LED Lifetime">
+                            <Form.Item label="LED Lifetime" name="led Lifetime">
                                 <Input placeholder="..." disabled={!!id} />
                             </Form.Item>
 
-                            <Form.Item label="Maximum Drive Current (mA)" name="Maximum Drive Current (mA)">
+                            <Form.Item label="Maximum Drive Current (mA)" name="maximum Drive Current">
                                 <Input placeholder="..." disabled={!!id} />
                             </Form.Item>
 
-                            <Form.Item label="Minimum Drive Current (mA)" name="Minimum Drive Current (mA)">
+                            <Form.Item label="Minimum Drive Current (mA)" name="minimum Drive Current">
                                 <Input placeholder="..." disabled={!!id} />
                             </Form.Item>
                         </>

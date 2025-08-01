@@ -32,7 +32,7 @@ const RevisionAndVersion: React.FC = () => {
     const [deleteVersion] = useMutation(DELETE_VERSION);
     const part = data?.getPartById;
 
-    if (!part) return <p>Loading part</p>;
+    if (!part) return <Loading />;
     if (!part.revisions?.length) return <p>No revisions available.</p>;
 
     const handleView = (part: {
@@ -57,11 +57,12 @@ const RevisionAndVersion: React.FC = () => {
                         versionId: part.versionId,
                         name: part.name,
                         code: part.code,
-                        type: part.type
+                        type: part.type,
+                        activeTab: 'properties',
                     },
                 }
             );
-        }, 0); // delay 1 chút để đảm bảo push đầu tiên được ghi vào history
+        }, 0);
     };
 
     const dataSource = part?.revisions
