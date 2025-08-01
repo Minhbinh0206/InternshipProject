@@ -20,13 +20,15 @@ import {
 import './CodeBuilder.css';
 import CustomButton from '../../common/CustomButton/CustomButton';
 import { flushSync } from 'react-dom';
-import type PartGroup from '../../../types/partGroup';
 import { GET_ADDITIONAL_FIELDS_GROUPS, GET_GROUPS_BY_VERSIONID } from '../../../graphQL/partQueries';
 import { useQuery } from '@apollo/client';
 import { useParams } from 'react-router-dom';
-import { GET_VERSION_BY_CODE } from '../../../graphQL/versionQueries';
+import { GET_LIST_CODE_BUILDER, GET_VERSION_BY_CODE } from '../../../graphQL/versionQueries';
 import { useMutation } from '@apollo/client';
 import { ADD_PROPERTY_TO_CODEBUILDER } from '../../../graphQL/partActions';
+import { CREATE_CODEBUILDER, DELETE_CODE_BUILDER, EDIT_RULE_CODE_BUILDER, UPDATE_FIELDS_CODE_BUILDER } from '../../../graphQL/versionActions';
+import { toast } from 'react-toastify';
+import Loading from '../../layout/Loading/Loading';
 
 const { Title, Text } = Typography;
 const { TextArea } = Input;
@@ -34,7 +36,7 @@ const { TextArea } = Input;
 interface CodePattern {
     id: number;
     name: string;
-    code: string;
+    rule: string;
     isDefault: boolean;
 }
 
@@ -48,14 +50,19 @@ interface CodeBuilderProps {
 }
 
 const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
-    const [listCodeBuilders, setListCodeBuilders] = useState<CodePattern[]>([
-        {
-            id: Date.now(),
-            name: 'Unnamed code pattern',
-            code: '{this.productCode}',
-            isDefault: true
+    console.log('CodeBuilder versionId:', versionId);
+
+    const { data: codeBuildersData, loading: codeLoading } = useQuery(GET_LIST_CODE_BUILDER, {
+        variables: { versionId }
+    });
+    const [listCodeBuilders, setListCodeBuilders] = useState<CodePattern[]>([]);
+
+    useEffect(() => {
+        if (codeBuildersData?.getCodeBuilderByVersion) {
+            setListCodeBuilders(codeBuildersData.getCodeBuilderByVersion);
         }
-    ]);
+    }, [codeBuildersData]);
+
     const { id, revisionId, versionCode } = useParams<{
         id: string;
         revisionId?: string;
@@ -66,17 +73,20 @@ const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
     const inputRef = useRef<any>(null);
     const [showAlert, setShowAlert] = useState(false);
     const [isModalVisible, setIsModalVisible] = useState(false);
+    const [selectedCodeBuilderId, setSelectedCodeBuilderId] = useState<number | undefined>();
     const [selectedGroupId, setSelectedGroupId] = useState<string | undefined>();
     const [selectedProperty, setSelectedProperty] = useState<string | undefined>();
+    const [updateCodebuilder] = useMutation(UPDATE_FIELDS_CODE_BUILDER);
+    const [isCanceling, setIsCanceling] = useState(false);
     const [validate, setValidate] = useState<ValidateState>({
         id: null,
         status: null,
     });
     const [fieldsGroup, setFieldsGroup] = useState<any[]>([]);
-
+    const [storeRuleToCodebuilder] = useMutation(EDIT_RULE_CODE_BUILDER);
     const [addPropertyToCodebuilder, { loading: addingProperty }] = useMutation(ADD_PROPERTY_TO_CODEBUILDER);
-
-
+    const [createCodeBuilder] = useMutation(CREATE_CODEBUILDER);
+    const [deleteCodebuilder] = useMutation(DELETE_CODE_BUILDER);
     const { data } = useQuery(GET_GROUPS_BY_VERSIONID, {
         variables: { versionId },
     });
@@ -84,7 +94,6 @@ const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
     const { data: fieldsData } = useQuery(GET_ADDITIONAL_FIELDS_GROUPS, {
         variables: { groupId: selectedGroupId },
     });
-    console.log(fieldsData);
 
     const { data: versionData } = useQuery(GET_VERSION_BY_CODE, {
         variables: {
@@ -108,7 +117,7 @@ const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
                 if (version.name) {
                     customFields.push({
                         id: 'name',
-                        name: 'Name',
+                        name: 'name',
                         value: version.name,
                     });
                 }
@@ -116,7 +125,7 @@ const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
                 if (version.type?.name) {
                     customFields.push({
                         id: 'typeName',
-                        name: 'Type',
+                        name: 'type',
                         value: version.type.name,
                     });
                 }
@@ -124,7 +133,7 @@ const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
                 if (version.code) {
                     customFields.push({
                         id: 'code',
-                        name: 'Code',
+                        name: 'code',
                         value: version.code,
                     });
                 }
@@ -145,39 +154,36 @@ const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
             }
         } else {
             const additionalFields = fieldsData?.getAdditionalFieldsFromGroup || [];
+            const version = additionalFields[0]?.version || {};
 
-            if (additionalFields.length === 0) {
-                setFieldsGroup([]);
-                return;
-            }
-
-            const version = additionalFields[0].version || {};
-
-            // Các field name riêng
-            const fieldItems = additionalFields.map((field: any, index: number) => ({
-                id: `field_${index}`,
-                name: field.name,
-                value: '', // Hoặc giá trị mặc định tùy bạn
-            }));
-
-            // Các trường version (chỉ lấy 1 lần)
             const versionFields = [
                 {
                     id: 'version_name',
-                    name: 'Name',
+                    name: 'name',
                     value: version.name || 'N/A',
                 },
                 {
                     id: 'version_code',
-                    name: 'Code',
+                    name: 'code',
                     value: version.code || 'N/A',
                 },
                 {
                     id: 'version_type',
-                    name: 'Type',
+                    name: 'type',
                     value: version.type?.name || 'N/A',
                 },
             ];
+
+            if (additionalFields.length === 0) {
+                setFieldsGroup(versionFields); // ✅ KHÔNG để [versionFields]
+                return;
+            }
+
+            const fieldItems = additionalFields.map((field: any, index: number) => ({
+                id: `field_${index}`,
+                name: field.name,
+                value: field.value || 'N/A',
+            }));
 
             setFieldsGroup([...versionFields, ...fieldItems]);
         }
@@ -188,71 +194,175 @@ const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
         setTempName(currentName);
     };
 
-    const handleBlur = (id: number) => {
-        setListCodeBuilders(prev =>
-            prev.map(item =>
-                item.id === id ? { ...item, name: tempName } : item
-            )
-        );
+    const handleBlur = async (id: number) => {
+        if (isCanceling) {
+            setIsCanceling(false); // reset lại cờ
+            return; // không gọi mutation
+        }
+
+        if (tempName.trim() === '') {
+            toast.warning('Name cannot be empty');
+            return;
+        }
+
+        setShowAlert(false);
+
+        try {
+            await updateCodebuilder({
+                variables: {
+                    input: {
+                        id,
+                        name: tempName,
+                    },
+                },
+            });
+
+            setListCodeBuilders(prev =>
+                prev.map(item =>
+                    item.id === id ? { ...item, name: tempName } : item
+                )
+            );
+            toast.success('Name updated successfully');
+        } catch (error) {
+            console.error("Lỗi khi cập nhật tên:", error);
+            toast.error('Name update failed');
+        }
+
         setEditingId(null);
     };
 
     const handleCancel = (
         e: React.KeyboardEvent<HTMLInputElement>,
-        id: number,
         originalName: string,
     ) => {
         if (e.key === 'Escape' || e.keyCode === 27) {
-            // ép React cập nhật state NGAY LẬP TỨC
+            setIsCanceling(true);
             flushSync(() => setTempName(originalName));
-            setEditingId(null);           // thoát chế độ rename
-            inputRef.current?.blur();     // giờ mới blur -> handleBlur sẽ đọc đúng "Tên CŨ"
+            setEditingId(null);
+            inputRef.current?.blur();
+            toast.info('Cancelled renaming');
         }
     };
 
-    const handleCodeChange = (id: number, newCode: string) => {
+    const handleCodeChange = (id: number, newRule: string) => {
         setListCodeBuilders(prev =>
             prev.map(item =>
-                item.id === id ? { ...item, code: newCode } : item
+                item.id === id ? { ...item, rule: newRule } : item
             )
         );
     };
 
-    const handleToggleDefault = (id: number) => {
-        setListCodeBuilders(prev =>
-            prev.map(item =>
-                item.id === id
-                    ? { ...item, isDefault: true }
-                    : { ...item, isDefault: false }
-            )
-        );
+    const handleCodeBlur = async (id: number, rule: string) => {
+        try {
+            await storeRuleToCodebuilder({
+                variables: {
+                    input: {
+                        id,
+                        rule,
+                    },
+                },
+            });
+            console.log('Đã lưu rule');
+            toast.success('Rule updated successfully')
+        } catch (err) {
+            console.error('Lỗi khi lưu rule', err);
+            toast.error('Rule updated failed')
+        }
     };
 
-    const handleRemove = (id: number) => {
+    const handleToggleDefault = async (id: number) => {
+        try {
+            // Gọi API để đặt item có id là default
+            await updateCodebuilder({
+                variables: {
+                    input: {
+                        id: id,
+                        is_default: true,
+                    },
+                },
+            });
+
+            // Sau khi thành công, cập nhật lại local state
+            setListCodeBuilders(prev =>
+                prev.map(item =>
+                    item.id === id
+                        ? { ...item, isDefault: true }
+                        : { ...item, isDefault: false }
+                )
+            );
+        } catch (error) {
+            console.error('Lỗi khi cập nhật isDefault:', error);
+        }
+    };
+
+    const handleRemove = (id: number, rule: string) => {
         if (listCodeBuilders.length === 1) {
             setShowAlert(!showAlert);
             return;
         }
 
-        setListCodeBuilders(prev => {
-            const filtered = prev.filter(item => item.id !== id);
+        Modal.confirm({
+            title: 'Xác nhận xoá',
+            content: `Bạn có chắc chắn muốn xoá rule ${rule} này?`,
+            okText: 'Xoá',
+            okType: 'danger',
+            cancelText: 'Huỷ',
+            onOk: async () => {
+                try {
+                    await deleteCodebuilder({ variables: { id } });
 
-            // nếu xóa ngay phần tử default → gán phần tử đầu thành default
-            if (!filtered.some(item => item.isDefault)) {
-                filtered[0] = { ...filtered[0], isDefault: true };
-            }
-            return filtered;
+                    setListCodeBuilders(prev => {
+                        const filtered = prev.filter(item => item.id !== id);
+
+                        // Nếu xóa phần tử default → gán phần tử đầu làm default
+                        if (!filtered.some(item => item.isDefault)) {
+                            filtered[0] = { ...filtered[0], isDefault: true };
+                        }
+
+                        return filtered;
+                    });
+
+                    toast.success('Remove code builder successfully');
+                } catch (error) {
+                    console.error('Lỗi khi xoá:', error);
+                    toast.error('Remove failed');
+                }
+            },
         });
     };
 
-    const handleCreateNew = () => {
-        const newItem: CodePattern = {
-            id: Date.now(),
-            name: 'Unnamed code pattern',
-            code: '{this.productCode}',
-            isDefault: false
-        };
-        setListCodeBuilders(prev => [...prev, newItem]);
+    const handleCreateNew = async () => {
+        try {
+            const response = await createCodeBuilder({
+                variables: {
+                    input: {
+                        name: 'Unnamed code pattern',
+                        rule: '{this.code}',
+                        is_default: false,
+                        version_id: versionId, // phải là trường đúng tên
+                    }
+                }
+            });
+
+            console.log(response);
+
+            const createdItem = response.data?.createCodebuilder;
+            if (!createdItem) {
+                toast.error('Tạo code builder thất bại');
+                return;
+            }
+
+            // Thêm trường originalRule để dùng cho so sánh
+            setListCodeBuilders(prev => [
+                ...prev,
+                { ...createdItem, originalRule: createdItem.rule },
+            ]);
+
+            toast.success('Tạo code builder thành công');
+        } catch (error) {
+            console.error('Lỗi khi tạo code builder', error);
+            toast.error('Tạo code builder thất bại');
+        }
     };
 
     const normalize = (s: string) =>
@@ -262,7 +372,7 @@ const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
         const current = listCodeBuilders.find(cb => cb.id === id);
         if (!current) return;
 
-        const code = normalize(current.code);
+        const code = normalize(current.rule);
 
         if (!code) {
             setValidate({ id, status: 'empty' });
@@ -270,11 +380,15 @@ const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
         }
 
         const dup = listCodeBuilders.some(
-            cb => cb.id !== id && normalize(cb.code) === code
+            cb => cb.id !== id && normalize(cb.rule) === code
         );
 
         setValidate({ id, status: dup ? 'dup' : 'ok' });
     };
+
+    if (codeLoading) {
+        return <Loading />
+    }
 
     return (
         <>
@@ -294,9 +408,8 @@ const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
                     />
                 )}
 
-
-                {listCodeBuilders.map((item) => (
-                    <div className="cb-box" key={item.id}>
+                {listCodeBuilders.map((item: any, index: number) => (
+                    <div className="cb-box" key={item.id || index} id={item.id}>
                         <Row justify="space-between" align="middle">
                             <Col>
                                 {editingId !== item.id ? (
@@ -321,7 +434,7 @@ const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
                                         autoFocus
                                         onChange={(e) => setTempName(e.target.value)}
                                         onBlur={() => handleBlur(item.id)}
-                                        onKeyDown={(e) => handleCancel(e, item.id, item.name)}
+                                        onKeyDown={(e) => handleCancel(e, item.id)}
                                         placeholder="Enter name Code Builder"
                                     />
                                 )}
@@ -338,14 +451,12 @@ const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
                                         Is default for new outcomes
                                     </Checkbox>
 
-
-
                                     <CustomButton
                                         variant="red"
                                         layout="iconFirst"
                                         icon={<CloseOutlined />}
                                         text="Remove code pattern"
-                                        onClick={() => handleRemove(item.id)}
+                                        onClick={() => handleRemove(item.id, item.rule)}
                                     />
                                 </Space>
                             </Col>
@@ -355,9 +466,11 @@ const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
                             <Text strong>Code editor</Text>
                             <TextArea
                                 rows={4}
-                                value={item.code}
-                                onChange={(e) => handleCodeChange(item.id, e.target.value)}
+                                value={item.rule}
+                                onChange={(e) => handleCodeChange(item.id, e.target.value)} // cập nhật local
+                                onBlur={() => handleCodeBlur(item.id, item.rule)} // gọi API khi blur
                             />
+
                         </div>
 
                         {/* báo trống */}
@@ -401,7 +514,10 @@ const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
                                         layout="iconFirst"
                                         icon={<PlusOutlined />}
                                         text="Browse and add properties"
-                                        onClick={() => setIsModalVisible(true)}
+                                        onClick={() => {
+                                            setSelectedCodeBuilderId(item.id);
+                                            setIsModalVisible(true)
+                                        }}
                                     />
                                     <CustomButton
                                         variant="blue"
@@ -463,7 +579,9 @@ const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
                     >
                         <Select.Option value='this Item'>This</Select.Option>
                         {partGroups.map((item: any) => (
-                            <Select.Option value={item.id}>{item.name ? item.name : "Không có tên"}</Select.Option>
+                            <Select.Option key={item.id} value={item.id}>
+                                {item.name || "Không có tên"}
+                            </Select.Option>
                         ))}
                     </Select>
                     <Text >Select part group to see available properties</Text>
@@ -475,11 +593,16 @@ const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
                         style={{ width: '100%', marginTop: 8 }}
                         placeholder="Select property..."
                         value={selectedProperty}
-                        onChange={(val) => setSelectedProperty(val)}
+                        onChange={(val) => {
+                            setSelectedProperty(val);
+                        }}
                         disabled={!selectedGroupId}
                     >
                         {fieldsGroup.map((item: any, index: number) => (
-                            <Select.Option key={item.id ?? `fallback-${index}`} value={item.id}>
+                            <Select.Option
+                                key={item.id || `field_${index}`}
+                                value={item.name}
+                            >
                                 {item.name || "Không có tên"}
                             </Select.Option>
                         ))}
@@ -497,27 +620,43 @@ const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
                                 text={addingProperty ? 'Adding...' : 'Add property'}
                                 layout='noIcon'
                                 onClick={async () => {
+                                    console.log('Selected Group ID:', selectedGroupId);
+                                    console.log('Selected Property:', selectedProperty);
+                                    console.log('Selected Code Builder ID:', selectedCodeBuilderId);
+
                                     if (!selectedGroupId || !selectedProperty) {
-                                        return; 
+                                        return;
                                     }
 
                                     try {
                                         await addPropertyToCodebuilder({
                                             variables: {
                                                 input: {
-                                                    id: versionId, 
-                                                    group_name: selectedGroupId,
+                                                    id: selectedCodeBuilderId,
+                                                    group_id: selectedGroupId === 'this Item' ? null : selectedGroupId,
                                                     field_name: selectedProperty,
                                                 },
                                             },
                                         });
+
                                         setIsModalVisible(false);
                                         setSelectedGroupId(undefined);
                                         setSelectedProperty(undefined);
+
+                                        toast.success('Adding new properties successfully'); // ✅ chỉ hiển thị khi thành công
+
                                     } catch (error: any) {
                                         console.error("Lỗi khi thêm property:", error);
+
+                                        // Có thể xử lý lỗi cụ thể hơn nếu GraphQL trả về thông tin
+                                        if (error?.graphQLErrors?.[0]?.message) {
+                                            toast.error(error.graphQLErrors[0].message);
+                                        } else {
+                                            toast.error('Failed to add property');
+                                        }
                                     }
                                 }}
+
                             />
 
                         </Space>

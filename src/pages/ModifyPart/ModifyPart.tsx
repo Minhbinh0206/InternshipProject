@@ -15,7 +15,6 @@ import Properties from '../../components/parts/Properties/Properties';
 import RevisionAndVersion from '../../components/parts/RevisionAndVersion/RevisionAndVersion';
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import { useQuery } from '@apollo/client';
-import { useSearchParams } from "react-router-dom";
 import { GET_PART_BY_ID } from '../../graphQL/partQueries';
 import { GET_VERSION_BY_CODE } from '../../graphQL/versionQueries';
 import Loading from '../../components/layout/Loading/Loading';
@@ -30,14 +29,6 @@ const ModifyPart: React.FC = () => {
   const [activeKey, setActiveKey] = useState<string>('properties');
   const navigate = useNavigate();
   const location = useLocation();
-
-  useEffect(() => {
-    const storedTab = localStorage.getItem('activeModifyPartTab');
-    if (storedTab) {
-      setActiveKey(storedTab);
-    }
-  }, []);
-
 
   const { id, revisionId, versionCode } = useParams<{
     id: string;
@@ -92,13 +83,38 @@ const ModifyPart: React.FC = () => {
 
   const enable = version?.enable_assembly_groups;
 
-  const tabs: ActiveBarItem[] = [
-    { key: 'properties', label: 'Properties', icon: <FileTextOutlined /> },
-    { key: 'assembler', label: 'Part assembler', icon: <BarsOutlined /> },
-    { key: 'outcome-settings', label: 'Outcome settings', icon: <SettingOutlined /> },
-    { key: 'code-builder', label: 'Code Builder', icon: <EditOutlined /> },
-    { key: 'assembly-outcomes', label: 'Assembly Outcomes', icon: <CheckCircleOutlined /> },
-  ];
+  let tabs: ActiveBarItem[] = []
+
+  if (enable) {
+    tabs = [
+      { key: 'properties', label: 'Properties', icon: <FileTextOutlined /> },
+      { key: 'assembler', label: 'Part assembler', icon: <BarsOutlined /> },
+      { key: 'outcome-settings', label: 'Outcome settings', icon: <SettingOutlined /> },
+      { key: 'code-builder', label: 'Code Builder', icon: <EditOutlined /> },
+      { key: 'assembly-outcomes', label: 'Assembly Outcomes', icon: <CheckCircleOutlined /> },
+    ];
+  } else {
+    tabs = [
+      { key: 'properties', label: 'Properties', icon: <FileTextOutlined /> },
+    ];
+  }
+
+  useEffect(() => {
+    if (partLoading || (versionCode && versionLoading)) return;
+
+    const validTabKeys = tabs.map(tab => tab.key);
+    const initTab = location.state?.activeTab || localStorage.getItem('activeModifyPartTab');
+
+    if (initTab && validTabKeys.includes(initTab)) {
+      setActiveKey(initTab);
+      localStorage.removeItem('activeModifyPartTab');
+    } else {
+      setActiveKey('properties');
+      localStorage.removeItem('activeModifyPartTab');
+    }
+    // ✅ chỉ chạy 1 lần khi tabs load xong
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (partLoading || (versionCode && versionLoading)) {
     return <Loading />;
@@ -150,7 +166,7 @@ const ModifyPart: React.FC = () => {
               versionCode={versionCode || ''}
             />
           ) : activeKey === 'code-builder' ? (
-            <CodeBuilder versionId={version.id}/>
+            <CodeBuilder versionId={version.id} />
           ) : activeKey === 'assembler' ? (
             enable && <PartAssemblerGroup versionId={version.id} />
           ) : activeKey === 'assembly-outcomes' ? (

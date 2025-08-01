@@ -12,7 +12,7 @@ import { FILTER_PARTS } from "../../../graphQL/partQueries";
 import { DELETE_PART } from "../../../graphQL/partActions";
 import "./PartTable.css";
 import Loading from "../../layout/Loading/Loading";
-import { message, Modal } from "antd";
+import { toast } from "react-toastify";
 
 interface PartTableProps {
   searchText: string;
@@ -20,7 +20,6 @@ interface PartTableProps {
   publishedFilter?: string | boolean;
   isAssembler?: string;
 }
-
 
 interface PartItem {
   id: number;
@@ -62,14 +61,13 @@ const PartTable: React.FC<PartTableProps> = ({
     ],
   });
 
-
   const { loading, error, data } = useQuery(FILTER_PARTS, {
     variables: { filter },
   });
 
 
   if (loading) return <Loading />;
-  if (error) return <p>Lỗi tải dữ liệu</p>;
+  if (error) return <p>Lỗi tải dữ liệu + {error.message}  </p>;
 
   const partList: PartItem[] = (data?.filterParts || []).map((part: any) => {
     let allVersions: any[] = [];
@@ -112,7 +110,7 @@ const PartTable: React.FC<PartTableProps> = ({
       console.log(`Deleted part with ID: ${partId}`);
     } catch (error) {
       console.error("Error deleting part:", error);
-      alert("Failed to delete part.");
+      toast.error("Failed to delete part.");
     }
 
   };
