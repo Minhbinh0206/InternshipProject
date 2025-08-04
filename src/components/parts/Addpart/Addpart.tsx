@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useQuery } from "@apollo/client";
 import { SettingOutlined } from "@ant-design/icons";
-import { GET_PUBLISHED_PART } from "../../../graphQL/partQueries";
+import { FILTER_PARTS, GET_PUBLISHED_PART } from "../../../graphQL/partQueries";
 import { Form, Checkbox, Typography, Input, Button, message } from "antd";
 import SearchBar from "../../common/SearchBar";
 import { TypeFilter } from "../PartFilters";
@@ -13,20 +13,33 @@ import Loading from "../../layout/Loading/Loading";
 
 interface AddpartProps {
     groupId: string;
+    selectedType?: string | null; 
     onSuccess?: () => void;
     activeTab: string;
 }
 
 const { Title } = Typography;
 
-const Addpart: React.FC<AddpartProps> = ({ groupId, onSuccess }) => {
+const Addpart: React.FC<AddpartProps> = ({ groupId, onSuccess, selectedType }) => {
     const { loading, error, data, refetch } = useQuery(GET_PUBLISHED_PART, {
-        variables: { groupId: groupId },
+        variables: {
+            groupId: groupId,
+        },
+
     });
     const [addPartToGroup] = useMutation(ADD_PART_TO_GROUP);
+
     const [search, setSearch] = useState("");
-    const [type, setType] = useState("");
+    const [type, setType] = useState(selectedType || "");
+    const [selectedTypeId, setSelectedTypeId] = useState<string | null>(null);
     const [selectedParts, setSelectedParts] = useState<any[]>([]);
+    console.log("Selected Type ID:", selectedType);
+
+    useEffect(() => {
+        if (selectedType) {
+            setType(selectedType);
+        }
+    }, [selectedType]);
 
     if (loading) return <Loading />;
     if (error) return <p>Lỗi tải dữ liệu</p>;
@@ -48,18 +61,6 @@ const Addpart: React.FC<AddpartProps> = ({ groupId, onSuccess }) => {
 
     console.log('1111111', partList);
 
-    //search
-    const filteredPartsBySearch = partList.filter((part: any) =>
-        part.name.toLowerCase().includes(search.toLowerCase()) ||
-        part.code.toLowerCase().includes(search.toLowerCase())
-    );
-
-    //Filter Type
-    const filteredPartsOfType = partList.filter(
-        (part: any) => type === "" || part.type === type
-    );
-
-    //cả 2
     const filteredParts = partList.filter(
         (part: any) =>
             (part.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -115,7 +116,7 @@ const Addpart: React.FC<AddpartProps> = ({ groupId, onSuccess }) => {
                 onReset={handleReset}
                 extraFilter={
                     <>
-                        <TypeFilter value={type} onChange={handleTypeChange} />
+                        <TypeFilter value={type} onChange={handleTypeChange} valueKey="name"/>
                     </>
                 }
             />

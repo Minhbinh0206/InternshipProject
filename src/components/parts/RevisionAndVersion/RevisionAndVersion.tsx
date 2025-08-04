@@ -31,7 +31,10 @@ const RevisionAndVersion: React.FC = () => {
     const [deleteVersion] = useMutation(DELETE_VERSION);
     const part = data?.getPartById;
 
-    if (!part) return <p>Loading part</p>;
+    if (!part) return <p>Loading part {error?.message}</p>;
+    console.log(error);
+    
+    
     if (!part.revisions?.length) return <p>No revisions available.</p>;
 
     const handleView = (part: {

@@ -13,6 +13,7 @@ import { DELETE_PART } from "../../../graphQL/partActions";
 import "./PartTable.css";
 import Loading from "../../layout/Loading/Loading";
 import { message, Modal } from "antd";
+import { toast } from "react-toastify";
 
 interface PartTableProps {
   searchText: string;
@@ -52,7 +53,6 @@ const PartTable: React.FC<PartTableProps> = ({
     filter.is_assembler = isAssembler === "true";
   }
 
-
   const [deletePartMutation] = useMutation(DELETE_PART, {
     refetchQueries: [
       {
@@ -61,16 +61,21 @@ const PartTable: React.FC<PartTableProps> = ({
       },
     ],
   });
+  console.log("Filter:", filter);
 
 
   const { loading, error, data } = useQuery(FILTER_PARTS, {
     variables: { filter },
   });
 
+  console.log("Filter Data:", data);
+  
 
   if (loading) return <Loading />;
-  if (error) return <p>Lỗi tải dữ liệu</p>;
-
+  if (error) {
+    console.error(error);
+    return <p>Lỗi tải dữ liệu: {error.message}</p>;
+  }
   const partList: PartItem[] = (data?.filterParts || []).map((part: any) => {
     let allVersions: any[] = [];
     if (Array.isArray(part.revisions)) {
@@ -109,6 +114,7 @@ const PartTable: React.FC<PartTableProps> = ({
 
     try {
       await deletePartMutation({ variables: { id: partId } });
+      toast.success("Part deleted successfully");
       console.log(`Deleted part with ID: ${partId}`);
     } catch (error) {
       console.error("Error deleting part:", error);
