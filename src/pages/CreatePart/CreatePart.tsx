@@ -192,10 +192,11 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
                 enable_assembly_groups: isChecked,
             };
 
-            console.log(input);
 
             const { data } = await createPart({ variables: { input } });
             const createdPart = data?.createPart;
+
+            console.log(input);
 
             if (createdPart?.id && createdPart?.latest_version_id) {
                 // 👇 Add to group

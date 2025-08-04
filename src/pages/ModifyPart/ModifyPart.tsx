@@ -74,6 +74,7 @@ const ModifyPart: React.FC = () => {
     setActiveKey(key);
     localStorage.setItem('activeModifyPartTab', key);
   };
+  const [refetchCounter, setRefetchCounter] = useState(0);
 
   const partCode = versionCode ? version?.code || '-' : selectedVersion?.code || '-';
   const partType = versionCode ? version?.type?.name || '-' : selectedVersion?.type?.name || '-';

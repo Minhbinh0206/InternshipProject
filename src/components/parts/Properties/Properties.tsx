@@ -3,12 +3,8 @@ import { Col, Divider, Form, Input, Row, Select, Tooltip, Typography, Modal, mes
 import { QuestionCircleOutlined, PlusOutlined, QuestionCircleFilled } from '@ant-design/icons';
 import CustomButton from '../../../components/common/CustomButton/CustomButton';
 import { useQuery, useMutation } from '@apollo/client';
-import { useSearchParams } from 'react-router-dom';
 import { UPDATE_PART } from '../../../graphQL/versionActions';
 import '../../../pages/CreatePart/CreatePart.css';
-import type PartType from '../../../types/partType';
-import { GET_PART_TYPES } from '../../../graphQL/partQueries';
-import { UPDATE_STANDARD_FIELD } from '../../../graphQL/versionActions';
 import { GET_VERSION_BY_CODE } from '../../../graphQL/versionQueries';
 import AutoSaveInput from '../OnblurProcessing/AutoSaveInput';
 import AutoSaveSelect from '../OnblurProcessing/AutoSaveSelect';
@@ -32,7 +28,6 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
   const [form] = Form.useForm();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [checkedKeys, setCheckedKeys] = useState<string[]>([]);
-  const { data: typeData } = useQuery(GET_PART_TYPES);
   const [selectedFields, setSelectedFields] = useState<Field[]>([]);
   //const [updateStandardField] = useMutation(UPDATE_STANDARD_FIELD);
   const [updatePart] = useMutation(UPDATE_PART)

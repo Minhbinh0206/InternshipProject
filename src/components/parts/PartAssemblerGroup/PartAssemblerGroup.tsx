@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Table, Space, Typography, Tooltip, Modal, Form, Input, Select, Button } from 'antd';
 import { useParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@apollo/client';
@@ -33,7 +33,7 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
   const { data, loading, error, refetch } = useQuery(GET_GROUPS_BY_VERSIONID, {
     variables: { versionId },
   });
-
+  const [groupRefetch, setGroupRefetch] = useState(0);
   const { data: partTypeData } = useQuery(GET_PART_TYPES);
   const [deleteGroupPartById] = useMutation(DELETE_GROUP_PART_BY_ID);
   const [createGroup] = useMutation(CREATE_GROUP);
@@ -59,6 +59,9 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
     });
   }
 
+  useEffect(() => {
+    refetch();
+  }, [groupRefetch]);
 
   const showCreateGroupModal = () => {
     setEditMode('create');
@@ -92,6 +95,33 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
 
       if (data?.deleteGroupPartById) {
         toast.success("Xóa thành công");
+        const handleDeleteGroupPartById = async (groupPartId?: number | string) => {
+          const id = parseInt(String(groupPartId), 10);
+
+          if (!id || isNaN(id)) {
+            console.error("Invalid groupPartId:", groupPartId);
+            return;
+          }
+
+          const confirm = window.confirm("Bạn có chắc chắn muốn xóa part khỏi group?");
+          if (!confirm) return;
+
+          try {
+            const { data } = await deleteGroupPartById({
+              variables: { id }
+            });
+
+            if (data?.deleteGroupPartById) {
+              setGroupRefetch((prev: any) => prev + 1);
+              toast.success("Xóa thành công");
+              refetch();
+            } else {
+              toast.error("Xóa thất bại");
+            }
+          } catch (err) {
+            console.error("Lỗi khi xóa:", err);
+          }
+        };
         refetch();
       } else {
         toast.error("Xóa thất bại");
