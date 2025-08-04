@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { useQuery } from "@apollo/client";
-import { GET_PUBLISHED_PART } from "../../../graphQL/partQueries";
-import { Form, Typography } from "antd";
+import { SettingOutlined } from "@ant-design/icons";
+import { FILTER_PARTS, GET_PUBLISHED_PART } from "../../../graphQL/partQueries";
+import { Form, Checkbox, Typography, Input, Button, message } from "antd";
+
 import SearchBar from "../../common/SearchBar";
 import { TypeFilter } from "../PartFilters";
 import CustomButton from "../../common/CustomButton/CustomButton";
@@ -13,6 +15,7 @@ import Loading from "../../layout/Loading/Loading";
 
 interface AddpartProps {
     groupId: string;
+    selectedType?: string | null; 
     onSuccess?: () => void;
     activeTab: string;
     existingParts: any[];
@@ -20,15 +23,33 @@ interface AddpartProps {
 
 const { Title } = Typography;
 
-const Addpart: React.FC<AddpartProps> = ({ groupId, onSuccess, existingParts }) => {
+const Addpart: React.FC<AddpartProps> = ({ groupId, onSuccess, selectedType, existingParts }) => {
     const { loading, error, data, refetch } = useQuery(GET_PUBLISHED_PART, {
-        variables: { groupId: groupId },
+        variables: {
+            groupId: groupId,
+        },
+
     });
     const [addPartToGroup] = useMutation(ADD_PART_TO_GROUP);
+
     const [search, setSearch] = useState("");
+    const [type, setType] = useState(selectedType || "");
+    const [selectedTypeId, setSelectedTypeId] = useState<string | null>(null);
+    const [selectedParts, setSelectedParts] = useState<any[]>([]);
+    console.log("Selected Type ID:", selectedType);
+
+    useEffect(() => {
+        if (selectedType) {
+            setType(selectedType);
+        }
+    }, [selectedType]);
+
+    if (loading) return <Loading />;
+    if (error) return <p>Lỗi tải dữ liệu</p>;
     const [type, setType] = useState("");
     const [deleteGroupPartById] = useMutation(DELETE_GROUP_PART_BY_ID);
     const [checkedParts, setCheckedParts] = useState<number[]>([]);
+
 
     const partList = data?.publishedPart?.map((part: any) => {
         const version = part.revisions[0]?.versions[0];
@@ -45,12 +66,22 @@ const Addpart: React.FC<AddpartProps> = ({ groupId, onSuccess, existingParts }) 
 
     }).filter(Boolean);
 
+    console.log('1111111', partList);
+
+    const filteredParts = partList.filter(
+        (part: any) =>
+            (part.name.toLowerCase().includes(search.toLowerCase()) ||
+                part.code.toLowerCase().includes(search.toLowerCase())) &&
+            (type === "" || part.type === type)
+    );
+
     useEffect(() => {
         if (existingParts && data?.publishedPart) {
             const checkedIds = existingParts.map((p: any) => Number(p.part.id));
             setCheckedParts(checkedIds);
         }
     }, [data, existingParts ]);
+
 
     const handleSearch = () => {
     };
@@ -133,7 +164,7 @@ const Addpart: React.FC<AddpartProps> = ({ groupId, onSuccess, existingParts }) 
                 onReset={handleReset}
                 extraFilter={
                     <>
-                        <TypeFilter value={type} onChange={handleTypeChange} />
+                        <TypeFilter value={type} onChange={handleTypeChange} valueKey="name"/>
                     </>
                 }
             />

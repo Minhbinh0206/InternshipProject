@@ -43,6 +43,24 @@ export const CREATE_REVISION = gql`
   }
 `;
 
+export const DUPLICATE_PART = gql`
+ mutation duplicateFullPart($part_id: ID!, $code: String!) {
+  duplicateFullPart(part_id: $part_id, code: $code) {
+    id
+    name
+    code
+    revisions {
+      id
+      versions {
+        id
+        name
+        code
+      }
+    }
+  }
+ }
+ `;
+
 // GROUP
 export const ADD_PART_TO_GROUP = gql`
   mutation AddPartToGroup($input: [CreateGroupPartInput!]!) {
@@ -54,16 +72,6 @@ export const ADD_PART_TO_GROUP = gql`
     }
   }
 `;
-
-// export const UPDATE_GROUP = gql`
-//   mutation UpdateGroup($id: ID!, $input: UpdateGroupInput!) {
-//     updateGroup(id: $id, input: $input) {
-//       id
-//       name
-//       part_type_id
-//     }
-//   }
-// `;
 
 export const DELETE_GROUP_PART_BY_ID = gql`
   mutation DeleteGroupPartById($id: Int!) {
@@ -82,21 +90,35 @@ export const CREATE_GROUP = gql`
 `;
 
 export const UPDATE_GROUP = gql`
-mutation UpdateGroup($input: EditGroupInput!) {
-  updateGroup(input: $input) {
-    id
-    name
-    is_optional
-    type_id
+  mutation UpdateGroup($input: EditGroupInput!) {
+    updateGroup(input: $input) {
+      id
+      name
+      is_optional
+      type_id
   }
 }
 `;
 
 export const DELETE_GROUP = gql`
-mutation DeleteGroup($id: ID!) {
-  deleteGroup(id: $id)
-}
+  mutation DeleteGroup($id: ID!) {
+    deleteGroup(id: $id)
+  }
 `;
+
+export const CREATE_AND_ADD_PART_TO_GROUP = gql`
+  mutation createAndAddPartToGroup($input: CreatePartInput!) {
+    createAndAddPartToGroup(input: $input) {
+      id
+      name
+      code
+    }
+  }
+`;
+
+
+
+
 
 export const ADD_PROPERTY_TO_CODEBUILDER = gql`
   mutation AddPropertyToCodebuilder($input: AddPropertyToCodebuilderInput!) {
@@ -107,3 +129,5 @@ export const ADD_PROPERTY_TO_CODEBUILDER = gql`
     }
   }
 `;
+
+

@@ -4,10 +4,15 @@ import { QuestionCircleOutlined, PlusOutlined, QuestionCircleFilled } from '@ant
 import CustomButton from '../../../components/common/CustomButton/CustomButton';
 import { useQuery, useMutation } from '@apollo/client';
 import { UPDATE_PART } from '../../../graphQL/versionActions';
+import { useQuery, useMutation } from '@apollo/client';
 import '../../../pages/CreatePart/CreatePart.css';
+import type PartType from '../../../types/partType';
+import { GET_PART_TYPES } from '../../../graphQL/partQueries';
 import { GET_VERSION_BY_CODE } from '../../../graphQL/versionQueries';
 import AutoSaveInput from '../OnblurProcessing/AutoSaveInput';
 import AutoSaveSelect from '../OnblurProcessing/AutoSaveSelect';
+import { toast } from 'react-toastify';
+import CustomSwitch from '../../common/CustomSwitch/CustomSwitch';
 
 const { Option } = Select;
 
@@ -29,8 +34,8 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [checkedKeys, setCheckedKeys] = useState<string[]>([]);
   const [selectedFields, setSelectedFields] = useState<Field[]>([]);
-  //const [updateStandardField] = useMutation(UPDATE_STANDARD_FIELD);
   const [updatePart] = useMutation(UPDATE_PART)
+  const [isChecked, setChecked] = useState(false);
 
   // Get version data by versionCode (if exists)
   const { data: versionData, refetch } = useQuery(GET_VERSION_BY_CODE, {
@@ -45,8 +50,22 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
   });
 
   useEffect(() => {
-  console.log("DEBUG - versionData after update:", versionData);
-}, [versionData]);
+    console.log("DEBUG - versionData after update:", versionData);
+  }, [versionData]);
+
+
+  useEffect(() => {
+    if (versionData?.getVersionByVersionCode) {
+      const version = versionData.getVersionByVersionCode;
+      setChecked(version.enable_assembly_groups);
+    }
+  }, [versionData]);
+
+  // useEffect(() => {
+  //   if (version) {
+  //     setChecked(version.enable_assembly_groups);
+  //   }
+  // }, [version]);
 
 
   const version = versionData?.getVersionByVersionCode;
@@ -149,6 +168,38 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
             </Tooltip>
           </div>
 
+          <Form.Item label="Enable assembly groups (combination generator)" colon={false}>
+            <Row align="middle" gutter={16}>
+              <Col>
+                {version?.enable_assembly_groups ? (
+                  <CustomSwitch checked={isChecked} onChange={() => { }} disabled />
+                ) : (
+                  <CustomSwitch
+                    checked={isChecked}
+                    onChange={() => {
+                      setChecked(!isChecked);
+                      updatePart({
+                        variables: {
+                          input: {
+                            version_id: version.id,
+                            enable_assembly_groups: !isChecked,
+                          },
+                        },
+                      })
+                        .then(() => toast.success("Enable assembly groups updated"))
+                        .catch((err) => {
+                          console.error(err);
+                          toast.error("Failed to update assembly groups");
+                        })
+                    }}
+                    disabled
+                  />
+                )}
+              </Col>
+            </Row>
+
+          </Form.Item>
+
           <Row gutter={24} align="top">
             <Col span={12}>
               <Form.Item
@@ -169,66 +220,13 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
 
           </Row>
 
-          {/* <Form.Item
-            label="Name"
-            name="name"
-            rules={[{ required: true }]}
-            validateTrigger="onSubmit"
-          >
-            <Input
-              placeholder="Part name"
-              onBlur={(e) => {
-                const value = e.target.value;
-                updateStandardField({
-                  variables: {
-                    input: {
-                      part_id: Number(id),
-                      revision_id: Number(revisionId),
-                      version_code: versionCode,
-                      data: value,
-                      field: 'name',
-                    },
-                  },
-                })
-                  .then(() => {
-                    message.success('Name updated successfully');
-                  })
-                  .catch((error) => {
-                    console.error('GraphQL update error:', error);
-                    message.error(error.message || 'Failed to update name');
-                  });
-
-              }}
-            />
-          </Form.Item> */}
-
           <Form.Item
             label="Name"
             name="name"
             rules={[{ required: true }]}
             validateTrigger="onSubmit"
           >
-          {/* <Input
-    placeholder="Part name"
-    onBlur={(e) => {
-      const value = e.target.value;
-
-      updatePart({
-        variables: {
-          input: {
-            version_id: Number(version?.id), 
-            name: value
-          },
-        },
-      })
-        .then(() => message.success('Name updated successfully'))
-        .catch((error) => {
-          console.error('GraphQL update error:', error);
-          message.error(error.message || 'Failed to update name');
-        });
-    }}
-  /> */}
-            <AutoSaveInput name="name" value={version?.name || ''} versionId={version?.id} refetch={refetch}/>
+            <AutoSaveInput name="name" value={version?.name || ''} versionId={version?.id} refetch={refetch} />
           </Form.Item>
 
 
@@ -283,11 +281,6 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
                   rules={[{ required: true }]}
                   validateTrigger="onSubmit"
                 >
-                  {/* <Select>
-                    <Option value="27000K">2700K</Option>
-                    <Option value="30000K">3000K</Option>
-                    <Option value="40000K">4000K</Option>
-                  </Select> */}
                   <AutoSaveSelect
                       name="colour Temperature"
                       value={getFieldValue('colour Temperature') || ''}
@@ -445,8 +438,8 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
                                 },
                               },
                             })
-                              .then(() => message.success(`${field.label} updated`))
-                              .catch(() => message.error(`Failed to update ${field.label}`));
+                              .then(() => toast.success(`${field.label} updated`))
+                              .catch(() => toast.error(`Failed to update ${field.label}`));
                           }}
                         >
                           <Option value="B">Black</Option>

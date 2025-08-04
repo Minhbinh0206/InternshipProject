@@ -23,6 +23,7 @@ export const DELETE_VERSION = gql`
     }
 `;
 
+
 export const UPDATE_STANDARD_FIELD = gql`
   mutation UpdateStandardFieldByVersionCode($input: VersionFieldUpdateInput!) {
     updateStandardFieldByVersionCode(input: $input) {
@@ -66,4 +67,3 @@ export const CREATE_CODEBUILDER = gql`
         isDefault
     }
 }`;
-

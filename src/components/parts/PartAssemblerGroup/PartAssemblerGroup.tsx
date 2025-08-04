@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { Table, Space, Typography, Tooltip, Modal, Form, Input, Select, Button } from 'antd';
-import { useParams } from 'react-router-dom';
+import { Table, Checkbox, Space, Typography, Tooltip, Modal, Form, Input, Select, Button } from 'antd';
+import { useLocation, useParams } from 'react-router-dom';
+
 import { useMutation, useQuery } from '@apollo/client';
 import {
   ArrowsAltOutlined, CloseOutlined, DeleteOutlined,
@@ -14,7 +15,7 @@ import { GET_GROUPS_BY_VERSIONID, GET_PART_TYPES } from '../../../graphQL/partQu
 import type { ColumnsType } from 'antd/es/table';
 import './PartAssemblerGroup.css';
 import Addpart from '../Addpart/Addpart.tsx';
-import { DELETE_GROUP_PART_BY_ID, CREATE_GROUP, UPDATE_GROUP, DELETE_GROUP } from '../../../graphQL/partActions.ts';
+import { DELETE_GROUP_PART_BY_ID, CREATE_GROUP, UPDATE_GROUP, DELETE_GROUP, CREATE_PART, CREATE_AND_ADD_PART_TO_GROUP } from '../../../graphQL/partActions.ts';
 import { TypeFilter } from '../PartFilters.tsx';
 import { toast } from 'react-toastify';
 import Loading from '../../layout/Loading/Loading.tsx';
@@ -39,6 +40,8 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
   const [createGroup] = useMutation(CREATE_GROUP);
   const [updateGroup] = useMutation(UPDATE_GROUP);
   const [deleteGroup] = useMutation(DELETE_GROUP);
+  const [createAndAddPart] = useMutation(CREATE_AND_ADD_PART_TO_GROUP);
+
 
   const [isEditModalVisible, setEditModalVisible] = useState(false);
   const [editMode, setEditMode] = useState<'create' | 'edit'>('edit');
@@ -46,8 +49,21 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
   const [isCreatePartModalVisible, setCreatePartModalVisible] = useState(false);
   const [isAddPartModalVisible, setAddPartModalVisible] = useState(false);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
-
+  // const [selectedTypeId, setSelectedTypeId] = useState<string | null>(null);
+  // const [type, setType] = useState<string | null>(null);
+  const [type, setType] = useState<string>('');
+  const [selectedTypeId, setSelectedTypeId] = useState<string>('');
   console.log("selectedGroupId:", selectedGroupId);
+
+  useEffect(() => {
+    for (const typeId of partTypeData?.types ?? []) {
+      if (typeId.id === selectedTypeId) {
+        setType(typeId.name);
+        break;
+
+      }
+    }
+  })
 
   const showEditModal = (group: any) => {
     setEditMode('edit');
@@ -63,6 +79,7 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
     refetch();
   }, [groupRefetch]);
 
+
   const showCreateGroupModal = () => {
     setEditMode('create');
     setCurrentGroupData(null);
@@ -71,10 +88,8 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
   }
 
   const handleCancel = () => setEditModalVisible(false);
-
   const showCreatePartModal = () => setCreatePartModalVisible(true);
   const handleCreatePartCancel = () => setCreatePartModalVisible(false);
-
   const handleAddPartCancel = () => setAddPartModalVisible(false);
 
   const handleDeleteGroupPartById = async (groupPartId?: number | string) => {
@@ -153,6 +168,7 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
       toast.error("Lỗi khi xóa group");
     }
   }
+
 
   if (loading) return <Loading />;
   if (error) return <p>Lỗi khi tải dữ liệu: {error.message}</p>;
@@ -260,12 +276,15 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
               onClick={async () => {
                 await refetch(); // 💡 Đảm bảo partGroups được cập nhật trước
                 setSelectedGroupId(group.id);
+                console.log("Group ID", group.id);
+                setSelectedTypeId(group.type_id);
+                console.log("Group Type ID:", group.type_id);
                 setAddPartModalVisible(true);
               }}
 
             />
 
-            < CustomButton
+            <CustomButton
               variant="white"
               layout="iconFirst"
               icon={< PlusOutlined />}
@@ -282,13 +301,22 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
             footer={null}
             width={1200}
           >
-            <TypeFilter />
-            <CreatePart createModalVisible={(visible: boolean) => setCreatePartModalVisible(visible)} groupId={group.id} hideHeader={true} />
+            <div style={{ marginBottom: 24 }}>
+              <div style={{ marginTop: 24, marginLeft: 32, marginBottom: -30 }}>
+                <TypeFilter
+                />
+              </div>
+              <CreatePart
+                groupId={group.id}
+                createModalVisible={(visible: boolean) => setCreatePartModalVisible(visible)}
+                hideHeader
+                hideFooter
+                isDuplicate={false}
+              />
+            </div>
           </Modal>
           {/* End Modal Create and Add new part  */}
         </div>
-
-
       ))}
 
       <CustomButton variant="blue" layout="textFirst" icon={<CloseOutlined />} text="Create group"
@@ -327,16 +355,18 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
                   }
                 }
               });
+              toast.success("Cập nhật group thành công!");
             } else {
               await createGroup({
                 variables: {
                   input: {
                     ...input,
                     version_id: versionId,
-                    assembler_id: 1,
+                    assembler_id: partId.id,
                   },
                 },
               });
+              toast.success("Tạo group mới thành công!");
             }
 
             refetch();
@@ -381,6 +411,7 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
         {selectedGroupId &&
           <Addpart
             groupId={selectedGroupId}
+            selectedType={type}
             activeTab='part-assembler'
             existingParts={data?.groups?.find((g: any) => g.id === selectedGroupId)?.groupParts ?? []}
             onSuccess={() => {

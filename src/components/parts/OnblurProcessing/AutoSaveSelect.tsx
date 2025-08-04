@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Select, message } from 'antd';
 import { useMutation } from '@apollo/client';
 import { UPDATE_PART } from '../../../graphQL/versionActions';
+import { toast } from 'react-toastify';
 
 const { Option } = Select;
 
@@ -56,8 +57,8 @@ const AutoSaveSelect: React.FC<AutoSaveSelectProps> = ({
         input: inputPayload,
       },
     })
-      .then(() => message.success(`${name} updated`))
-      .catch(() => message.error(`Failed to update ${name}`));
+      .then(() => toast.success(`${name} updated`))
+      .catch(() => toast.error(`Failed to update ${name}`));
   };
 
   return (

@@ -13,8 +13,10 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { GET_PART_BY_ID } from '../../graphQL/partQueries';
 import { useMutation } from '@apollo/client';
 import { CREATE_PART } from '../../graphQL/partActions';
+import { CREATE_AND_ADD_PART_TO_GROUP, ADD_PART_TO_GROUP } from '../../graphQL/partActions';
 import { ADD_PART_TO_GROUP } from '../../graphQL/partActions';
 import { toast } from 'react-toastify';
+
 
 const { Option } = Select;
 
@@ -22,12 +24,15 @@ interface CreatePartProps {
     createModalVisible: (visible: boolean) => void;
     groupId?: string;
     hideHeader?: boolean;
+    hideFooter?: boolean;
+    isDuplicate?: boolean;
 }
 
-const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hideHeader = false }) => {
+const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hideHeader = false, hideFooter = false, isDuplicate = true }) => {
+    const [createAndAddPartToGroup] = useMutation(CREATE_AND_ADD_PART_TO_GROUP);
     const [addPartToGroup] = useMutation(ADD_PART_TO_GROUP);
     const [activeKey, setActiveKey] = useState('properties');
-    const { data: typeData, loading: typeLoading } = useQuery(GET_PART_TYPES);
+    const { data: typeData, loading: typeLoading, error: typeError } = useQuery(GET_PART_TYPES);
     const [mode] = useState<PartTypeMode>('detailed');
     const [isChecked, setChecked] = useState(false);
     const [selectedPartType, setSelectedPartType] = useState('Standard');
@@ -38,8 +43,13 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
     const { data: allPartsData } = useQuery(GET_PARTS);
 
     const [inputValue, setInputValue] = useState<string>('');
-    const { id } = useParams<{ id?: string }>();
+    // const { id } = useParams<{ id?: string }>();
+    const { id: routeId } = useParams<{ id?: string }>();
+    const id = isDuplicate ? routeId : undefined;
+
     const navigate = useNavigate();
+    console.log(typeError);
+
 
     const { data: partData } = useQuery(GET_PART_BY_ID, {
         variables: { id },
@@ -133,6 +143,8 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
         return baseFields;
     }, [selectedPartType]);
 
+    console.log('Selected type:', selectedPartType);
+
     const formValues = Form.useWatch([], form);
 
     const isCreateDisabled = requiredFields.some(field => {
@@ -170,6 +182,7 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
         },
     ];
 
+
     const handleCreate = async () => {
         const partTypeExtraFields = partTypeFieldConfig[selectedPartType] || [];
         const customFields = selectedFields;
@@ -177,52 +190,62 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
 
         try {
             const values = await form.validateFields();
-            const input = {
-                name: values.name,
-                type_id: selectedPartTypeId,
-                code: values.customerCode,
-                description: values.description,
-                additional_fields: [...customFields, ...standardFields]
-                    .filter(field => values[field] !== undefined && values[field] !== null)
-                    .map(field => ({
-                        name: field,
-                        value: values[field].toString(),
-                        type_group: customFields.includes(field) ? 'custom' : 'standard',
-                    })),
-                enable_assembly_groups: isChecked,
-            };
+            const additional_fields = [...customFields, ...standardFields]
+                .filter(field => values[field] !== undefined && values[field] !== null)
+                .map(field => ({
+                    name: field,
+                    value: values[field].toString(),
+                    data_type: typeof values[field] === 'number' ? 'int' : 'string',
+                }));
 
+            let createdPart;
 
-            const { data } = await createPart({ variables: { input } });
-            const createdPart = data?.createPart;
+            if (groupId) {
 
-            console.log(input);
+                const input = {
+                    name: values.name,
+                    code: values.customerCode,
+                    type_id: selectedPartTypeId,
+                    description: values.description,
+                    enable_assembly_groups: isChecked,
+                    addToGroup: true,
+                    group_id: groupId,
+                    additional_fields,
+                };
 
-            if (createdPart?.id && createdPart?.latest_version_id) {
-                // 👇 Add to group
-                await addPartToGroup({
-                    variables: {
-                        input: [
-                            {
-                                group_id: groupId,
-                                part_id: createdPart.id,
-                                version_id: createdPart.latest_version_id,
-                            }
-                        ]
-                    }
-                });
-                console.log('✅ Part added to group');
+                console.log("input", input);
+
+                const { data } = await createAndAddPartToGroup({ variables: { input } });
+                createdPart = data?.createAndAddPartToGroup;
+                console.log('Created and added to group');
+
+            } else {
+
+                const input = {
+                    name: values.name,
+                    code: values.customerCode,
+                    type_id: selectedPartTypeId,
+                    description: values.description,
+                    enable_assembly_groups: isChecked,
+                    additional_fields,
+                };
+
+                const { data } = await createPart({ variables: { input } });
+                createdPart = data?.createPart;
+                console.log('Created (no group)');
             }
 
-            navigate(`/parts/modify/${createdPart.id}`);
-            toast.success('Part created successfully');
+            if (!hideFooter && createdPart?.id) {
+                navigate(`/parts/modify/${createdPart.id}`);
+            }
 
             createModalVisible(false);
             form.resetFields();
-        } catch (error) {
-            console.error('❌ Error creating or adding part:', error);
+        } catch (err) {
+            console.error('Create part failed:', err);
         }
     };
+
 
     useEffect(() => {
         if (selectedPartType === 'Luminaire') {
@@ -360,8 +383,8 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
                         <>
                             <Row gutter={20} align="top">
                                 <Col span={5}>
-                                    <Form.Item label="Colour Temperature (K)" name="colour Temperature" rules={[{ required: true }]} validateTrigger="onSubmit">
-                                        <Select defaultValue="30000K" onChange={(value) => console.log(value)} disabled={!!id}>
+                                    <Form.Item label="Colour Temperature (K)" name="Colour Temperature (K)" rules={[{ required: true }]} validateTrigger="onSubmit" initialValue={'30000K'}>
+                                        <Select onChange={(value) => console.log(value)} disabled={!!id}>
                                             <Option value="27000K">2700K</Option>
                                             <Option value="30000K">3000K</Option>
                                             <Option value="40000K">4000K</Option>
@@ -417,9 +440,10 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
                                         .flatMap(group => group.fields)
                                         .find(f => f.key === fieldKey)?.label || fieldKey}
                                     name={fieldKey}
+                                    initialValue={fieldKey === 'finish' ? 'B' : ''}
                                 >
                                     {fieldKey === 'finish' ? (
-                                        <Select placeholder="Select Finish" defaultValue='Black' disabled={!!id}>
+                                        <Select placeholder="Select Finish" disabled={!!id}>
                                             <Option value="B">Black</Option>
                                             <Option value="R">Red</Option>
                                             <Option value="Y">Yellow</Option>
@@ -450,15 +474,49 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
                 )
             }
 
-            <div style={{ textAlign: 'start', margin: 30 }}>
-                <CustomButton
-                    variant='blue'
-                    text={id ? 'Duplicate Part' : 'Create Part'}
-                    layout='noIcon'
-                    onClick={handleCreate}
-                    disabled={!!(isCreateDisabled || isDuplicateCode)}
-                />
-            </div>
+            {!hideFooter ? (
+                <div style={{ textAlign: 'start', margin: 30 }}>
+                    {id && isDuplicate && (
+                        <CustomButton
+                            variant='blue'
+                            text="Duplicate Part"
+                            layout='noIcon'
+                            onClick={() => handleCreate()}
+                            disabled={!!(isCreateDisabled || isDuplicateCode)}
+                        />
+                    )}
+
+                    {!id && !groupId && (
+                        <CustomButton
+                            variant='blue'
+                            text="Create Part"
+                            layout='noIcon'
+                            onClick={() => handleCreate()}
+                            disabled={!!(isCreateDisabled || isDuplicateCode)}
+                        />
+                    )}
+
+                    {!id && groupId && (
+                        <CustomButton
+                            variant='blue'
+                            text="Create and Add new part"
+                            layout='noIcon'
+                            onClick={() => handleCreate()}
+                            disabled={!!(isCreateDisabled || isDuplicateCode)}
+                        />
+                    )}
+                </div>
+            ) : (
+                <div style={{ textAlign: 'start', margin: 30 }}>
+                    <CustomButton
+                        variant='blue'
+                        text="Create and Add new part"
+                        layout='noIcon'
+                        onClick={() => handleCreate()}
+                        disabled={!!(isCreateDisabled || isDuplicateCode)}
+                    />
+                </div>
+            )}
 
 
             <Modal
