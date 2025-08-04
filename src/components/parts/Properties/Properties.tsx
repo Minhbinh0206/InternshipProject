@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Col, Divider, Form, Input, Row, Select, Tooltip, Typography, Modal, message } from 'antd';
 import { QuestionCircleOutlined, PlusOutlined, QuestionCircleFilled } from '@ant-design/icons';
 import CustomButton from '../../../components/common/CustomButton/CustomButton';
+import { useQuery, useMutation } from '@apollo/client';
 import { UPDATE_PART } from '../../../graphQL/versionActions';
 import { useQuery, useMutation } from '@apollo/client';
 import '../../../pages/CreatePart/CreatePart.css';
@@ -32,7 +33,6 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
   const [form] = Form.useForm();
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [checkedKeys, setCheckedKeys] = useState<string[]>([]);
-  const { data: typeData } = useQuery(GET_PART_TYPES);
   const [selectedFields, setSelectedFields] = useState<Field[]>([]);
   const [updatePart] = useMutation(UPDATE_PART)
   const [isChecked, setChecked] = useState(false);
@@ -234,15 +234,15 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
             <>
               <Form.Item
                 label="LOR"
-                name="LOR"
-                initialValue={getFieldValue('LOR')}
+                name="lor"
+                initialValue={getFieldValue('lor')}
                 rules={[{ required: true }]}
                 validateTrigger="onSubmit"
               >
                 {/* <Input placeholder="Enter LOR" /> */}
                 <AutoSaveInput
-                  name="LOR"
-                  value={getFieldValue('LOR') || ''}
+                  name="lor"
+                  value={getFieldValue('lor') || ''}
                   versionId={version?.id}
                   isAdditional={true}
                   dataType="string"
@@ -252,15 +252,15 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
               </Form.Item>
               <Form.Item
                 label="Primary Beam Angle"
-                name="Primary Beam Angle"
-                initialValue={getFieldValue('Primary Beam Angle')}
+                name="primary Beam Angle"
+                initialValue={getFieldValue('primary Beam Angle')}
                 rules={[{ required: true }]}
                 validateTrigger="onSubmit"
               >
                 {/* <Input placeholder="Enter primary beam angle" /> */}
                 <AutoSaveInput
-                  name="Primary Beam Angle"
-                  value={getFieldValue('Primary Beam Angle') || ''}
+                  name="primary Beam Angle"
+                  value={getFieldValue('primary Beam Angle') || ''}
                   versionId={version?.id}
                   isAdditional={true}
                   dataType="string"
@@ -276,39 +276,38 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
               <Col span={5}>
                 <Form.Item
                   label="Colour Temperature (K)"
-                  name="Colour Temperature (K)"
-                  initialValue={getFieldValue('Colour Temperature (K)')}
+                  name="colour Temperature"
+                  initialValue={getFieldValue('colour Temperature')}
                   rules={[{ required: true }]}
                   validateTrigger="onSubmit"
                 >
                   <AutoSaveSelect
-                    name="Colour Temperature (K)"
-                    value={getFieldValue('Colour Temperature (K)') || ''}
-                    versionId={version?.id}
-                    isAdditional={true}
-                    dataType="string"
-                    typeGroup="custom"
-                    options={[
-                      { label: '2700K', value: '27000K' },
-                      { label: '3000K', value: '30000K' },
-                      { label: '4000K', value: '40000K' },
-                    ]}
-                    refetch={refetch}
-                  />
+                      name="colour Temperature"
+                      value={getFieldValue('colour Temperature') || ''}
+                      versionId={version?.id}
+                      isAdditional={true}
+                      dataType="string"
+                      typeGroup="custom"
+                      options={[
+                        { label: '2700K', value: '27000K' },
+                        { label: '3000K', value: '30000K' },
+                        { label: '4000K', value: '40000K' },
+                      ]}
+                    />
                 </Form.Item>
               </Col>
               <Col span={19}>
                 <Form.Item
                   label="LED Part No"
-                  name="LED Part No"
-                  initialValue={getFieldValue('LED Part No')}
+                  name="led Part No"
+                  initialValue={getFieldValue('led Part No')}
                   rules={[{ required: true }]}
                   validateTrigger="onSubmit"
                 >
                   {/* <Input placeholder="..." /> */}
                   <AutoSaveInput
-                    name="LED Part No"
-                    value={getFieldValue('LED Part No') || ''}
+                    name="led Part No"
+                    value={getFieldValue('led Part No') || ''}
                     versionId={version?.id}
                     isAdditional={true}
                     dataType="string"
@@ -324,13 +323,13 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
             <>
               <Form.Item
                 label="LED Lifetime"
-                name="LED Lifetime"
-                initialValue={getFieldValue('LED Lifetime')}
+                name="led Lifetime"
+                initialValue={getFieldValue('led Lifetime')}
               >
                 {/* <Input placeholder="..." /> */}
                 <AutoSaveInput
-                  name="LED Lifetime"
-                  value={getFieldValue('LED Lifetime') || ''}
+                  name="led Lifetime"
+                  value={getFieldValue('led Lifetime') || ''}
                   versionId={version?.id}
                   isAdditional={true}
                   dataType="string"
@@ -340,13 +339,13 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
               </Form.Item>
               <Form.Item
                 label="Maximum Drive Current (mA)"
-                name="Maximum Drive Current (mA)"
-                initialValue={getFieldValue('Maximum Drive Current (mA)')}
+                name="maximum Drive Current"
+                initialValue={getFieldValue('maximum Drive Current')}
               >
                 {/* <Input placeholder="..." /> */}
                 <AutoSaveInput
-                  name="Maximum Drive Current (mA)"
-                  value={getFieldValue('Maximum Drive Current (mA)') || ''}
+                  name="maximum Drive Current"
+                  value={getFieldValue('maximum Drive Current') || ''}
                   versionId={version?.id}
                   isAdditional={true}
                   dataType="string"
@@ -356,13 +355,13 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
               </Form.Item>
               <Form.Item
                 label="Minimum Drive Current (mA)"
-                name="Minimum Drive Current (mA)"
-                initialValue={getFieldValue('Minimum Drive Current (mA)')}
+                name="minimum Drive Current"
+                initialValue={getFieldValue('minimum Drive Current')}
               >
                 {/* <Input placeholder="..." /> */}
                 <AutoSaveInput
-                  name="Minimum Drive Current (mA)"
-                  value={getFieldValue('Minimum Drive Current (mA)') || ''}
+                  name="minimum Drive Current"
+                  value={getFieldValue('minimum Drive Current') || ''}
                   versionId={version?.id}
                   isAdditional={true}
                   dataType="string"
@@ -377,7 +376,7 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
 
         <Divider />
 
-        <div className="custom-section">
+        {/* <div className="custom-section">
           <div className='title-container'>
             <Typography.Title level={5} className="custom-section-title">
               Inherited properties&nbsp;
@@ -388,7 +387,7 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
           </div>
         </div>
 
-        <Divider />
+        <Divider /> */}
 
         <div className="custom-section">
           <div className='title-container'>

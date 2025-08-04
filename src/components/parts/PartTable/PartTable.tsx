@@ -22,7 +22,6 @@ interface PartTableProps {
   isAssembler?: string;
 }
 
-
 interface PartItem {
   id: number;
   name: string;
@@ -63,7 +62,6 @@ const PartTable: React.FC<PartTableProps> = ({
   });
   console.log("Filter:", filter);
 
-
   const { loading, error, data } = useQuery(FILTER_PARTS, {
     variables: { filter },
   });
@@ -72,10 +70,8 @@ const PartTable: React.FC<PartTableProps> = ({
   
 
   if (loading) return <Loading />;
-  if (error) {
-    console.error(error);
-    return <p>Lỗi tải dữ liệu: {error.message}</p>;
-  }
+  if (error) return <p>Lỗi tải dữ liệu + {error.message}  </p>;
+
   const partList: PartItem[] = (data?.filterParts || []).map((part: any) => {
     let allVersions: any[] = [];
     if (Array.isArray(part.revisions)) {
@@ -118,7 +114,7 @@ const PartTable: React.FC<PartTableProps> = ({
       console.log(`Deleted part with ID: ${partId}`);
     } catch (error) {
       console.error("Error deleting part:", error);
-      alert("Failed to delete part.");
+      toast.error("Failed to delete part.");
     }
 
   };

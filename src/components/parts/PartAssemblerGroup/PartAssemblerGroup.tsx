@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Checkbox, Space, Typography, Tooltip, Modal, Form, Input, Select, Button } from 'antd';
 import { useLocation, useParams } from 'react-router-dom';
+
 import { useMutation, useQuery } from '@apollo/client';
 import {
   ArrowsAltOutlined, CloseOutlined, DeleteOutlined,
-  DoubleRightOutlined, EditOutlined, PlusOutlined,
+  EditOutlined, PlusOutlined,
   QuestionCircleFilled, SettingOutlined, QuestionCircleOutlined
 } from '@ant-design/icons';
 
@@ -18,15 +19,8 @@ import { DELETE_GROUP_PART_BY_ID, CREATE_GROUP, UPDATE_GROUP, DELETE_GROUP, CREA
 import { TypeFilter } from '../PartFilters.tsx';
 import { toast } from 'react-toastify';
 import Loading from '../../layout/Loading/Loading.tsx';
-// import * as partActions from '../../../graphQL/partActions.ts';
-
-
 
 const { Title } = Typography;
-
-function useQueryParams() {
-  return new URLSearchParams(useLocation().search);
-}
 
 interface PartAssemblerGroupProps {
   versionId?: string;
@@ -40,7 +34,7 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
   const { data, loading, error, refetch } = useQuery(GET_GROUPS_BY_VERSIONID, {
     variables: { versionId },
   });
-
+  const [groupRefetch, setGroupRefetch] = useState(0);
   const { data: partTypeData } = useQuery(GET_PART_TYPES);
   const [deleteGroupPartById] = useMutation(DELETE_GROUP_PART_BY_ID);
   const [createGroup] = useMutation(CREATE_GROUP);
@@ -81,6 +75,11 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
     });
   }
 
+  useEffect(() => {
+    refetch();
+  }, [groupRefetch]);
+
+
   const showCreateGroupModal = () => {
     setEditMode('create');
     setCurrentGroupData(null);
@@ -111,6 +110,33 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
 
       if (data?.deleteGroupPartById) {
         toast.success("Xóa thành công");
+        const handleDeleteGroupPartById = async (groupPartId?: number | string) => {
+          const id = parseInt(String(groupPartId), 10);
+
+          if (!id || isNaN(id)) {
+            console.error("Invalid groupPartId:", groupPartId);
+            return;
+          }
+
+          const confirm = window.confirm("Bạn có chắc chắn muốn xóa part khỏi group?");
+          if (!confirm) return;
+
+          try {
+            const { data } = await deleteGroupPartById({
+              variables: { id }
+            });
+
+            if (data?.deleteGroupPartById) {
+              setGroupRefetch((prev: any) => prev + 1);
+              toast.success("Xóa thành công");
+              refetch();
+            } else {
+              toast.error("Xóa thất bại");
+            }
+          } catch (err) {
+            console.error("Lỗi khi xóa:", err);
+          }
+        };
         refetch();
       } else {
         toast.error("Xóa thất bại");
@@ -191,10 +217,15 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
         <Space size="small" style={{ float: "right" }}>
           <CustomButton variant="blue" layout="iconFirst" icon={<EditOutlined />} text="Edit original" />
           <CustomButton variant="blue" layout="iconFirst" icon={<ArrowsAltOutlined />} text="Replace Part" />
-          <CustomButton variant="red" layout="iconFirst" icon={<DeleteOutlined />} text="Remove" onClick={() => {
-            console.log("record:", record);
-            handleDeleteGroupPartById(record.id);
-          }} />
+          <CustomButton
+            variant="red"
+            layout="iconFirst"
+            icon={<DeleteOutlined />}
+            text="Remove"
+            onClick={() => {
+              handleDeleteGroupPartById(record.id);
+            }
+            } />
         </Space>
       ),
     },
@@ -242,13 +273,15 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
               layout="iconFirst"
               icon={<PlusOutlined />}
               text="Add Part"
-              onClick={() => {
+              onClick={async () => {
+                await refetch(); // 💡 Đảm bảo partGroups được cập nhật trước
                 setSelectedGroupId(group.id);
                 console.log("Group ID", group.id);
                 setSelectedTypeId(group.type_id);
                 console.log("Group Type ID:", group.type_id);
                 setAddPartModalVisible(true);
               }}
+
             />
 
             <CustomButton
@@ -380,6 +413,7 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
             groupId={selectedGroupId}
             selectedType={type}
             activeTab='part-assembler'
+            existingParts={data?.groups?.find((g: any) => g.id === selectedGroupId)?.groupParts ?? []}
             onSuccess={() => {
               refetch();
               setAddPartModalVisible(false);
@@ -388,9 +422,6 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
           />}
 
       </Modal>
-      {/* End Modal Add part  */}
-
-
     </>
   );
 };

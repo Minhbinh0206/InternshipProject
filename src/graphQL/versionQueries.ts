@@ -42,3 +42,15 @@ export const GET_VERSION_BY_CODE = gql`
     }
   }
 `;
+
+export const GET_LIST_CODE_BUILDER = gql`
+  query getCodeBuilderByVersion($versionId: ID!) {
+    getCodeBuilderByVersion(versionId: $versionId) {
+      id
+      name
+      rule
+      isDefault
+    }
+  }
+`;
+

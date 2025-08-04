@@ -123,9 +123,9 @@ export const CREATE_AND_ADD_PART_TO_GROUP = gql`
 export const ADD_PROPERTY_TO_CODEBUILDER = gql`
   mutation AddPropertyToCodebuilder($input: AddPropertyToCodebuilderInput!) {
     addPropertyToCodebuilder(input: $input) {
-      id
-      group_name
-      field_name
+        id
+        name
+        rule
     }
   }
 `;

@@ -190,9 +190,19 @@ export const FILTER_PARTS = gql`
   }
 `;
 
+export const VALIDATE_CODE = gql`
+  query validateGeneratedCode($codebuilderId: ID!) {
+    validateGeneratedCode(codebuilderId: $codebuilderId)
+  }
+`;
 
-
-
+export const GET_CODE_BY_CODEBUILDER = gql`
+  query GetCodeByCodebuilder($codebuilderId: ID!) {
+    getCodeByCodebuilder(codebuilderId: $codebuilderId) {
+      generatedCode
+    }
+  }
+`;
 
 
 

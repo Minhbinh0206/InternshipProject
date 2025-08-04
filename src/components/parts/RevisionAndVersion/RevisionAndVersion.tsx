@@ -15,6 +15,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { CREATE_REVISION, UPDATE_VERSION_STATUS } from '../../../graphQL/partActions';
 import { DELETE_VERSION } from '../../../graphQL/versionActions';
 import Loading from '../../layout/Loading/Loading';
+import { toast } from 'react-toastify';
 
 const { Text, Title, Link } = Typography;
 
@@ -31,10 +32,8 @@ const RevisionAndVersion: React.FC = () => {
     const [deleteVersion] = useMutation(DELETE_VERSION);
     const part = data?.getPartById;
 
-    if (!part) return <p>Loading part {error?.message}</p>;
-    console.log(error);
-    
-    
+
+    if (!part) return <Loading />;
     if (!part.revisions?.length) return <p>No revisions available.</p>;
 
     const handleView = (part: {
@@ -59,11 +58,12 @@ const RevisionAndVersion: React.FC = () => {
                         versionId: part.versionId,
                         name: part.name,
                         code: part.code,
-                        type: part.type
+                        type: part.type,
+                        activeTab: 'properties',
                     },
                 }
             );
-        }, 0); // delay 1 chút để đảm bảo push đầu tiên được ghi vào history
+        }, 0);
     };
 
     const dataSource = part?.revisions
@@ -188,12 +188,12 @@ const RevisionAndVersion: React.FC = () => {
             });
 
             hide();
-            message.success('Version published successfully');
+            toast.success('Version published successfully');
             await refetch();
         } catch (error) {
             hide();
             console.error('Publish error:', error);
-            message.error('Failed to publish version');
+            toast.error('Failed to publish version');
         }
     };
 
@@ -209,13 +209,13 @@ const RevisionAndVersion: React.FC = () => {
             });
 
             hideLoading(); // ẩn loading
-            message.success("Version deleted successfully");
+            toast.success("Version deleted successfully");
 
             await refetch(); // cập nhật lại dữ liệu
         } catch (error) {
             console.error("Delete version error:", error);
             hideLoading(); // dù lỗi cũng cần ẩn loading
-            message.error("Failed to delete version");
+            toast.error("Failed to delete version");
         }
     };
 
@@ -229,7 +229,8 @@ const RevisionAndVersion: React.FC = () => {
                 },
             });
 
-            window.location.reload();
+            refetch(); // Cập nhật lại dữ liệu sau khi tạo revision
+            toast.success('Revision created successfully');
         } catch (error) {
             console.error('Create revision error:', error);
         }
