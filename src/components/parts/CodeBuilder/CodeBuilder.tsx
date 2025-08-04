@@ -9,6 +9,7 @@ import {
     Alert,
     Modal,
     Select,
+    Table,
 } from 'antd';
 import {
     PlusOutlined,
@@ -20,8 +21,8 @@ import {
 import './CodeBuilder.css';
 import CustomButton from '../../common/CustomButton/CustomButton';
 import { flushSync } from 'react-dom';
-import { GET_ADDITIONAL_FIELDS_GROUPS, GET_GROUPS_BY_VERSIONID } from '../../../graphQL/partQueries';
-import { useQuery } from '@apollo/client';
+import { GET_ADDITIONAL_FIELDS_GROUPS, GET_CODE_BY_CODEBUILDER, GET_GROUPS_BY_VERSIONID, VALIDATE_CODE } from '../../../graphQL/partQueries';
+import { useLazyQuery, useQuery } from '@apollo/client';
 import { useParams } from 'react-router-dom';
 import { GET_LIST_CODE_BUILDER, GET_VERSION_BY_CODE } from '../../../graphQL/versionQueries';
 import { useMutation } from '@apollo/client';
@@ -52,7 +53,7 @@ interface CodeBuilderProps {
 const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
     console.log('CodeBuilder versionId:', versionId);
 
-    const { data: codeBuildersData, loading: codeLoading } = useQuery(GET_LIST_CODE_BUILDER, {
+    const { data: codeBuildersData, loading: codeLoading, refetch } = useQuery(GET_LIST_CODE_BUILDER, {
         variables: { versionId }
     });
     const [listCodeBuilders, setListCodeBuilders] = useState<CodePattern[]>([]);
@@ -78,21 +79,38 @@ const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
     const [selectedProperty, setSelectedProperty] = useState<string | undefined>();
     const [updateCodebuilder] = useMutation(UPDATE_FIELDS_CODE_BUILDER);
     const [isCanceling, setIsCanceling] = useState(false);
+    const [currentId, setCurrentId] = useState<number | null>(null);
+    const [isModalGeneratedCodeVisible, setIsModalGeneratedCodeVisible] = useState(false);
+    const [generatedCodes, setGeneratedCodes] = useState<string[]>([]);
     const [validate, setValidate] = useState<ValidateState>({
         id: null,
         status: null,
     });
+
+    const [fetchCodes, { data: generatedData, loading: loadingGeneratedCodes }] = useLazyQuery(
+        GET_CODE_BY_CODEBUILDER,
+        {
+            fetchPolicy: 'network-only', // 👈 Bắt buộc fetch từ server, không dùng cache
+            onCompleted: (data) => {
+                const codes = data.getCodeByCodebuilder?.map((item: any) => item.generatedCode) || [];
+                setGeneratedCodes(codes);
+            },
+        }
+    );
+
+    useEffect(() => {
+        if (isModalGeneratedCodeVisible && selectedCodeBuilderId) {
+            fetchCodes({ variables: { codebuilderId: selectedCodeBuilderId } });
+        }
+    }, [isModalGeneratedCodeVisible, selectedCodeBuilderId]);
+
     const [fieldsGroup, setFieldsGroup] = useState<any[]>([]);
     const [storeRuleToCodebuilder] = useMutation(EDIT_RULE_CODE_BUILDER);
     const [addPropertyToCodebuilder, { loading: addingProperty }] = useMutation(ADD_PROPERTY_TO_CODEBUILDER);
     const [createCodeBuilder] = useMutation(CREATE_CODEBUILDER);
     const [deleteCodebuilder] = useMutation(DELETE_CODE_BUILDER);
-    const { data } = useQuery(GET_GROUPS_BY_VERSIONID, {
+    const { data, refetch: groupRefect } = useQuery(GET_GROUPS_BY_VERSIONID, {
         variables: { versionId },
-    });
-
-    const { data: fieldsData } = useQuery(GET_ADDITIONAL_FIELDS_GROUPS, {
-        variables: { groupId: selectedGroupId },
     });
 
     const { data: versionData } = useQuery(GET_VERSION_BY_CODE, {
@@ -106,10 +124,41 @@ const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
         skip: !id || !revisionId || !versionCode,
     });
 
+    const [validateCodeQuery] = useLazyQuery(VALIDATE_CODE, {
+        onCompleted: (data) => {
+            if (currentId === null) return;
+            const isValid = data?.validateGeneratedCode;
+            setValidate({ id: currentId, status: isValid ? 'ok' : 'dup' });
+
+            if (!isValid) {
+                toast.error('Code generated already exist')
+            } else {
+                toast.success('Code generated is unique')
+            }
+        },
+        onError: (error) => {
+            console.error('❌ validateCodeQuery bị lỗi:', error);
+            toast.error(`Lỗi validate: ${error.message}`);
+            if (currentId === null) return;
+            setValidate({ id: currentId, status: 'dup' });
+
+        },
+    });
+
     const version = versionData?.getVersionByVersionCode;
+
     /* ---------- List of part groups ---------- */
+    const { data: fieldsData, refetch: fieldsRefect } = useQuery(GET_ADDITIONAL_FIELDS_GROUPS, {
+        variables: { groupId: selectedGroupId },
+        fetchPolicy: 'network-only'
+    });
     const partGroups = data?.groups || [];
+
+    console.log(partGroups);
+
     useEffect(() => {
+        const selectedGroup = partGroups.find((group: any) => group.id === selectedGroupId);
+
         if (selectedGroupId === 'this Item') {
             if (version) {
                 const customFields = [];
@@ -152,7 +201,15 @@ const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
             } else {
                 setFieldsGroup([]);
             }
-        } else {
+        } else if (selectedGroup) {
+            const groupParts = selectedGroup.groupParts || [];
+
+            // ✅ Nếu không có part nào trong group
+            if (groupParts.length === 0) {
+                setFieldsGroup([]);
+                return;
+            }
+
             const additionalFields = fieldsData?.getAdditionalFieldsFromGroup || [];
             const version = additionalFields[0]?.version || {};
 
@@ -175,7 +232,7 @@ const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
             ];
 
             if (additionalFields.length === 0) {
-                setFieldsGroup(versionFields); // ✅ KHÔNG để [versionFields]
+                setFieldsGroup(versionFields);
                 return;
             }
 
@@ -186,8 +243,20 @@ const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
             }));
 
             setFieldsGroup([...versionFields, ...fieldItems]);
+        } else {
+            setFieldsGroup([]);
         }
-    }, [selectedGroupId, versionData, fieldsData]);
+    }, [selectedGroupId, versionData, fieldsData, partGroups]);
+    useEffect(() => {
+        if (isModalVisible && selectedGroupId) {
+            fieldsRefect({ variables: { groupId: selectedGroupId } });
+        }
+    }, [isModalVisible, selectedGroupId]);
+
+
+    useEffect(() => {
+        console.log("🌀 fieldsData changed:", fieldsData);
+    }, [fieldsData]);
 
     const handleRename = (id: number, currentName: string) => {
         setEditingId(id);
@@ -244,7 +313,10 @@ const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
         }
     };
 
+    const ruleRef = useRef<{ [id: number]: string }>({});
+
     const handleCodeChange = (id: number, newRule: string) => {
+        ruleRef.current[id] = newRule; // Lưu rule mới nhất vào ref
         setListCodeBuilders(prev =>
             prev.map(item =>
                 item.id === id ? { ...item, rule: newRule } : item
@@ -252,7 +324,8 @@ const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
         );
     };
 
-    const handleCodeBlur = async (id: number, rule: string) => {
+    const handleCodeBlur = async (id: number) => {
+        const rule = ruleRef.current[id]; // Lấy rule mới nhất từ ref
         try {
             await storeRuleToCodebuilder({
                 variables: {
@@ -262,11 +335,9 @@ const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
                     },
                 },
             });
-            console.log('Đã lưu rule');
-            toast.success('Rule updated successfully')
+            toast.success('Rule updated successfully');
         } catch (err) {
-            console.error('Lỗi khi lưu rule', err);
-            toast.error('Rule updated failed')
+            toast.error('Rule updated failed');
         }
     };
 
@@ -323,6 +394,8 @@ const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
                     });
 
                     toast.success('Remove code builder successfully');
+
+                    await refetch();
                 } catch (error) {
                     console.error('Lỗi khi xoá:', error);
                     toast.error('Remove failed');
@@ -330,6 +403,10 @@ const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
             },
         });
     };
+
+    useEffect(() => {
+        console.log("Cập nhật listCodeBuilders:", listCodeBuilders);
+    }, [listCodeBuilders]);
 
     const handleCreateNew = async () => {
         try {
@@ -359,6 +436,7 @@ const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
             ]);
 
             toast.success('Tạo code builder thành công');
+            await refetch();
         } catch (error) {
             console.error('Lỗi khi tạo code builder', error);
             toast.error('Tạo code builder thất bại');
@@ -373,17 +451,19 @@ const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
         if (!current) return;
 
         const code = normalize(current.rule);
-
         if (!code) {
             setValidate({ id, status: 'empty' });
             return;
         }
 
-        const dup = listCodeBuilders.some(
-            cb => cb.id !== id && normalize(cb.rule) === code
-        );
+        setCurrentId(id);
+        validateCodeQuery({ variables: { codebuilderId: String(id) } });
 
-        setValidate({ id, status: dup ? 'dup' : 'ok' });
+        console.log('Gọi validateCodeQuery:', {
+            id,
+            current,
+            data
+        });
     };
 
     if (codeLoading) {
@@ -462,49 +542,28 @@ const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
                             </Col>
                         </Row>
 
+
                         <div className="cb-editor-block">
+                            <Input
+                                style={{ cursor: 'pointer' }}
+                                placeholder='Code generated'
+                                readOnly
+                                onClick={() => {
+                                    console.log('id', item.id);
+
+                                    fetchCodes({ variables: { codebuilderId: item.id } });
+                                    setIsModalGeneratedCodeVisible(true);
+                                }}
+                            />
+
                             <Text strong>Code editor</Text>
                             <TextArea
-                                rows={4}
                                 value={item.rule}
-                                onChange={(e) => handleCodeChange(item.id, e.target.value)} // cập nhật local
-                                onBlur={() => handleCodeBlur(item.id, item.rule)} // gọi API khi blur
+                                onChange={(e) => handleCodeChange(item.id, e.target.value)}
+                                onBlur={() => handleCodeBlur(item.id)}
                             />
 
                         </div>
-
-                        {/* báo trống */}
-                        {validate.id === item.id && validate.status === 'empty' && (
-                            <Alert
-                                type="error"
-                                message="Code Builder content cannot be blank"
-                                showIcon closable
-                                onClose={() => setValidate({ id: null, status: null })}
-                                style={{ marginTop: 12 }}
-                            />
-                        )}
-
-                        {/* báo trùng */}
-                        {validate.id === item.id && validate.status === 'dup' && (
-                            <Alert
-                                type="error"
-                                message="Code Builder content already exists"
-                                showIcon closable
-                                onClose={() => setValidate({ id: null, status: null })}
-                                style={{ marginTop: 12 }}
-                            />
-                        )}
-
-                        {/* báo hợp lệ */}
-                        {validate.id === item.id && validate.status === 'ok' && (
-                            <Alert
-                                type="success"
-                                message="Code Builder content is unique"
-                                showIcon closable
-                                onClose={() => setValidate({ id: null, status: null })}
-                                style={{ marginTop: 12 }}
-                            />
-                        )}
 
                         <Row justify="space-between" className="cb-action-bar">
                             <Col>
@@ -514,10 +573,11 @@ const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
                                         layout="iconFirst"
                                         icon={<PlusOutlined />}
                                         text="Browse and add properties"
-                                        onClick={() => {
+                                        onClick={async () => {
                                             setSelectedCodeBuilderId(item.id);
-                                            setIsModalVisible(true)
+                                            setIsModalVisible(true);
                                         }}
+
                                     />
                                     <CustomButton
                                         variant="blue"
@@ -620,13 +680,9 @@ const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
                                 text={addingProperty ? 'Adding...' : 'Add property'}
                                 layout='noIcon'
                                 onClick={async () => {
-                                    console.log('Selected Group ID:', selectedGroupId);
-                                    console.log('Selected Property:', selectedProperty);
-                                    console.log('Selected Code Builder ID:', selectedCodeBuilderId);
+                                    if (!selectedGroupId || !selectedProperty) return;
 
-                                    if (!selectedGroupId || !selectedProperty) {
-                                        return;
-                                    }
+                                    await groupRefect();
 
                                     try {
                                         await addPropertyToCodebuilder({
@@ -643,20 +699,13 @@ const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
                                         setSelectedGroupId(undefined);
                                         setSelectedProperty(undefined);
 
-                                        toast.success('Adding new properties successfully'); // ✅ chỉ hiển thị khi thành công
+                                        toast.success('Adding new properties successfully');
 
                                     } catch (error: any) {
                                         console.error("Lỗi khi thêm property:", error);
-
-                                        // Có thể xử lý lỗi cụ thể hơn nếu GraphQL trả về thông tin
-                                        if (error?.graphQLErrors?.[0]?.message) {
-                                            toast.error(error.graphQLErrors[0].message);
-                                        } else {
-                                            toast.error('Failed to add property');
-                                        }
+                                        toast.error('Failed to add property');
                                     }
                                 }}
-
                             />
 
                         </Space>
@@ -666,6 +715,29 @@ const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
                     </Col>
                 </Row>
             </Modal>
+
+            <Modal
+                title="Danh sách Generated Code"
+                open={isModalGeneratedCodeVisible}
+                onCancel={() => setIsModalGeneratedCodeVisible(false)}
+                footer={null}
+                width={600}
+            >
+                <Table
+                    loading={loadingGeneratedCodes}
+                    dataSource={generatedCodes.map((code, index) => ({
+                        key: index,
+                        stt: index + 1,
+                        code,
+                    }))}
+                    columns={[
+                        { title: 'STT', dataIndex: 'stt', key: 'stt', width: 80 },
+                        { title: 'Code', dataIndex: 'code', key: 'code' },
+                    ]}
+                    pagination={false}
+                />
+            </Modal>
+
         </>
     );
 };
