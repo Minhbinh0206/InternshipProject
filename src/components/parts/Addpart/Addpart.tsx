@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useQuery } from "@apollo/client";
-import { SettingOutlined } from "@ant-design/icons";
-import { FILTER_PARTS, GET_PUBLISHED_PART } from "../../../graphQL/partQueries";
-import { Form, Checkbox, Typography, Input, Button, message } from "antd";
+import { GET_PUBLISHED_PART } from "../../../graphQL/partQueries";
+import { Form, Typography } from "antd";
 
 import SearchBar from "../../common/SearchBar";
 import { TypeFilter } from "../PartFilters";
@@ -34,8 +33,6 @@ const Addpart: React.FC<AddpartProps> = ({ groupId, onSuccess, selectedType, exi
 
     const [search, setSearch] = useState("");
     const [type, setType] = useState(selectedType || "");
-    const [selectedTypeId, setSelectedTypeId] = useState<string | null>(null);
-    const [selectedParts, setSelectedParts] = useState<any[]>([]);
     console.log("Selected Type ID:", selectedType);
 
     useEffect(() => {
@@ -46,7 +43,6 @@ const Addpart: React.FC<AddpartProps> = ({ groupId, onSuccess, selectedType, exi
 
     if (loading) return <Loading />;
     if (error) return <p>Lỗi tải dữ liệu</p>;
-    const [type, setType] = useState("");
     const [deleteGroupPartById] = useMutation(DELETE_GROUP_PART_BY_ID);
     const [checkedParts, setCheckedParts] = useState<number[]>([]);
 
@@ -67,13 +63,6 @@ const Addpart: React.FC<AddpartProps> = ({ groupId, onSuccess, selectedType, exi
     }).filter(Boolean);
 
     console.log('1111111', partList);
-
-    const filteredParts = partList.filter(
-        (part: any) =>
-            (part.name.toLowerCase().includes(search.toLowerCase()) ||
-                part.code.toLowerCase().includes(search.toLowerCase())) &&
-            (type === "" || part.type === type)
-    );
 
     useEffect(() => {
         if (existingParts && data?.publishedPart) {

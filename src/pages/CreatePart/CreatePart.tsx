@@ -13,9 +13,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { GET_PART_BY_ID } from '../../graphQL/partQueries';
 import { useMutation } from '@apollo/client';
 import { CREATE_PART } from '../../graphQL/partActions';
-import { CREATE_AND_ADD_PART_TO_GROUP, ADD_PART_TO_GROUP } from '../../graphQL/partActions';
-import { ADD_PART_TO_GROUP } from '../../graphQL/partActions';
-import { toast } from 'react-toastify';
+import { CREATE_AND_ADD_PART_TO_GROUP } from '../../graphQL/partActions';
 
 
 const { Option } = Select;
@@ -30,7 +28,6 @@ interface CreatePartProps {
 
 const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hideHeader = false, hideFooter = false, isDuplicate = true }) => {
     const [createAndAddPartToGroup] = useMutation(CREATE_AND_ADD_PART_TO_GROUP);
-    const [addPartToGroup] = useMutation(ADD_PART_TO_GROUP);
     const [activeKey, setActiveKey] = useState('properties');
     const { data: typeData, loading: typeLoading, error: typeError } = useQuery(GET_PART_TYPES);
     const [mode] = useState<PartTypeMode>('detailed');
