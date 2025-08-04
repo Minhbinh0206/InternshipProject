@@ -1,13 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Col, Divider, Form, Input, Row, Select, Tooltip, Typography, Modal, message } from 'antd';
+import { Col, Divider, Form, Input, Row, Select, Tooltip, Typography, Modal } from 'antd';
 import { QuestionCircleOutlined, PlusOutlined, QuestionCircleFilled } from '@ant-design/icons';
 import CustomButton from '../../../components/common/CustomButton/CustomButton';
 import { useQuery, useMutation } from '@apollo/client';
 import { UPDATE_PART } from '../../../graphQL/versionActions';
-import { useQuery, useMutation } from '@apollo/client';
 import '../../../pages/CreatePart/CreatePart.css';
-import type PartType from '../../../types/partType';
-import { GET_PART_TYPES } from '../../../graphQL/partQueries';
 import { GET_VERSION_BY_CODE } from '../../../graphQL/versionQueries';
 import AutoSaveInput from '../OnblurProcessing/AutoSaveInput';
 import AutoSaveSelect from '../OnblurProcessing/AutoSaveSelect';
