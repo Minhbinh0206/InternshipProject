@@ -179,7 +179,6 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
         },
     ];
 
-
     const handleCreate = async () => {
         const partTypeExtraFields = partTypeFieldConfig[selectedPartType] || [];
         const customFields = selectedFields;
@@ -196,9 +195,10 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
                 }));
 
             let createdPart;
-
+            
             if (groupId) {
-
+                console.log('Rơi vào nhánh 1');
+                
                 const input = {
                     name: values.name,
                     code: values.customerCode,
@@ -217,6 +217,7 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
                 console.log('Created and added to group');
 
             } else {
+                console.log('Rơi vào nhánh 2');
 
                 const input = {
                     name: values.name,
@@ -228,6 +229,9 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
                 };
 
                 const { data } = await createPart({ variables: { input } });
+
+                console.log('data: ',data);
+                
                 createdPart = data?.createPart;
                 console.log('Created (no group)');
             }
@@ -242,7 +246,6 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
             console.error('Create part failed:', err);
         }
     };
-
 
     useEffect(() => {
         if (selectedPartType === 'Luminaire') {
@@ -380,7 +383,7 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
                         <>
                             <Row gutter={20} align="top">
                                 <Col span={5}>
-                                    <Form.Item label="Colour Temperature (K)" name="Colour Temperature (K)" rules={[{ required: true }]} validateTrigger="onSubmit" initialValue={'30000K'}>
+                                    <Form.Item label="Colour Temperature (K)" name="colour Temperature" rules={[{ required: true }]} validateTrigger="onSubmit" initialValue={'30000K'}>
                                         <Select onChange={(value) => console.log(value)} disabled={!!id}>
                                             <Option value="27000K">2700K</Option>
                                             <Option value="30000K">3000K</Option>
