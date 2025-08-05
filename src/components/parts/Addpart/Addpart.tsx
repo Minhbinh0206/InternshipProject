@@ -41,11 +41,8 @@ const Addpart: React.FC<AddpartProps> = ({ groupId, onSuccess, selectedType, exi
         }
     }, [selectedType]);
 
-    if (loading) return <Loading />;
-    if (error) return <p>Lỗi tải dữ liệu</p>;
     const [deleteGroupPartById] = useMutation(DELETE_GROUP_PART_BY_ID);
     const [checkedParts, setCheckedParts] = useState<number[]>([]);
-
 
     const partList = data?.publishedPart?.map((part: any) => {
         const version = part.revisions[0]?.versions[0];
