@@ -14,6 +14,9 @@ import { GET_PART_BY_ID } from '../../graphQL/partQueries';
 import { useMutation } from '@apollo/client';
 import { CREATE_PART } from '../../graphQL/partActions';
 import { CREATE_AND_ADD_PART_TO_GROUP } from '../../graphQL/partActions';
+import ModalCustomProperties from '../../components/parts/ModalCustomProperties/ModalCustomProperties';
+import {propertyGroups} from '../../components/utils/propertyGroups';
+import {getRequiredFields, partTypeFieldConfig} from '../../components/utils/partFieldConfig';
 
 
 const { Option } = Select;
@@ -24,9 +27,10 @@ interface CreatePartProps {
     hideHeader?: boolean;
     hideFooter?: boolean;
     isDuplicate?: boolean;
+    onCreated?: () => void;
 }
 
-const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hideHeader = false, hideFooter = false, isDuplicate = true }) => {
+const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hideHeader = false, hideFooter = false, isDuplicate = true, onCreated }) => {
     const [createAndAddPartToGroup] = useMutation(CREATE_AND_ADD_PART_TO_GROUP);
     const [activeKey, setActiveKey] = useState('properties');
     const { data: typeData, loading: typeLoading, error: typeError } = useQuery(GET_PART_TYPES);
@@ -100,11 +104,6 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
         }
     }, [partData, id]);
 
-    const partTypeFieldConfig: Record<string, string[]> = {
-        Led: ['led Part No', 'colour Temperature'],
-        'Optic set': ['lor', 'primary Beam Angle'],
-        Engine: ['led Lifetime', 'maximum Drive Current', 'minimum Drive Current'],
-    };
 
     useEffect(() => {
         if (partData?.getPartById?.selected_version?.code && inputValue === '') {
@@ -123,22 +122,7 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
         );
     }, [inputValue, allPartsData]);
 
-
-    const requiredFields = useMemo(() => {
-        const baseFields = ['name', 'customerCode'];
-        const ledFields = ['led Part No', 'colour Temperature'];
-        const opticSetFields = ['lor', 'primary Beam Angle'];
-
-        if (selectedPartType === 'Led') {
-            return [...baseFields, ...ledFields];
-        }
-
-        if (selectedPartType === 'Optic set') {
-            return [...baseFields, ...opticSetFields];
-        }
-
-        return baseFields;
-    }, [selectedPartType]);
+    const requiredFields = useMemo(() => getRequiredFields(selectedPartType), [selectedPartType])
 
     console.log('Selected type:', selectedPartType);
 
@@ -154,31 +138,6 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
         // Xử lý cho các trường không phải chuỗi (số, object, v.v.)
         return value === undefined || value === null;
     });
-
-    const propertyGroups = [
-        {
-            category: 'Design',
-            fields: [
-                { key: 'finish', label: 'Finish' },
-                { key: 'material', label: 'Material' },
-            ],
-        },
-        {
-            category: 'Dimensions',
-            fields: [
-                { key: 'height', label: 'Height' },
-                { key: 'length', label: 'Length' },
-                { key: 'width', label: 'Width' },
-            ],
-        },
-        {
-            category: 'Ratings',
-            fields: [
-                { key: 'class', label: 'Class' },
-            ],
-        },
-    ];
-
 
     const handleCreate = async () => {
         const partTypeExtraFields = partTypeFieldConfig[selectedPartType] || [];
@@ -234,6 +193,10 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
 
             if (!hideFooter && createdPart?.id) {
                 navigate(`/parts/modify/${createdPart.id}`);
+            }
+
+            if (onCreated) {
+                onCreated();
             }
 
             createModalVisible(false);
@@ -515,52 +478,14 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
                 </div>
             )}
 
-
-            <Modal
-                title={<span className="modal-title">Manage properties</span>}
+            <ModalCustomProperties
                 open={isModalVisible}
-                onCancel={() => setIsModalVisible(false)}
-                footer={[
-                    <div className='footer-modal'>
-                        <CustomButton className='button-modal' variant='blue' layout='noIcon' text='Accept' onClick={handleAcceptModal} />
-                        <CustomButton className='button-modal' variant='white' layout='noIcon' text='Cancel' onClick={() => setIsModalVisible(false)} />
-                    </div>
-                ]}
-                width={1000}
-                className="manage-properties-modal"
-            >
-                <Typography.Title level={5} className="custom-properties-title">
-                    <span>Custom properties</span>&nbsp;
-                    <Tooltip title="I don't know what to put in here.">
-                        <QuestionCircleFilled style={{ fontSize: 14 }} />
-                    </Tooltip>
-                </Typography.Title>
-
-                <Row gutter={32}>
-                    {propertyGroups.map(group => (
-                        <Col span={8} key={group.category}>
-                            <div className="category-title">{group.category}</div>
-                            {group.fields.map(f => (
-                                <label key={f.key} className="field-row">
-                                    <input
-                                        type="checkbox"
-                                        checked={checkedKeys.includes(f.key)}
-                                        onChange={e => {
-                                            setCheckedKeys(prev =>
-                                                e.target.checked
-                                                    ? [...prev, f.key]
-                                                    : prev.filter(k => k !== f.key)
-                                            );
-                                        }}
-                                    />
-                                    <span className="field-label">{f.label}</span>
-                                </label>
-                            ))}
-                        </Col>
-                    ))}
-                </Row>
-            </Modal>
-
+                onClose={() => setIsModalVisible(false)}
+                onAccept={handleAcceptModal}
+                propertyGroups={propertyGroups}
+                checkedKeys={checkedKeys}
+                setCheckedKeys={setCheckedKeys}
+            />
         </>
     );
 };

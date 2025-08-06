@@ -10,6 +10,8 @@ import AutoSaveInput from '../OnblurProcessing/AutoSaveInput';
 import AutoSaveSelect from '../OnblurProcessing/AutoSaveSelect';
 import { toast } from 'react-toastify';
 import CustomSwitch from '../../common/CustomSwitch/CustomSwitch';
+import ModalCustomProperties from '../ModalCustomProperties/ModalCustomProperties';
+import {propertyGroups} from '../../utils/propertyGroups'
 
 const { Option } = Select;
 
@@ -85,30 +87,6 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
       form.setFieldsValue(initialValues);
     }
   }, [versionData]);
-
-  const propertyGroups = [
-    {
-      category: 'Design',
-      fields: [
-        { key: 'finish', label: 'Finish' },
-        { key: 'material', label: 'Material' },
-      ],
-    },
-    {
-      category: 'Dimensions',
-      fields: [
-        { key: 'height', label: 'Height' },
-        { key: 'length', label: 'Length' },
-        { key: 'width', label: 'Width' },
-      ],
-    },
-    {
-      category: 'Ratings',
-      fields: [
-        { key: 'class', label: 'Class' },
-      ],
-    },
-  ];
 
   const standardKeys = propertyGroups.flatMap(g => g.fields.map(f => f.key));
 
@@ -279,18 +257,18 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
                   validateTrigger="onSubmit"
                 >
                   <AutoSaveSelect
-                      name="colour Temperature"
-                      value={getFieldValue('colour Temperature') || ''}
-                      versionId={version?.id}
-                      isAdditional={true}
-                      dataType="string"
-                      typeGroup="custom"
-                      options={[
-                        { label: '2700K', value: '27000K' },
-                        { label: '3000K', value: '30000K' },
-                        { label: '4000K', value: '40000K' },
-                      ]}
-                    />
+                    name="colour Temperature"
+                    value={getFieldValue('colour Temperature') || ''}
+                    versionId={version?.id}
+                    isAdditional={true}
+                    dataType="string"
+                    typeGroup="custom"
+                    options={[
+                      { label: '2700K', value: '27000K' },
+                      { label: '3000K', value: '30000K' },
+                      { label: '4000K', value: '40000K' },
+                    ]}
+                  />
                 </Form.Item>
               </Col>
               <Col span={19}>
@@ -473,50 +451,14 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
         />
       </div>
 
-      <Modal
-        title={<span className="modal-title">Manage properties</span>}
+      <ModalCustomProperties
         open={isModalVisible}
-        onCancel={() => setIsModalVisible(false)}
-        footer={[
-          <div className='footer-modal' key="footer">
-            <CustomButton className='button-modal' variant='blue' layout='noIcon' text='Accept' onClick={handleAcceptModal} />
-            <CustomButton className='button-modal' variant='white' layout='noIcon' text='Cancel' onClick={() => setIsModalVisible(false)} />
-          </div>
-        ]}
-        width={1000}
-        className="manage-properties-modal"
-      >
-        <Typography.Title level={5} className="custom-properties-title">
-          <span>Custom properties</span>&nbsp;
-          <Tooltip title="I don't know what to put in here.">
-            <QuestionCircleFilled style={{ fontSize: 14 }} />
-          </Tooltip>
-        </Typography.Title>
-
-        <Row gutter={32}>
-          {propertyGroups.map(group => (
-            <Col span={8} key={group.category}>
-              <div className="category-title">{group.category}</div>
-              {group.fields.map(f => (
-                <label key={f.key} className="field-row">
-                  <input
-                    type="checkbox"
-                    checked={checkedKeys.includes(f.key)}
-                    onChange={e => {
-                      setCheckedKeys(prev =>
-                        e.target.checked
-                          ? [...prev, f.key]
-                          : prev.filter(k => k !== f.key)
-                      );
-                    }}
-                  />
-                  <span className="field-label">{f.label}</span>
-                </label>
-              ))}
-            </Col>
-          ))}
-        </Row>
-      </Modal>
+        onClose={() => setIsModalVisible(false)}
+        onAccept={handleAcceptModal}
+        propertyGroups={propertyGroups}
+        checkedKeys={checkedKeys}
+        setCheckedKeys={setCheckedKeys}
+      />
     </>
   );
 };

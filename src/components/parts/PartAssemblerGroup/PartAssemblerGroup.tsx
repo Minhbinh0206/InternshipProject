@@ -1,21 +1,15 @@
 import React, { useEffect, useState } from 'react';
 import { Table, Checkbox, Space, Typography, Tooltip, Modal, Form, Input, Select, Button } from 'antd';
 import { useLocation, useParams } from 'react-router-dom';
-
 import { useMutation, useQuery } from '@apollo/client';
-import {
-  ArrowsAltOutlined, CloseOutlined, DeleteOutlined,
-  EditOutlined, PlusOutlined,
-  QuestionCircleFilled, SettingOutlined, QuestionCircleOutlined
-} from '@ant-design/icons';
-
+import { ArrowsAltOutlined, CloseOutlined, DeleteOutlined, EditOutlined, PlusOutlined, QuestionCircleFilled, SettingOutlined, QuestionCircleOutlined } from '@ant-design/icons';
 import CustomButton from '../../common/CustomButton/CustomButton';
 import CreatePart from '../../../pages/CreatePart/CreatePart';
 import { GET_GROUPS_BY_VERSIONID, GET_PART_TYPES } from '../../../graphQL/partQueries.ts';
 import type { ColumnsType } from 'antd/es/table';
 import './PartAssemblerGroup.css';
 import Addpart from '../Addpart/Addpart.tsx';
-import { DELETE_GROUP_PART_BY_ID, CREATE_GROUP, UPDATE_GROUP, DELETE_GROUP, CREATE_PART, CREATE_AND_ADD_PART_TO_GROUP } from '../../../graphQL/partActions.ts';
+import { DELETE_GROUP_PART_BY_ID, CREATE_GROUP, UPDATE_GROUP, DELETE_GROUP, CREATE_AND_ADD_PART_TO_GROUP } from '../../../graphQL/partActions.ts';
 import { TypeFilter } from '../PartFilters.tsx';
 import { toast } from 'react-toastify';
 import Loading from '../../layout/Loading/Loading.tsx';

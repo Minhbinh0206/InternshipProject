@@ -107,7 +107,7 @@ export const DELETE_GROUP = gql`
 `;
 
 export const CREATE_AND_ADD_PART_TO_GROUP = gql`
-  mutation createAndAddPartToGroup($input: CreatePartInput!) {
+  mutation createAndAddPartToGroup($input: CreatePartAndAddInput!) {
     createAndAddPartToGroup(input: $input) {
       id
       name

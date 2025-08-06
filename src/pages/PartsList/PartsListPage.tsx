@@ -7,21 +7,33 @@ import SearchBar from '../../components/common/SearchBar';
 import PartFilters from '../../components/parts/PartFilters';
 
 const PartList: React.FC = () => {
-    const [search, setSearch] = useState("");
-    const [selectedType, setSelectedType] = useState("");
-    const [publishedFilter, setPublishedFilter] = useState("");
-    const [isAssembler, setIsAssembler] = useState("");
+    const [filters, setFilters] = useState({
+        search: "",
+        type: "",
+        published: "",
+        isAssembler: "",
+    });
+
+    const handleFilterChange = (key: string, value: string) => {
+        setFilters(prev => ({
+            ...prev,
+            [key]: value
+        }));
+    };
 
     const handleSearch = () => {
-        console.log("Searching for:", search);
+        console.log("Searching for:", filters);
     };
 
     const handleReset = () => {
-        setSearch("");
-        setSelectedType("");
-        setPublishedFilter("");
-        setIsAssembler("");
+        setFilters({
+            search: "",
+            type: "",
+            published: "",
+            isAssembler: ""
+        });
     };
+
 
     return (
         <>
@@ -36,27 +48,22 @@ const PartList: React.FC = () => {
                 onSelectPartType={() => { }}
             />
             <SearchBar
-                searchText={search}
-                onSearchTextChange={setSearch}
+                searchText={filters.search}
+                onSearchTextChange={(val) => handleFilterChange("search", val)}
                 onSearch={handleSearch}
                 onReset={handleReset}
                 extraFilter={
                     <PartFilters
-                        typeValue={selectedType}
-                        onTypeChange={(e) => setSelectedType(e.target.value)}
-                        publishedValue={publishedFilter}
-                        onPublishedChange={(e) => setPublishedFilter(e.target.value)}
-                        isAssemblerValue={isAssembler}
-                        onIsAssemblerChange={(e) => setIsAssembler(e.target.value)}
+                        typeValue={filters.type}
+                        onTypeChange={(e) => handleFilterChange("type", e.target.value)}
+                        publishedValue={filters.published}
+                        onPublishedChange={(e) => handleFilterChange("published", e.target.value)}
+                        isAssemblerValue={filters.isAssembler}
+                        onIsAssemblerChange={(e) => handleFilterChange("isAssembler", e.target.value)}
                     />
                 }
             />
-            <PartTable
-                searchText={search}
-                typeFilter={selectedType}
-                publishedFilter={publishedFilter}
-                isAssembler={isAssembler}
-            />
+            <PartTable filters={filters} />
         </>
     );
 };
