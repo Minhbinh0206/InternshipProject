@@ -10,6 +10,7 @@ import AutoSaveInput from '../OnblurProcessing/AutoSaveInput';
 import AutoSaveSelect from '../OnblurProcessing/AutoSaveSelect';
 import { toast } from 'react-toastify';
 import CustomSwitch from '../../common/CustomSwitch/CustomSwitch';
+import { FIELD_DEFINITIONS } from '../../../types/standardFields';
 
 const { Option } = Select;
 
@@ -226,8 +227,41 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
             <AutoSaveInput name="name" value={version?.name || ''} versionId={version?.id} refetch={refetch} />
           </Form.Item>
 
+          {(partType in FIELD_DEFINITIONS) && FIELD_DEFINITIONS[partType as keyof typeof FIELD_DEFINITIONS].map((field, index) => (
+            <Form.Item
+              key={index}
+              label={field.label}
+              name={field.name}
+              initialValue={getFieldValue(field.name)}
+              rules={[{ required: field.rule }]}
+              validateTrigger="onSubmit"
+            >
+              {field.type === 'input' ? (
+                <AutoSaveInput
+                  name={field.name}
+                  value={getFieldValue(field.name) || ''}
+                  versionId={version?.id}
+                  isAdditional={true}
+                  dataType="string"
+                  typeGroup="custom"
+                  refetch={refetch}
+                />
+              ) : (
+                <AutoSaveSelect
+                  name={field.name}
+                  value={getFieldValue(field.name) || ''}
+                  versionId={version?.id}
+                  isAdditional={true}
+                  dataType="string"
+                  typeGroup="custom"
+                  options={field.options || []}
+                />
+              )}
+            </Form.Item>
+          ))}
 
-          {partType === 'Optic set' && (
+
+          {/* {partType === 'Optic set' && (
             <>
               <Form.Item
                 label="LOR"
@@ -236,140 +270,134 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
                 rules={[{ required: true }]}
                 validateTrigger="onSubmit"
               >
-                {/* <Input placeholder="Enter LOR" /> */}
-                <AutoSaveInput
-                  name="lor"
-                  value={getFieldValue('lor') || ''}
-                  versionId={version?.id}
-                  isAdditional={true}
-                  dataType="string"
-                  typeGroup="custom"
-                  refetch={refetch}
-                />
-              </Form.Item>
-              <Form.Item
-                label="Primary Beam Angle"
-                name="primary Beam Angle"
-                initialValue={getFieldValue('primary Beam Angle')}
-                rules={[{ required: true }]}
-                validateTrigger="onSubmit"
-              >
-                {/* <Input placeholder="Enter primary beam angle" /> */}
-                <AutoSaveInput
-                  name="primary Beam Angle"
-                  value={getFieldValue('primary Beam Angle') || ''}
-                  versionId={version?.id}
-                  isAdditional={true}
-                  dataType="string"
-                  typeGroup="custom"
-                  refetch={refetch}
-                />
-              </Form.Item>
-            </>
+          <AutoSaveInput
+            name="lor"
+            value={getFieldValue('lor') || ''}
+            versionId={version?.id}
+            isAdditional={true}
+            dataType="string"
+            typeGroup="custom"
+            refetch={refetch}
+          />
+        </Form.Item>
+        <Form.Item
+          label="Primary Beam Angle"
+          name="primary Beam Angle"
+          initialValue={getFieldValue('primary Beam Angle')}
+          rules={[{ required: true }]}
+          validateTrigger="onSubmit"
+        >
+          <AutoSaveInput
+            name="primary Beam Angle"
+            value={getFieldValue('primary Beam Angle') || ''}
+            versionId={version?.id}
+            isAdditional={true}
+            dataType="string"
+            typeGroup="custom"
+            refetch={refetch}
+          />
+        </Form.Item>
+      </>
           )}
 
-          {partType === 'Led' && (
-            <Row gutter={20} align="top">
-              <Col span={5}>
-                <Form.Item
-                  label="Colour Temperature (K)"
-                  name="colour Temperature"
-                  initialValue={getFieldValue('colour Temperature')}
-                  rules={[{ required: true }]}
-                  validateTrigger="onSubmit"
-                >
-                  <AutoSaveSelect
-                      name="colour Temperature"
-                      value={getFieldValue('colour Temperature') || ''}
-                      versionId={version?.id}
-                      isAdditional={true}
-                      dataType="string"
-                      typeGroup="custom"
-                      options={[
-                        { label: '2700K', value: '27000K' },
-                        { label: '3000K', value: '30000K' },
-                        { label: '4000K', value: '40000K' },
-                      ]}
-                    />
-                </Form.Item>
-              </Col>
-              <Col span={19}>
-                <Form.Item
-                  label="LED Part No"
-                  name="led Part No"
-                  initialValue={getFieldValue('led Part No')}
-                  rules={[{ required: true }]}
-                  validateTrigger="onSubmit"
-                >
-                  {/* <Input placeholder="..." /> */}
-                  <AutoSaveInput
-                    name="led Part No"
-                    value={getFieldValue('led Part No') || ''}
-                    versionId={version?.id}
-                    isAdditional={true}
-                    dataType="string"
-                    typeGroup="custom"
-                    refetch={refetch}
-                  />
-                </Form.Item>
-              </Col>
-            </Row>
-          )}
+      {partType === 'Led' && (
+        <Row gutter={20} align="top">
+          <Col span={5}>
+            <Form.Item
+              label="Colour Temperature (K)"
+              name="colour Temperature"
+              initialValue={getFieldValue('colour Temperature')}
+              rules={[{ required: true }]}
+              validateTrigger="onSubmit"
+            >
+              <AutoSaveSelect
+                name="colour Temperature"
+                value={getFieldValue('colour Temperature') || ''}
+                versionId={version?.id}
+                isAdditional={true}
+                dataType="string"
+                typeGroup="custom"
+                options={[
+                  { label: '2700K', value: '27000K' },
+                  { label: '3000K', value: '30000K' },
+                  { label: '4000K', value: '40000K' },
+                ]}
+              />
+            </Form.Item>
+          </Col>
+          <Col span={19}>
+            <Form.Item
+              label="LED Part No"
+              name="led Part No"
+              initialValue={getFieldValue('led Part No')}
+              rules={[{ required: true }]}
+              validateTrigger="onSubmit"
+            >
+              <AutoSaveInput
+                name="led Part No"
+                value={getFieldValue('led Part No') || ''}
+                versionId={version?.id}
+                isAdditional={true}
+                dataType="string"
+                typeGroup="custom"
+                refetch={refetch}
+              />
+            </Form.Item>
+          </Col>
+        </Row>
+      )}
 
-          {partType === 'Engine' && (
-            <>
-              <Form.Item
-                label="LED Lifetime"
-                name="led Lifetime"
-                initialValue={getFieldValue('led Lifetime')}
-              >
-                {/* <Input placeholder="..." /> */}
-                <AutoSaveInput
-                  name="led Lifetime"
-                  value={getFieldValue('led Lifetime') || ''}
-                  versionId={version?.id}
-                  isAdditional={true}
-                  dataType="string"
-                  typeGroup="custom"
-                  refetch={refetch}
-                />
-              </Form.Item>
-              <Form.Item
-                label="Maximum Drive Current (mA)"
-                name="maximum Drive Current"
-                initialValue={getFieldValue('maximum Drive Current')}
-              >
-                {/* <Input placeholder="..." /> */}
-                <AutoSaveInput
-                  name="maximum Drive Current"
-                  value={getFieldValue('maximum Drive Current') || ''}
-                  versionId={version?.id}
-                  isAdditional={true}
-                  dataType="string"
-                  typeGroup="custom"
-                  refetch={refetch}
-                />
-              </Form.Item>
-              <Form.Item
-                label="Minimum Drive Current (mA)"
-                name="minimum Drive Current"
-                initialValue={getFieldValue('minimum Drive Current')}
-              >
-                {/* <Input placeholder="..." /> */}
-                <AutoSaveInput
-                  name="minimum Drive Current"
-                  value={getFieldValue('minimum Drive Current') || ''}
-                  versionId={version?.id}
-                  isAdditional={true}
-                  dataType="string"
-                  typeGroup="custom"
-                  refetch={refetch}
-                />
-              </Form.Item>
-            </>
-          )}
+      {partType === 'Engine' && (
+        <>
+          <Form.Item
+            label="LED Lifetime"
+            name="led Lifetime"
+            initialValue={getFieldValue('led Lifetime')}
+          >
+            <AutoSaveInput
+              name="led Lifetime"
+              value={getFieldValue('led Lifetime') || ''}
+              versionId={version?.id}
+              isAdditional={true}
+              dataType="string"
+              typeGroup="custom"
+              refetch={refetch}
+            />
+          </Form.Item>
+          <Form.Item
+            label="Maximum Drive Current (mA)"
+            name="maximum Drive Current"
+            initialValue={getFieldValue('maximum Drive Current')}
+          >
+            <AutoSaveInput
+              name="maximum Drive Current"
+              value={getFieldValue('maximum Drive Current') || ''}
+              versionId={version?.id}
+              isAdditional={true}
+              dataType="string"
+              typeGroup="custom"
+              refetch={refetch}
+            />
+          </Form.Item>
+          <Form.Item
+            label="Minimum Drive Current (mA)"
+            name="minimum Drive Current"
+            initialValue={getFieldValue('minimum Drive Current')}
+          >
+            <AutoSaveInput
+              name="minimum Drive Current"
+              value={getFieldValue('minimum Drive Current') || ''}
+              versionId={version?.id}
+              isAdditional={true}
+              dataType="string"
+              typeGroup="custom"
+              refetch={refetch}
+            />
+          </Form.Item>
+        </>
+      )} */}
 
-        </div>
+        </div >
 
         <Divider />
 
@@ -461,7 +489,7 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
             })}
           </Row>
         </div>
-      </Form>
+      </Form >
 
       <div style={{ textAlign: 'start', margin: 30 }}>
         <CustomButton
