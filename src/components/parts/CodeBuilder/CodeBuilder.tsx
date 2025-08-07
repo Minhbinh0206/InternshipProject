@@ -125,15 +125,16 @@ const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
     });
 
     const [validateCodeQuery] = useLazyQuery(VALIDATE_CODE, {
+        fetchPolicy: 'no-cache', // 👈 Thêm dòng này để luôn gọi lại query
         onCompleted: (data) => {
             if (currentId === null) return;
             const isValid = data?.validateGeneratedCode;
             setValidate({ id: currentId, status: isValid ? 'ok' : 'dup' });
 
             if (!isValid) {
-                toast.error('Code generated already exist')
+                toast.error('Code generated already exist');
             } else {
-                toast.success('Code generated is unique')
+                toast.success('Code generated is unique');
             }
         },
         onError: (error) => {
@@ -141,7 +142,6 @@ const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
             toast.error(`Lỗi validate: ${error.message}`);
             if (currentId === null) return;
             setValidate({ id: currentId, status: 'dup' });
-
         },
     });
 
@@ -247,12 +247,12 @@ const CodeBuilder: React.FC<CodeBuilderProps> = ({ versionId }) => {
             setFieldsGroup([]);
         }
     }, [selectedGroupId, versionData, fieldsData, partGroups]);
+
     useEffect(() => {
         if (isModalVisible && selectedGroupId) {
             fieldsRefect({ variables: { groupId: selectedGroupId } });
         }
     }, [isModalVisible, selectedGroupId]);
-
 
     useEffect(() => {
         console.log("🌀 fieldsData changed:", fieldsData);

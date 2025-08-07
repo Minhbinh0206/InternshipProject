@@ -31,7 +31,11 @@ const RevisionAndVersion: React.FC = () => {
     const [expandedRowKeys, setExpandedRowKeys] = useState<string[]>([]);
     const [deleteVersion] = useMutation(DELETE_VERSION);
     const part = data?.getPartById;
-
+    const [versionStatus] = useState({
+        published: 'Published',
+        draft: 'Draft',
+        archieve: 'Archieve'
+    });
 
     if (!part) return <Loading />;
     if (!part.revisions?.length) return <p>No revisions available.</p>;
@@ -305,7 +309,7 @@ const RevisionAndVersion: React.FC = () => {
                                                     }
                                                 />
 
-                                                {!(record.latestStatus === 'Published') && (
+                                                {!(record.latestStatus === versionStatus.published) && (
                                                     <CustomButton
                                                         variant="blue"
                                                         layout="noIcon"
@@ -340,7 +344,7 @@ const RevisionAndVersion: React.FC = () => {
                                                     }
                                                 />
 
-                                                {(record.latestStatus === 'Draft') && (
+                                                {(record.latestStatus === versionStatus.draft) && (
                                                     <CustomButton
                                                         variant="red"
                                                         layout="noIcon"

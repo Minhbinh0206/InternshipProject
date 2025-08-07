@@ -41,8 +41,10 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
   const [updateGroup] = useMutation(UPDATE_GROUP);
   const [deleteGroup] = useMutation(DELETE_GROUP);
   const [createAndAddPart] = useMutation(CREATE_AND_ADD_PART_TO_GROUP);
+  const [selectedType, setSelectedType] = useState<string | null>(null);
 
-
+  console.log('Type assembler: ', selectedType);
+  
   const [isEditModalVisible, setEditModalVisible] = useState(false);
   const [editMode, setEditMode] = useState<'create' | 'edit'>('edit');
   const [currentGroupData, setCurrentGroupData] = useState<any>(null);
@@ -302,10 +304,6 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
             width={1200}
           >
             <div style={{ marginBottom: 24 }}>
-              <div style={{ marginTop: 24, marginLeft: 32, marginBottom: -30 }}>
-                <TypeFilter
-                />
-              </div>
               <CreatePart
                 groupId={group.id}
                 createModalVisible={(visible: boolean) => setCreatePartModalVisible(visible)}

@@ -4,7 +4,7 @@ import CustomButton from '../../common/CustomButton/CustomButton';
 import type PartType from '../../../types/partType';
 const { Text } = Typography;
 
-export type PartTypeMode = 'editable' | 'read-only' | 'detailed' | 'modify';
+export type PartTypeMode = 'editable' | 'read-only' | 'detailed' | 'modify' | 'addToGroup';
 
 interface FilterPartTypeProps {
   value?: string;
@@ -50,14 +50,17 @@ const FilterPartType: React.FC<FilterPartTypeProps> = ({
         justifyContent: 'space-between',
         alignItems: 'center',
         width: '100%',
-        marginTop: 24,
-        marginBottom: 50
+        marginTop: mode === 'addToGroup' ? 0 : 24,
+        marginBottom: mode === 'addToGroup' ? 0 : 50,
+        marginLeft: mode === 'addToGroup' ? 30 : 0
       }}
     >
       {/* Chọn Part‑type */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-        <Text strong>Part type:</Text>
-
+        {
+          !(mode === 'addToGroup') && (<Text strong>Part type:</Text>)
+        }
+        
         <Select
           value={value}
           style={{ width: 180 }}
