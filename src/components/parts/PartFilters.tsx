@@ -31,10 +31,12 @@ interface PartFiltersProps {
 export const TypeFilter = ({
   value,
   onChange,
+  onChangeType,
   valueKey = 'id',
 }: {
   value?: string;
   onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  onChangeType?: (type: string) => void; // ✅ thêm kiểu
   valueKey?: 'id' | 'name';
 }) => {
   const { loading, error, data } = useQuery(GET_PART_TYPES);
@@ -42,14 +44,19 @@ export const TypeFilter = ({
   if (loading) return <select style={selectStyle}><option>Loading...</option></select>;
   if (error) return <select style={selectStyle}><option>Error</option></select>;
 
-  const selectedType = data.types.find((type: any) => type[valueKey] === value);
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    onChange?.(e); // gọi callback nếu có
+    onChangeType?.(e.target.value);
+
+    console.log('Type: ' , e.target.name);
+  };
 
   return (
-    <select style={selectStyle} value={value} onChange={onChange}>
+    <select style={selectStyle} value={value} onChange={handleChange}>
       <option value="">Type: Any</option>
       {/* {value && selectedType && <option value={value}>{selectedType.name}</option> }  */}
       {data.types.map((type: any) => (
-        <option key={type.id} value={type[valueKey]}>
+        <option key={type.id} value={type.name}>
           {type.name}
         </option>
       ))}

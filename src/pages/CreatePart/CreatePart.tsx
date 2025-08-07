@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { HomeOutlined, PlusOutlined, QuestionCircleFilled, QuestionCircleOutlined } from '@ant-design/icons';
 import PageHeader from '../../components/layout/PageHeader/PageHeader';
-import { type PartTypeMode } from '../../components/parts/FilterPartType/FilterPartType';
+import FilterPartType, { type PartTypeMode } from '../../components/parts/FilterPartType/FilterPartType';
 import { Col, Divider, Form, Input, Modal, Row, Select, Tooltip, Typography } from 'antd';
 import './CreatePart.css';
 import CustomSwitch from '../../components/common/CustomSwitch/CustomSwitch';
@@ -43,15 +43,14 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
     const [selectedPartTypeId, setSelectedPartTypeId] = useState<string>('1');
     const { data: allPartsData } = useQuery(GET_PARTS);
 
+    console.log('SS', selectedPartType);
+
     const [inputValue, setInputValue] = useState<string>('');
     // const { id } = useParams<{ id?: string }>();
     const { id: routeId } = useParams<{ id?: string }>();
     const id = isDuplicate ? routeId : undefined;
 
     const navigate = useNavigate();
-    console.log(typeError);
-
-
     const { data: partData } = useQuery(GET_PART_BY_ID, {
         variables: { id },
         skip: !id,
@@ -73,9 +72,6 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
         if (id && partData?.getPartById) {
             const part = partData.getPartById;
             const version = part.selected_version;
-
-            console.log('Part data:', part);
-
             setSelectedPartTypeId(part.selected_version.type.id);
 
             // Set form values
@@ -109,9 +105,6 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
         if (partData?.getPartById?.selected_version?.code && inputValue === '') {
             setInputValue(partData?.getPartById?.selected_version?.code);
         }
-        console.log('Part data updated:', partData?.getPartById?.selected_version?.code);
-        console.log('value:', inputValue);
-
     }, [partData]);
 
     const isDuplicateCode = useMemo(() => {
@@ -123,8 +116,6 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
     }, [inputValue, allPartsData]);
 
     const requiredFields = useMemo(() => getRequiredFields(selectedPartType), [selectedPartType])
-
-    console.log('Selected type:', selectedPartType);
 
     const formValues = Form.useWatch([], form);
 
@@ -140,7 +131,7 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
     });
 
     const handleCreate = async () => {
-        const partTypeExtraFields = partTypeFieldConfig[selectedPartType] || [];
+        const partTypeExtraFields = selectedPartType ? partTypeFieldConfig[selectedPartType] || [] : [];
         const customFields = selectedFields;
         const standardFields = partTypeExtraFields.filter(field => !selectedFields.includes(field));
 
@@ -157,7 +148,6 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
             let createdPart;
 
             if (groupId) {
-
                 const input = {
                     name: values.name,
                     code: values.customerCode,
@@ -169,14 +159,9 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
                     additional_fields,
                 };
 
-                console.log("input", input);
-
                 const { data } = await createAndAddPartToGroup({ variables: { input } });
                 createdPart = data?.createAndAddPartToGroup;
-                console.log('Created and added to group');
-
             } else {
-
                 const input = {
                     name: values.name,
                     code: values.customerCode,
@@ -188,7 +173,6 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
 
                 const { data } = await createPart({ variables: { input } });
                 createdPart = data?.createPart;
-                console.log('Created (no group)');
             }
 
             if (!hideFooter && createdPart?.id) {
@@ -205,7 +189,6 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
             console.error('Create part failed:', err);
         }
     };
-
 
     useEffect(() => {
         if (selectedPartType === 'Luminaire') {
@@ -224,8 +207,8 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
 
     return (
         <>
-            {!hideHeader &&
-                (
+            {!hideHeader ?
+                ((
                     id ? (
                         <PageHeader
                             title="Duplicate part"
@@ -239,7 +222,7 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
                             onTabChange={setActiveKey}
                             mode={'modify'}
                             partTypes={fetchedPartTypes}
-                            selectedPartType={typeLoading ? '...' : selectedPartType}
+                            selectedPartType={typeLoading ? '...' : selectedPartType || undefined}
                             onSelectPartType={(typeName) => {
                                 setSelectedPartType(typeName);
                                 const found = fetchedPartTypes.find(t => t.value === typeName);
@@ -260,7 +243,7 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
                             onTabChange={setActiveKey}
                             mode={mode}
                             partTypes={fetchedPartTypes}
-                            selectedPartType={typeLoading ? '...' : selectedPartType}
+                            selectedPartType={typeLoading ? '...' : selectedPartType ?? undefined}
                             onSelectPartType={(typeName) => {
                                 setSelectedPartType(typeName);
                                 const found = fetchedPartTypes.find(t => t.value === typeName);
@@ -269,6 +252,15 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
 
                         />
                     )
+                )) :
+                (
+                    <FilterPartType 
+                        mode='addToGroup'
+                        partTypes={fetchedPartTypes}
+                        onChange={setSelectedPartType}
+                        selectedPartType={selectedPartType}
+                        value={selectedPartType}
+                    />
                 )
             }
 
@@ -343,7 +335,7 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
                         <>
                             <Row gutter={20} align="top">
                                 <Col span={5}>
-                                    <Form.Item label="Colour Temperature (K)" name="Colour Temperature (K)" rules={[{ required: true }]} validateTrigger="onSubmit" initialValue={'30000K'}>
+                                    <Form.Item label="Colour Temperature (K)" name="colour Temperature" rules={[{ required: true }]} validateTrigger="onSubmit" initialValue={'30000K'}>
                                         <Select onChange={(value) => console.log(value)} disabled={!!id}>
                                             <Option value="27000K">2700K</Option>
                                             <Option value="30000K">3000K</Option>
@@ -491,3 +483,17 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
 };
 
 export default CreatePart;
+
+const selectStyle: React.CSSProperties = {
+  border: "1px solid #e0e0e0",
+  borderRadius: 3,
+  padding: "8px 12px",
+  fontSize: 15,
+  color: "#2d6cdf",
+  background: "#fff",
+  fontFamily: "inherit",
+  outline: "none",
+  marginRight: 4,
+  minWidth: 150,
+  cursor: "pointer",
+};
