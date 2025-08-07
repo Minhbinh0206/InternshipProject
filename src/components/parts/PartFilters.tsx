@@ -1,6 +1,7 @@
 import React from "react";
 import { useQuery } from "@apollo/client";
 import { GET_PART_TYPES } from "../../graphQL/partQueries";
+import SelectBooleanFilter from "../common/SelectBooleanFilter";
 
 const selectStyle: React.CSSProperties = {
   border: "1px solid #e0e0e0",
@@ -16,19 +17,6 @@ const selectStyle: React.CSSProperties = {
   cursor: "pointer",
 };
 
-const buttonStyle: React.CSSProperties = {
-  padding: "8px 12px",
-  border: "1px solid #e0e0e0",
-  borderRadius: 3,
-  background: "#fff",
-  color: "#2d6cdf",
-  fontWeight: 500,
-  fontSize: 15,
-  cursor: "pointer",
-  marginLeft: 4,
-  whiteSpace: "nowrap",
-};
-
 interface PartFiltersProps {
   typeValue?: string;
   onTypeChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
@@ -36,6 +24,8 @@ interface PartFiltersProps {
   onPublishedChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
   isAssemblerValue?: string;
   onIsAssemblerChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
+  isAssemblyValue?: string;
+  onIsAssemblyChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
 }
 
 export const TypeFilter = ({
@@ -74,42 +64,6 @@ export const TypeFilter = ({
   );
 };
 
-export const PublishedFilter = ({
-  value,
-  onChange,
-}: {
-  value?: string;
-  onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
-}) => (
-  <select style={selectStyle} value={value} onChange={onChange}>
-    <option value="">Published: Any</option>
-    <option value="true">Published: Yes</option>
-    <option value="false">Published: No</option>
-  </select>
-);
-
-
-export const IsAssembler = ({
-  value,
-  onChange,
-}: {
-  value?: string;
-  onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
-}) => (
-  <select style={selectStyle} value={value} onChange={onChange}>
-    <option value="">Assembler: Any</option>
-    <option value="true">Assembler: Yes</option>
-    <option value="false">Assembler: No</option>
-  </select>
-);
-
-export const IsAssembly = ({ value, onChange }: { value?: string; onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void }) => (
-  <select style={selectStyle} value={value} onChange={onChange}>
-    <option value="">Assembly: Any</option>
-    <option value="">Assembly: Yes</option>
-    <option value="">Assembly: No</option>
-  </select>
-);
 // export const MoreFiltersButton = ({ onClick }: { onClick?: () => void }) => (
 //   <button style={buttonStyle} onClick={onClick}>
 //     + More filters
@@ -123,12 +77,15 @@ const PartFilters: React.FC<PartFiltersProps> = ({
   onPublishedChange,
   isAssemblerValue,
   onIsAssemblerChange,
+  isAssemblyValue,
+  onIsAssemblyChange,
 }) => (
   <>
     <TypeFilter value={typeValue} onChange={onTypeChange} />
-    <PublishedFilter value={publishedValue} onChange={onPublishedChange} />
-    <IsAssembler value={isAssemblerValue} onChange={onIsAssemblerChange} />
-    <IsAssembly />
+    <SelectBooleanFilter label="Published" value={publishedValue} onChange={onPublishedChange} />
+    <SelectBooleanFilter label="Assembler" value={isAssemblerValue} onChange={onIsAssemblerChange} />
+    <SelectBooleanFilter label="Assembly" value={isAssemblyValue} onChange={onIsAssemblyChange} />
+
   </>
 );
 

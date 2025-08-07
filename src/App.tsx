@@ -6,11 +6,8 @@ import PartList from './pages/PartsList/PartsListPage';
 import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { client } from './graphQL/client.ts';
 
-const client = new ApolloClient({
-  uri: 'http://localhost:8000/graphql', // đúng endpoint GraphQL
-  cache: new InMemoryCache(),
-});
 
 function App() {
   return (

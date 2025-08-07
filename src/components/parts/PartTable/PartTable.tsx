@@ -1,24 +1,18 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { useMutation, useQuery } from "@apollo/client";
-import {
-  SettingOutlined,
-  EditOutlined,
-  DeleteOutlined,
-  CopyOutlined,
-} from "@ant-design/icons";
+import { SettingOutlined, EditOutlined, DeleteOutlined, CopyOutlined } from "@ant-design/icons";
 import CustomButton from "../../common/CustomButton/CustomButton";
 import { useNavigate } from "react-router-dom";
 import { FILTER_PARTS } from "../../../graphQL/partQueries";
 import { DELETE_PART } from "../../../graphQL/partActions";
-import "./PartTable.css";
 import Loading from "../../layout/Loading/Loading";
-import { message, Modal } from "antd";
 import { toast } from "react-toastify";
+import "./PartTable.css";
 
-interface PartTableProps {
-  searchText: string;
-  typeFilter?: string;
-  publishedFilter?: string | boolean;
+interface Filters {
+  search: string;
+  type?: string;
+  published?: string | boolean;
   isAssembler?: string;
 }
 
@@ -29,122 +23,85 @@ interface PartItem {
   type: string;
   versionId?: number;
   revisionId?: number;
-  status?: string;
 }
 
-const PartTable: React.FC<PartTableProps> = ({
-  searchText,
-  typeFilter,
-  publishedFilter,
-  isAssembler,
-}) => {
+interface PartTableProps {
+  filters: Filters;
+}
 
+const mapFiltersToGraphQL = (filters: Filters) => {
+  const gqlFilter: any = {};
+  if (filters.search) gqlFilter.keyword = filters.search;
+  if (filters.type) gqlFilter.type_id = filters.type;
+  if (filters.published !== "") gqlFilter.published = filters.published === "true";
+  if (filters.isAssembler !== "") gqlFilter.is_assembler = filters.isAssembler === "true";
+  return gqlFilter;
+};
+
+const extractPreferredVersion = (part: any) => {
+  const versions = (part.revisions || []).flatMap((r: any) =>
+    (r.versions || []).map((v: any) => ({ ...v, revisionId: r.id }))
+  );
+
+  return versions.find((v) => v.status === "Published")
+    || versions.find((v) => v.status === "Draft")
+    || versions[0];
+};
+
+const PartTable: React.FC<PartTableProps> = ({ filters }) => {
   const navigate = useNavigate();
+  const gqlFilter = useMemo(() => mapFiltersToGraphQL(filters), [filters]);
 
-
-  const filter: any = {};
-  if (searchText) filter.keyword = searchText;
-  if (typeFilter) filter.type_id = typeFilter;
-  if (publishedFilter !== undefined && publishedFilter !== "") {
-    filter.published = publishedFilter === "true";
-  }
-  if (isAssembler !== undefined && isAssembler !== "") {
-    filter.is_assembler = isAssembler === "true";
-  }
-
-  const [deletePartMutation] = useMutation(DELETE_PART, {
-    refetchQueries: [
-      {
-        query: FILTER_PARTS,
-        variables: { filter },
-      },
-    ],
+  const [deletePart] = useMutation(DELETE_PART, {
+    refetchQueries: [{ query: FILTER_PARTS, variables: { filter: gqlFilter } }],
   });
-  console.log("Filter:", filter);
 
   const { loading, error, data } = useQuery(FILTER_PARTS, {
-    variables: { filter },
+    variables: { filter: gqlFilter },
   });
 
-  console.log("Filter Data:", data);
-  
-
   if (loading) return <Loading />;
-  if (error) return <p>Lỗi tải dữ liệu + {error.message}  </p>;
+  if (error) return <p>Lỗi tải dữ liệu: {error.message}</p>;
 
-  const partList: PartItem[] = (data?.filterParts || []).map((part: any) => {
-    let allVersions: any[] = [];
-    if (Array.isArray(part.revisions)) {
-      part.revisions.forEach((revision: any) => {
-        allVersions = [
-          ...allVersions,
-          ...(revision.versions || []).map((v: any) => ({
-            ...v,
-            revisionId: revision.id,
-          })),
-        ];
-      });
-    }
-    const preferredVersion =
-      allVersions.find((v) => v.status === "Published") ||
-      allVersions.find((v) => v.status === "Draft") ||
-      allVersions[0];
-
-    if (!preferredVersion) return null;
-
-    return {
-      id: Number(part.id),
-      revisionId: Number(preferredVersion.revisionId),
-      versionId: Number(preferredVersion.id),
-      name: preferredVersion.name,
-      code: preferredVersion.code ?? "",
-      type: preferredVersion.type?.name ?? "",
-    };
-  }).filter(Boolean)
+  const partList: PartItem[] = (data?.filterParts || [])
+    .map((part: any) => {
+      const v = extractPreferredVersion(part);
+      return v
+        ? {
+            id: Number(part.id),
+            revisionId: Number(v.revisionId),
+            versionId: Number(v.id),
+            name: v.name,
+            code: v.code ?? "",
+            type: v.type?.name ?? "",
+          }
+        : null;
+    })
+    .filter(Boolean)
     .reverse();
 
-
-  const handleDelete = async (partId: number) => {
-    const confirmed = window.confirm("Are you sure you want to delete this part?");
-    if (!confirmed) return;
-
+  const handleDelete = async (id: number) => {
+    if (!window.confirm("Are you sure you want to delete this part?")) return;
     try {
-      await deletePartMutation({ variables: { id: partId } });
+      await deletePart({ variables: { id } });
       toast.success("Part deleted successfully");
-      console.log(`Deleted part with ID: ${partId}`);
-    } catch (error) {
-      console.error("Error deleting part:", error);
-      toast.error("Failed to delete part.");
+    } catch (err) {
+      toast.error("Failed to delete part");
+      console.error(err);
     }
-
   };
 
-  const handleEdit = (part: PartItem) => {
-    navigate(`/parts/modify/${part.id}`, {
-      state: {
-        name: part.name,
-        type: part.type,
-        code: part.code,
-        id: part.id,
-      },
-    });
-  };
-
-  const handleDuplicate = (part: PartItem) => {
-    navigate(`/parts/duplicate/${part.id}`);
-  };
+  const goTo = (path: string, state?: any) => navigate(path, { state });
 
   return (
     <table>
       <thead>
-        <tr className="bg-gray-100" style={{ color: "gray" }}>
+        <tr className="bg-gray-100 text-gray-600">
           <th className="p-3">ID</th>
           <th className="p-3" style={{ width: "30%" }}>Name</th>
           <th className="p-3">Type</th>
           <th className="p-3" style={{ width: "30%" }}>Code</th>
-          <th className="p-3">
-            <SettingOutlined />
-          </th>
+          <th className="p-3"><SettingOutlined /></th>
         </tr>
       </thead>
       <tbody>
@@ -161,7 +118,7 @@ const PartTable: React.FC<PartTableProps> = ({
                 icon={<EditOutlined />}
                 text="Edit"
                 style={{ marginRight: 10 }}
-                onClick={() => handleEdit(part)}
+                onClick={() => goTo(`/parts/modify/${part.id}`, part)}
               />
               <CustomButton
                 variant="red"
@@ -176,7 +133,7 @@ const PartTable: React.FC<PartTableProps> = ({
                 layout="iconFirst"
                 icon={<CopyOutlined />}
                 text="Duplicate"
-                onClick={() => handleDuplicate(part)}
+                onClick={() => goTo(`/parts/duplicate/${part.id}`)}
               />
             </td>
           </tr>
@@ -187,3 +144,4 @@ const PartTable: React.FC<PartTableProps> = ({
 };
 
 export default PartTable;
+

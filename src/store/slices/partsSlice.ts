@@ -28,7 +28,8 @@ const initialState: PartsState = {
 };
 
 export const fetchParts = createAsyncThunk<Part[]>('parts/fetchParts', async () => {
-  const data = await request<{ parts: Part[] }>('http://localhost:8000/graphql', GET_PARTS);
+  const endpoint = import.meta.env.VITE_GRAPHQL_ENDPOINT;
+  const data = await request<{ parts: Part[] }>(endpoint, GET_PARTS);
   return data.parts;
 });
 
