@@ -1,108 +1,120 @@
 import React, { useEffect, useState } from 'react';
-import { Input, message } from 'antd';
+import { Input, Form } from 'antd';
+import type { FormInstance } from 'antd';
 import { useMutation } from '@apollo/client';
 import { UPDATE_PART } from '../../../graphQL/versionActions';
 import { toast } from 'react-toastify';
 import { useNavigate, useParams } from 'react-router-dom';
 
-
 interface AutoSaveInputProps {
+  form?: FormInstance;
   name: string;
   value: string;
   versionId: number;
-  // additional properties
   isAdditional?: boolean;
   dataType?: string;
   typeGroup?: string;
   refetch?: () => void;
-  // end
+  versionCode?: string;
 }
 
 const AutoSaveInput: React.FC<AutoSaveInputProps> = ({
+  form: formProp,
   name,
   value,
   versionId,
-  // additional properties
   isAdditional = false,
   dataType = 'string',
   typeGroup = 'custom',
-  // end
+  refetch,
+  versionCode
 }) => {
+  const formInstance: FormInstance | undefined =
+    formProp || (Form as any).useFormInstance ? (Form as any).useFormInstance() : undefined;
+
   const [internalValue, setInternalValue] = useState(value);
   const [updatePart] = useMutation(UPDATE_PART);
   const [loading, setLoading] = useState(false);
+  const [isCreatingDraft, setIsCreatingDraft] = useState(false);
 
   const navigate = useNavigate();
-  const { id, revisionId, versionCode } = useParams<{
-    id: string;
-    revisionId?: string;
-    versionCode?: string;
-  }>();
+  const { id, revisionId } = useParams<{ id: string; revisionId?: string }>();
 
   useEffect(() => {
     setInternalValue(value);
-  }, [value]);
+    if (formInstance) {
+      formInstance.setFieldsValue({ [name]: value });
+    }
+  }, [value, name, formInstance]);
 
-  const saveChange = () => {
-    if (internalValue === value || loading) return;
+  const saveChange = async () => {
+    if (!formInstance || loading || isCreatingDraft) return;
+
+    if (isAdditional && (!internalValue || internalValue.trim() === '')) return;
+    if (value === internalValue && !isAdditional) return;
+
+    formInstance.setFieldsValue({ [name]: internalValue });
+    const allFields = formInstance.getFieldsValue(true);
+    const standardFields = ['name', 'code', 'description'];
 
     const inputPayload: any = {
       version_id: versionId,
+      additional_fields: []
     };
 
-    if (isAdditional) {
-      inputPayload.additional_fields = [
-        {
-          name,
-          value: internalValue,
+    standardFields.forEach(field => {
+      if (allFields[field] !== undefined) {
+        inputPayload[field] = allFields[field];
+      }
+    });
+
+    Object.keys(allFields).forEach(key => {
+      if (!standardFields.includes(key)) {
+        inputPayload.additional_fields.push({
+          name: key,
+          value: allFields[key],
           data_type: dataType,
-          type_group: typeGroup,
-        },
-      ];
-    } else {
-      inputPayload[name] = internalValue;
-    }
+          type_group: typeGroup
+        });
+      }
+    });
 
     setLoading(true);
 
-    updatePart({
-      variables: {
-        input: inputPayload,
-      },
-    })
-      .then((res) => {
-        if (res.errors) {
-          throw new Error(res.errors[0]?.message || 'Update failed');
-        }
+    try {
+      const res = await updatePart({ variables: { input: inputPayload } });
+      if ((res as any).errors) throw new Error((res as any).errors[0]?.message || 'Update failed');
 
-        const updated = res?.data?.updatePart;
-        const returnedCode = updated?.version_code;
+      const updated = (res as any).data?.updatePart;
+      const returnedCode = updated?.version_code;
 
-        if (returnedCode && returnedCode !== versionCode) {
-          navigate(`/parts/modify/${id}/${revisionId}/${returnedCode}`, { replace: true });
-        }
+      if (returnedCode && returnedCode !== versionCode) {
+        setIsCreatingDraft(true);
+        navigate(`/parts/modify/${id}/${revisionId}/${returnedCode}`, { replace: true });
+      }
 
-        toast.success(`${name} updated`);
-      })
-      .catch((err) => {
-        console.error(err);
-        toast.error(`Failed to update ${name}`);
-      })
-      .finally(() => setLoading(false));
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Escape') {
-      setInternalValue(value);
+      toast.success(`${name} updated`);
+      if (refetch) refetch();
+    } catch (err) {
+      console.error(err);
+      toast.error(`Failed to update ${name}`);
+    } finally {
+      setLoading(false);
+      setIsCreatingDraft(false);
     }
   };
 
   return (
     <Input
       value={internalValue}
-      onChange={(e) => setInternalValue(e.target.value)}
+      onChange={e => setInternalValue(e.target.value)}
       onBlur={saveChange}
-      onKeyDown={handleKeyDown}
+      onKeyDown={e => {
+        if (e.key === 'Escape') {
+          setInternalValue(value);
+          formInstance?.setFieldsValue({ [name]: value });
+        }
+      }}
       disabled={loading}
     />
   );

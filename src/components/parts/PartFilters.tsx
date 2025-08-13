@@ -36,7 +36,7 @@ export const TypeFilter = ({
 }: {
   value?: string;
   onChange?: (e: React.ChangeEvent<HTMLSelectElement>) => void;
-  onChangeType?: (type: string) => void; // ✅ thêm kiểu
+  onChangeType?: (type: string) => void; 
   valueKey?: 'id' | 'name';
 }) => {
   const { loading, error, data } = useQuery(GET_PART_TYPES);
@@ -45,7 +45,7 @@ export const TypeFilter = ({
   if (error) return <select style={selectStyle}><option>Error</option></select>;
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    onChange?.(e); // gọi callback nếu có
+    onChange?.(e);
     onChangeType?.(e.target.value);
 
     console.log('Type: ' , e.target.name);
@@ -85,7 +85,6 @@ const PartFilters: React.FC<PartFiltersProps> = ({
     <SelectBooleanFilter label="Published" value={publishedValue} onChange={onPublishedChange} />
     <SelectBooleanFilter label="Assembler" value={isAssemblerValue} onChange={onIsAssemblerChange} />
     <SelectBooleanFilter label="Assembly" value={isAssemblyValue} onChange={onIsAssemblyChange} />
-
   </>
 );
 

@@ -51,6 +51,9 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
     const id = isDuplicate ? routeId : undefined;
 
     const navigate = useNavigate();
+
+    console.error("typeError", typeError);
+
     const { data: partData } = useQuery(GET_PART_BY_ID, {
         variables: { id },
         skip: !id,
@@ -125,11 +128,11 @@ const CreatePart: React.FC<CreatePartProps> = ({ createModalVisible, groupId, hi
         if (typeof value === 'string') {
             return value.trim() === '';
         }
-
         // Xử lý cho các trường không phải chuỗi (số, object, v.v.)
         return value === undefined || value === null;
     });
 
+   
     const handleCreate = async () => {
         const partTypeExtraFields = selectedPartType ? partTypeFieldConfig[selectedPartType] || [] : [];
         const customFields = selectedFields;

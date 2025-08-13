@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Table, Checkbox, Space, Typography, Tooltip, Modal, Form, Input, Select, Button } from 'antd';
 import { useLocation, useParams } from 'react-router-dom';
 import { useMutation, useQuery } from '@apollo/client';
-import { ArrowsAltOutlined, CloseOutlined, DeleteOutlined, EditOutlined, PlusOutlined, QuestionCircleFilled, SettingOutlined, QuestionCircleOutlined } from '@ant-design/icons';
+import { ArrowsAltOutlined, CloseOutlined, DeleteOutlined, EditOutlined, PlusOutlined, QuestionCircleFilled, SettingOutlined, QuestionCircleOutlined, RetweetOutlined } from '@ant-design/icons';
 import CustomButton from '../../common/CustomButton/CustomButton';
 import CreatePart from '../../../pages/CreatePart/CreatePart';
 import { GET_GROUPS_BY_VERSIONID, GET_PART_TYPES } from '../../../graphQL/partQueries.ts';
@@ -45,21 +45,34 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
   const [isCreatePartModalVisible, setCreatePartModalVisible] = useState(false);
   const [isAddPartModalVisible, setAddPartModalVisible] = useState(false);
   const [selectedGroupId, setSelectedGroupId] = useState<string | null>(null);
-  // const [selectedTypeId, setSelectedTypeId] = useState<string | null>(null);
-  // const [type, setType] = useState<string | null>(null);
   const [type, setType] = useState<string>('');
   const [selectedTypeId, setSelectedTypeId] = useState<string>('');
   console.log("selectedGroupId:", selectedGroupId);
+  console.log("selectedTypeId:", selectedTypeId);
 
-  useEffect(() => {
-    for (const typeId of partTypeData?.types ?? []) {
-      if (typeId.id === selectedTypeId) {
-        setType(typeId.name);
-        break;
+  // useEffect(() => {
+  //   for (const typeId of partTypeData?.types ?? []) {
+  //     if (typeId.id === selectedTypeId) {
+  //       setType(typeId.name);
+  //       break;
+  //     }
+  //   }
+  // }, [partTypeData, selectedTypeId]);
 
-      }
-    }
-  })
+  // useEffect(() => {
+  //   if (!selectedTypeId) {
+  //     setType('');
+  //     return;
+  //   }
+
+  //   for (const typeId of partTypeData?.types ?? []) {
+  //     if (typeId.id === selectedTypeId) {
+  //       setType(typeId.name);
+  //       break;
+  //     }
+  //   }
+  // }, [partTypeData, selectedTypeId]);
+
 
   const showEditModal = (group: any) => {
     setEditMode('edit');
@@ -165,6 +178,17 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
     }
   }
 
+  const handleAddPartModal = (group: any) => {
+    setSelectedGroupId(group.id);
+    const typeId = group.type_id;
+    setSelectedTypeId(typeId ?? '');
+    setType(() => {
+      if (!typeId) return '';
+      const found = partTypeData?.types?.find((t: any) => t.id === typeId);
+      return found?.name ?? '';
+    })
+    setAddPartModalVisible(true);
+  }
 
   if (loading) return <Loading />;
   if (error) return <p>Lỗi khi tải dữ liệu: {error.message}</p>;
@@ -269,14 +293,19 @@ const PartAssemblerGroup: React.FC<PartAssemblerGroupProps> = ({ versionId }) =>
               layout="iconFirst"
               icon={<PlusOutlined />}
               text="Add Part"
-              onClick={async () => {
-                await refetch(); // 💡 Đảm bảo partGroups được cập nhật trước
-                setSelectedGroupId(group.id);
-                console.log("Group ID", group.id);
-                setSelectedTypeId(group.type_id);
-                console.log("Group Type ID:", group.type_id);
-                setAddPartModalVisible(true);
-              }}
+              // onClick={async () => {
+              //   setSelectedGroupId(group.id);
+              //   console.log("Group ID", group.id);
+              //   if (group.type_id) {
+              //     setSelectedTypeId(group.type_id);
+              //   } else {
+              //     setSelectedTypeId('');
+              //     setType('');
+              //   }
+              //   setAddPartModalVisible(true);
+              //   refetch();
+              // }}
+              onClick={() => handleAddPartModal(group)}
 
             />
 

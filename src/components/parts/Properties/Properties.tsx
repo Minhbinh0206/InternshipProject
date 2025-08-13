@@ -11,7 +11,7 @@ import AutoSaveSelect from '../OnblurProcessing/AutoSaveSelect';
 import { toast } from 'react-toastify';
 import CustomSwitch from '../../common/CustomSwitch/CustomSwitch';
 import ModalCustomProperties from '../ModalCustomProperties/ModalCustomProperties';
-import {propertyGroups} from '../../utils/propertyGroups'
+import { propertyGroups } from '../../utils/propertyGroups';
 import { FIELD_DEFINITIONS } from '../../../types/standardFields';
 
 const { Option } = Select;
@@ -34,69 +34,86 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [checkedKeys, setCheckedKeys] = useState<string[]>([]);
   const [selectedFields, setSelectedFields] = useState<Field[]>([]);
-  const [updatePart] = useMutation(UPDATE_PART)
+  const [updatePart] = useMutation(UPDATE_PART);
   const [isChecked, setChecked] = useState(false);
 
-  // Get version data by versionCode (if exists)
   const { data: versionData, refetch } = useQuery(GET_VERSION_BY_CODE, {
     variables: {
       input: {
         partId: Number(id),
         revisionId: Number(revisionId),
-        versionCode: versionCode,
-      },
+        versionCode
+      }
     },
     skip: !id || !revisionId || !versionCode,
   });
 
-  useEffect(() => {
-    console.log("DEBUG - versionData after update:", versionData);
-  }, [versionData]);
+  // useEffect(() => {
+  //   console.log("DEBUG - versionData after update:", versionData);
+  // }, [versionData]);
 
-
-  useEffect(() => {
-    if (versionData?.getVersionByVersionCode) {
-      const version = versionData.getVersionByVersionCode;
-      setChecked(version.enable_assembly_groups);
-    }
-  }, [versionData]);
 
   // useEffect(() => {
-  //   if (version) {
+  //   if (versionData?.getVersionByVersionCode) {
+  //     const version = versionData.getVersionByVersionCode;
   //     setChecked(version.enable_assembly_groups);
   //   }
-  // }, [version]);
+  // }, [versionData]);
 
 
   const version = versionData?.getVersionByVersionCode;
   const partType = version?.type?.name || '';
 
   useEffect(() => {
-    const fields = version?.additional_fields;
-    console.log('Fields from version:', fields);
+  //   const version = versionData?.getVersionByVersionCode;
+  //   if (!version) return;
 
-    if (fields && Array.isArray(fields)) {
-      const transformed = fields.map((f: any) => ({
-        key: f.name,
-        value: f.value,
-      }));
-      setSelectedFields(transformed);
-      const initialValues: Record<string, string> = {};
-      transformed.forEach(f => {
-        initialValues[f.key] = f.value;
+  //   const fields = version?.additional_fields;
+  //   console.log('Fields from version:', fields);
+
+  //   if (fields && Array.isArray(fields)) {
+  //     const transformed = fields.map((f: any) => ({
+  //       key: f.name,
+  //       value: f.value,
+  //     }));
+  //     setSelectedFields(transformed);
+  //     const initialValues: Record<string, string> = {};
+  //     transformed.forEach(f => {
+  //       initialValues[f.key] = f.value;
+  //     });
+  //     form.setFieldsValue(initialValues);
+  //   }
+  // }, [versionData]);
+     if (version) {
+      setChecked(version.enable_assembly_groups);
+      form.setFieldsValue({
+        name: version.name,
+        code: version.code,
+        description: version.description,
+        ...version.additional_fields?.reduce((acc: any, field: any) => {
+          acc[field.name] = field.value;
+          return acc;
+        }, {}),
       });
-      form.setFieldsValue(initialValues);
+      setSelectedFields(
+        version.additional_fields?.map((f: any) => ({ key: f.name, value: f.value })) || []
+      );
     }
-  }, [versionData]);
+  }, [version, form]);
 
   const standardKeys = propertyGroups.flatMap(g => g.fields.map(f => f.key));
-
   const standardFields = selectedFields.filter(f => standardKeys.includes(f.key));
-  const customFields = selectedFields.filter(f => !standardKeys.includes(f.key));
 
   const getFieldValue = (key: string) => {
-    const found = customFields.find((f) => f.key === key);
+    // const found = customFields.find((f) => f.key === key);
+    const found = selectedFields.find((f) => f.key === key);
     return found ? found.value : undefined;
+  };
+
+  const handleOpenModalCustomProperties = () => {
+    const selectedKeys = selectedFields.map(f => f.key);
+    setCheckedKeys(selectedKeys);
+    setIsModalVisible(true);
   };
 
   const handleAcceptModal = () => {
@@ -108,28 +125,61 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
     setCheckedKeys([]);
   };
 
-  useEffect(() => {
-    if (versionData?.getVersionByVersionCode) {
-      const version = versionData.getVersionByVersionCode;
 
-      form.setFieldsValue({
-        name: version.name,
-        code: version.code,
-        description: version.description,
-        ...version.additional_fields?.reduce((acc: any, field: any) => {
-          acc[field.name] = field.value;
-          return acc;
-        }, {}),
-      });
+  // useEffect(() => {
+  //   if (!versionData?.getVersionByVersionCode) return;
 
-      const allFields: Field[] = version.additional_fields?.map((f: any) => ({
-        key: f.name,
-        value: f.value,
-      })) || [];
+  //   const version = versionData.getVersionByVersionCode;
 
-      setSelectedFields(allFields);
-    }
-  }, [versionData]);
+  //   form.setFieldsValue({
+  //     name: version.name,
+  //     code: version.code,
+  //     description: version.description,
+  //     ...version.additional_fields?.reduce((acc: any, field: any) => {
+  //       acc[field.name] = field.value;
+  //       return acc;
+  //     }, {}),
+  //   });
+
+  //   setSelectedFields(
+  //     version.additional_fields?.map((f: any) => ({
+  //       key: f.name,
+  //       value: f.value,
+  //     })) || []
+  //   );
+  // }, [versionData]);
+
+  // useEffect(() => {
+  //   if (versionData?.getVersionByVersionCode) {
+  //     const version = versionData.getVersionByVersionCode;
+
+  //     form.setFieldsValue({
+  //       name: version.name,
+  //       code: version.code,
+  //       description: version.description,
+  //       ...version.additional_fields?.reduce((acc: any, field: any) => {
+  //         acc[field.name] = field.value;
+  //         return acc;
+  //       }, {}),
+  //     });
+
+  //     const allFields: Field[] = version.additional_fields?.map((f: any) => ({
+  //       key: f.name,
+  //       value: f.value,
+  //     })) || [];
+
+  //     // setSelectedFields(allFields);
+  //     setSelectedFields(prev => {
+  //       const merge = [...prev];
+  //       allFields.forEach(newField => {
+  //         const idx = merge.findIndex(f => f.key === newField.key);
+  //         if (idx >= 0) merge[idx] = newField;
+  //         else merge.push(newField)
+  //       })
+  //       return merge;
+  //     })
+  //   }
+  // }, [versionData]);
 
   return (
     <>
@@ -190,7 +240,7 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
 
             <Col span={12}>
               <Form.Item label="Description" name="description">
-                <AutoSaveInput name="description" value={version?.description || ''} versionId={version?.id} refetch={refetch} />
+                <AutoSaveInput form={form} name="description" value={version?.description || ''} versionId={version?.id} versionCode={versionCode} refetch={refetch} />
               </Form.Item>
             </Col>
 
@@ -202,7 +252,7 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
             rules={[{ required: true }]}
             validateTrigger="onSubmit"
           >
-            <AutoSaveInput name="name" value={version?.name || ''} versionId={version?.id} refetch={refetch} />
+            <AutoSaveInput form={form} name="name" value={version?.name || ''} versionId={version?.id} versionCode={versionCode} refetch={refetch} />
           </Form.Item>
 
           {(partType in FIELD_DEFINITIONS) && FIELD_DEFINITIONS[partType as keyof typeof FIELD_DEFINITIONS].map((field, index) => (
@@ -210,16 +260,18 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
               key={index}
               label={field.label}
               name={field.name}
-              initialValue={getFieldValue(field.name)}
+              // initialValue={getFieldValue(field.name)}
               rules={[{ required: field.rule }]}
               validateTrigger="onSubmit"
             >
               {field.type === 'input' ? (
                 <AutoSaveInput
+                  form={form}
                   name={field.name}
                   value={getFieldValue(field.name) || ''}
                   versionId={version?.id}
-                  isAdditional={true}
+                  versionCode={versionCode}
+                  isAdditional
                   dataType="string"
                   typeGroup="custom"
                   refetch={refetch}
@@ -229,7 +281,8 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
                   name={field.name}
                   value={getFieldValue(field.name) || ''}
                   versionId={version?.id}
-                  isAdditional={true}
+                  versionCode={versionCode}
+                  isAdditional
                   dataType="string"
                   typeGroup="custom"
                   options={field.options || []}
@@ -287,7 +340,7 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
                       {field.key === 'finish' ? (
                         <Select
                           placeholder="Select Finish"
-                          defaultValue={matchedField.value || 'B'}
+                          // defaultValue={matchedField.value || 'B'}
                           onChange={(value) => {
                             updatePart({
                               variables: {
@@ -338,7 +391,7 @@ const Properties: React.FC<PropertiesProps> = ({ id, revisionId, versionCode }) 
           layout='iconFirst'
           icon={<PlusOutlined />}
           text='Manage Properties'
-          onClick={() => setIsModalVisible(true)}
+          onClick={handleOpenModalCustomProperties}
         />
       </div>
 
